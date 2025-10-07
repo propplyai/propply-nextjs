@@ -42,16 +42,28 @@ export default async function handler(req, res) {
     // Fetch HPD Violations (active only)
     const hpdUrl = `https://data.cityofnewyork.us/resource/wvxf-dwi5.json?bin=${bin}&violationstatus=Open&$limit=100`;
     const hpdResponse = await fetch(hpdUrl, { headers });
-    const hpdViolations = await hpdResponse.json();
+    let hpdViolations = await hpdResponse.json();
+    
+    // Ensure it's an array
+    if (!Array.isArray(hpdViolations)) {
+      console.log('[Compliance API] HPD response is not an array:', hpdViolations);
+      hpdViolations = [];
+    }
     
     // Fetch DOB Violations (active only)
     const dobUrl = `https://data.cityofnewyork.us/resource/3h2n-5cm9.json?bin=${bin}&$where=violation_category LIKE '%ACTIVE%'&$limit=100`;
     const dobResponse = await fetch(dobUrl, { headers });
-    const dobViolations = await dobResponse.json();
+    let dobViolations = await dobResponse.json();
+    
+    // Ensure it's an array
+    if (!Array.isArray(dobViolations)) {
+      console.log('[Compliance API] DOB response is not an array:', dobViolations);
+      dobViolations = [];
+    }
     
     // Calculate scores
-    const hpdActive = Array.isArray(hpdViolations) ? hpdViolations.length : 0;
-    const dobActive = Array.isArray(dobViolations) ? dobViolations.length : 0;
+    const hpdActive = hpdViolations.length;
+    const dobActive = dobViolations.length;
     
     const hpdScore = Math.max(0, 100 - (hpdActive * 10));
     const dobScore = Math.max(0, 100 - (dobActive * 15));
