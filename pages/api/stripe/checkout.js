@@ -34,7 +34,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { planId } = req.body;
+    const { planId, promoCode } = req.body;
 
     if (!planId || !pricingPlans[planId]) {
       return res.status(400).json({ error: 'Invalid plan ID' });
@@ -42,6 +42,31 @@ export default async function handler(req, res) {
 
     const plan = pricingPlans[planId];
     const origin = req.headers.origin || 'http://localhost:3000';
+
+    // Handle promo code
+    let couponId = null;
+    if (promoCode && promoCode.trim().toUpperCase() === 'INIT101') {
+      // Create or get the 100% off coupon for init101
+      try {
+        // Try to retrieve existing coupon
+        try {
+          const existingCoupon = await stripe.coupons.retrieve('INIT101');
+          couponId = existingCoupon.id;
+        } catch (retrieveError) {
+          // Coupon doesn't exist, create it
+          const coupon = await stripe.coupons.create({
+            id: 'INIT101',
+            percent_off: 100,
+            duration: 'once',
+            name: 'Init101 - 100% Off',
+          });
+          couponId = coupon.id;
+        }
+      } catch (couponError) {
+        console.error('Error handling promo code:', couponError);
+        // Continue without coupon if there's an error
+      }
+    }
 
     // Get authenticated user
     const supabase = createServerSupabaseClient();
@@ -84,7 +109,7 @@ export default async function handler(req, res) {
     }
 
     // Create Stripe checkout session
-    const session = await stripe.checkout.sessions.create({
+    const sessionConfig = {
       mode: plan.mode,
       payment_method_types: ['card'],
       customer: stripeCustomerId, // Link to existing customer
@@ -112,8 +137,16 @@ export default async function handler(req, res) {
       metadata: {
         planId,
         supabase_user_id: user.id,
+        promo_code: promoCode || '',
       },
-    });
+    };
+
+    // Apply coupon if valid promo code was provided
+    if (couponId) {
+      sessionConfig.discounts = [{ coupon: couponId }];
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionConfig);
 
     return res.status(200).json({ url: session.url });
   } catch (error) {

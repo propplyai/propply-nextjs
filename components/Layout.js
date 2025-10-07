@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { Home, Building2, FileCheck, ShoppingBag, BarChart3, Settings, LogOut, User } from 'lucide-react';
+import { Home, Building2, FileCheck, ShoppingBag, BarChart3, LogOut, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function Layout({ children, user, onLogout }) {
@@ -12,7 +12,6 @@ export default function Layout({ children, user, onLogout }) {
     { name: 'Compliance', href: '/compliance', icon: FileCheck },
     { name: 'Marketplace', href: '/marketplace', icon: ShoppingBag },
     { name: 'Analytics', href: '/analytics', icon: BarChart3 },
-    { name: 'Settings', href: '/settings', icon: Settings },
   ];
 
   const isActive = (href) => router.pathname === href || router.pathname.startsWith(href + '/');

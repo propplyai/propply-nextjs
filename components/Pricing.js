@@ -6,6 +6,9 @@ import { supabase } from '@/lib/supabase';
 export default function Pricing() {
   const router = useRouter();
   const [loading, setLoading] = useState(null);
+  const [promoCode, setPromoCode] = useState('');
+  const [promoApplied, setPromoApplied] = useState(false);
+  const [promoError, setPromoError] = useState('');
 
   const plans = [
     {
@@ -80,7 +83,7 @@ export default function Pricing() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ planId }),
+        body: JSON.stringify({ planId, promoCode: promoCode.trim() }),
       });
 
       const { url, error } = await response.json();
@@ -179,7 +182,42 @@ export default function Pricing() {
           ))}
         </div>
 
-        <div className="mt-12 text-center">
+        {/* Promo Code Section */}
+        <div className="mt-12 max-w-md mx-auto">
+          <div className="card bg-gradient-to-r from-corporate-500/10 to-emerald-500/10 border-corporate-500/30">
+            <h3 className="text-lg font-bold text-white mb-4 text-center">Have a Promo Code?</h3>
+            <div className="flex gap-3">
+              <input
+                type="text"
+                value={promoCode}
+                onChange={(e) => {
+                  setPromoCode(e.target.value.toUpperCase());
+                  setPromoError('');
+                  setPromoApplied(false);
+                }}
+                placeholder="Enter promo code"
+                className="flex-1 px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-corporate-500 transition-colors"
+              />
+            </div>
+            {promoApplied && (
+              <div className="mt-3 text-center text-emerald-400 text-sm font-medium">
+                ✓ Promo code will be applied at checkout
+              </div>
+            )}
+            {promoError && (
+              <div className="mt-3 text-center text-ruby-400 text-sm">
+                {promoError}
+              </div>
+            )}
+            {promoCode === 'INIT101' && !promoError && (
+              <div className="mt-3 text-center text-emerald-400 text-sm font-medium">
+                🎉 100% discount will be applied!
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-8 text-center">
           <p className="text-slate-400">
             Need a custom solution?{' '}
             <a href="mailto:sales@propply.ai" className="text-corporate-400 hover:text-corporate-300 font-semibold">
