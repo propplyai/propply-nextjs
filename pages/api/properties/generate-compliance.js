@@ -1,9 +1,4 @@
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import path from 'path';
-
-const execAsync = promisify(exec);
-
+// Direct API implementation without Python dependency
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -16,53 +11,84 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Path to Python script
-    const scriptPath = path.join(process.cwd(), 'python', 'generate_compliance_report.py');
-    
-    // Set environment variables for Python script
-    const env = {
-      ...process.env,
-      NYC_APP_TOKEN: process.env.NYC_APP_TOKEN || '',
-      API_KEY_SECRET: process.env.API_KEY_SECRET || ''
-    };
-
-    // Execute Python script
-    const command = `python3 "${scriptPath}" "${address}"`;
-    
     console.log(`Generating compliance report for: ${address}`);
     
-    const { stdout, stderr } = await execAsync(command, {
-      env,
-      timeout: 120000, // 2 minute timeout
-      maxBuffer: 10 * 1024 * 1024 // 10MB buffer
-    });
-
-    if (stderr && !stderr.includes('Warning')) {
-      console.error('Python script stderr:', stderr);
+    // Step 1: Get property identifiers from NYC Planning GeoSearch
+    const geoSearchUrl = `https://geosearch.planninglabs.nyc/v2/search?text=${encodeURIComponent(address)}&size=1`;
+    const geoResponse = await fetch(geoSearchUrl);
+    const geoData = await geoResponse.json();
+    
+    if (!geoData.features || geoData.features.length === 0) {
+      return res.status(404).json({ error: 'Property not found in NYC database' });
     }
-
-    // Parse the JSON output from Python script
-    try {
-      const reportData = JSON.parse(stdout);
-      
-      return res.status(200).json({
-        success: true,
-        data: reportData,
-        message: 'Compliance report generated successfully'
-      });
-    } catch (parseError) {
-      console.error('Failed to parse Python output:', stdout);
-      return res.status(500).json({
-        error: 'Failed to parse report data',
-        details: stdout.substring(0, 500)
-      });
+    
+    const feature = geoData.features[0];
+    const properties = feature.properties || {};
+    const padData = properties.addendum?.pad || {};
+    
+    const bin = padData.bin;
+    const bbl = padData.bbl;
+    
+    if (!bin) {
+      return res.status(404).json({ error: 'Could not find BIN for this property' });
     }
+    
+    console.log(`Found property - BIN: ${bin}, BBL: ${bbl}`);
+    
+    // Step 2: Fetch compliance data from NYC Open Data
+    const appToken = process.env.NYC_APP_TOKEN || '';
+    const headers = appToken ? { 'X-App-Token': appToken } : {};
+    
+    // Fetch HPD Violations (active only)
+    const hpdUrl = `https://data.cityofnewyork.us/resource/wvxf-dwi5.json?bin=${bin}&violationstatus=Open&$limit=100`;
+    const hpdResponse = await fetch(hpdUrl, { headers });
+    const hpdViolations = await hpdResponse.json();
+    
+    // Fetch DOB Violations (active only)
+    const dobUrl = `https://data.cityofnewyork.us/resource/3h2n-5cm9.json?bin=${bin}&$where=violation_category LIKE '%ACTIVE%'&$limit=100`;
+    const dobResponse = await fetch(dobUrl, { headers });
+    const dobViolations = await dobResponse.json();
+    
+    // Calculate scores
+    const hpdActive = Array.isArray(hpdViolations) ? hpdViolations.length : 0;
+    const dobActive = Array.isArray(dobViolations) ? dobViolations.length : 0;
+    
+    const hpdScore = Math.max(0, 100 - (hpdActive * 10));
+    const dobScore = Math.max(0, 100 - (dobActive * 15));
+    const overallScore = (hpdScore * 0.5) + (dobScore * 0.5);
+    
+    const reportData = {
+      success: true,
+      property: {
+        bin,
+        bbl,
+        borough: properties.borough,
+        address: `${properties.housenumber || ''} ${properties.street || ''}`.trim()
+      },
+      scores: {
+        hpd_score: Math.round(hpdScore * 10) / 10,
+        dob_score: Math.round(dobScore * 10) / 10,
+        overall_score: Math.round(overallScore * 10) / 10,
+        hpd_violations_active: hpdActive,
+        dob_violations_active: dobActive
+      },
+      data: {
+        hpd_violations: hpdViolations.slice(0, 50),
+        dob_violations: dobViolations.slice(0, 50)
+      },
+      generated_at: new Date().toISOString()
+    };
+    
+    console.log(`Report generated - Overall Score: ${reportData.scores.overall_score}%, HPD: ${hpdActive}, DOB: ${dobActive}`);
+    
+    return res.status(200).json(reportData);
 
   } catch (error) {
     console.error('Error generating compliance report:', error);
     return res.status(500).json({
       error: 'Failed to generate compliance report',
-      message: error.message
+      message: error.message,
+      details: error.toString()
     });
   }
 }
