@@ -33,15 +33,22 @@ export default function ComplianceReportPage() {
   const checkAuth = async () => {
     console.log('[Compliance Page] Checking authentication...');
     try {
-      const { user: currentUser } = await authHelpers.getUser();
+      const { user: currentUser, error: authError } = await authHelpers.getUser();
       console.log('[Compliance Page] Auth result:', { 
         hasUser: !!currentUser, 
-        userId: currentUser?.id 
+        userId: currentUser?.id,
+        authError: authError?.message
       });
       
-      if (!currentUser) {
-        console.log('[Compliance Page] No user found, redirecting to login');
-        router.push('/login');
+      // If there's an auth error or no user, redirect to login
+      if (authError || !currentUser) {
+        console.log('[Compliance Page] Auth failed or no user found, redirecting to login');
+        console.log('[Compliance Page] Error details:', authError);
+        
+        // Give a moment for any cleanup, then redirect
+        setTimeout(() => {
+          router.push('/login');
+        }, 100);
         return;
       }
       
@@ -49,14 +56,25 @@ export default function ComplianceReportPage() {
       setUser(currentUser);
       await loadReport(id, currentUser.id);
     } catch (error) {
-      console.error('[Compliance Page] Error during auth check:', error);
+      console.error('[Compliance Page] Unexpected error during auth check:', error);
       setLoading(false);
+      // On unexpected error, also redirect to login
+      setTimeout(() => {
+        router.push('/login');
+      }, 100);
     }
   };
 
   const loadReport = async (reportId, userId) => {
     try {
       console.log('[Compliance Page] Loading report:', reportId, 'for user:', userId);
+      
+      // Verify we have a valid session before querying
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error('[Compliance Page] No valid session, cannot load report');
+        throw new Error('No valid session');
+      }
       
       // First, try to get the report with explicit user filtering
       // This works around potential RLS issues
@@ -73,7 +91,8 @@ export default function ComplianceReportPage() {
           message: error.message,
           code: error.code,
           details: error.details,
-          hint: error.hint
+          hint: error.hint,
+          status: error.status
         } : null 
       });
 
@@ -83,6 +102,14 @@ export default function ComplianceReportPage() {
         console.error('[Compliance Page] Error message:', error.message);
         console.error('[Compliance Page] Error details:', error.details);
         console.error('[Compliance Page] Error hint:', error.hint);
+        console.error('[Compliance Page] HTTP status:', error.status);
+        
+        // If it's a 406 error, it's likely an auth/header issue
+        if (error.status === 406) {
+          console.error('[Compliance Page] 406 Not Acceptable - this indicates an auth or header issue');
+          console.error('[Compliance Page] Session state:', session ? 'exists' : 'missing');
+          throw new Error('Authentication issue - please try logging in again');
+        }
         
         // If it's a PGRST116 error (no rows), show not found message
         if (error.code === 'PGRST116') {

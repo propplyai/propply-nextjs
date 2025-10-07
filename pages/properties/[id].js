@@ -32,18 +32,37 @@ export default function PropertyDetailPage() {
   }, [id]);
 
   const checkAuth = async () => {
-    const { user: currentUser } = await authHelpers.getUser();
-    if (!currentUser) {
-      router.push('/login');
-      return;
+    try {
+      const { user: currentUser, error: authError } = await authHelpers.getUser();
+      
+      if (authError || !currentUser) {
+        console.log('[Property Detail] Auth failed, redirecting to login');
+        setTimeout(() => {
+          router.push('/login');
+        }, 100);
+        return;
+      }
+      
+      setUser(currentUser);
+      await loadProperty(id, currentUser.id);
+    } catch (error) {
+      console.error('[Property Detail] Unexpected error during auth:', error);
+      setTimeout(() => {
+        router.push('/login');
+      }, 100);
     }
-    setUser(currentUser);
-    await loadProperty(id, currentUser.id);
   };
 
   const loadProperty = async (propertyId, userId) => {
     try {
       console.log('[Property Detail] Loading property:', propertyId, 'for user:', userId);
+      
+      // Verify we have a valid session before querying
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error('[Property Detail] No valid session, cannot load property');
+        throw new Error('No valid session');
+      }
       
       const { data, error } = await supabase
         .from('properties')
@@ -52,10 +71,22 @@ export default function PropertyDetailPage() {
         .eq('user_id', userId)
         .single();
 
-      console.log('[Property Detail] Query result:', { hasData: !!data, error: error?.message });
+      console.log('[Property Detail] Query result:', { 
+        hasData: !!data, 
+        error: error?.message,
+        status: error?.status 
+      });
 
       if (error) {
         console.error('[Property Detail] Database error:', error);
+        
+        // If it's a 406 error, it's likely an auth/header issue
+        if (error.status === 406) {
+          console.error('[Property Detail] 406 Not Acceptable - auth or header issue');
+          console.error('[Property Detail] Session state:', session ? 'exists' : 'missing');
+          throw new Error('Authentication issue - please try logging in again');
+        }
+        
         throw error;
       }
       
