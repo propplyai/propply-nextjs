@@ -138,9 +138,11 @@ export default function ComplianceIndexPage() {
 
                       {/* Property Info */}
                       <div className="flex-1">
-                        <h3 className="text-xl font-bold text-white mb-2 hover:text-corporate-400 transition-colors">
-                          {report.address}
-                        </h3>
+                        <Link href={`/properties/${report.property_id}`}>
+                          <h3 className="text-xl font-bold text-white mb-2 hover:text-corporate-400 transition-colors">
+                            {report.address}
+                          </h3>
+                        </Link>
                         <div className="flex flex-wrap gap-4 text-sm text-slate-400 mb-3">
                           <span>{report.borough}</span>
                           <span>BIN: {report.bin}</span>
@@ -178,7 +180,6 @@ export default function ComplianceIndexPage() {
                       )}
                     </div>
                   </div>
-
                   {/* Expanded Content */}
                   {isExpanded && (
                     <div className="mt-6 pt-6 border-t border-slate-700 space-y-4">

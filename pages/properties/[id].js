@@ -14,6 +14,7 @@ import { cn, getComplianceScoreBadge, formatDate } from '@/lib/utils';
 export default function PropertyDetailPage() {
   const router = useRouter();
   const { id } = router.query;
+  console.log('[Property Detail] Component rendered. Router query id:', id, 'isReady:', router.isReady);
   const [user, setUser] = useState(null);
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -24,7 +25,7 @@ export default function PropertyDetailPage() {
   const [propertyInfoExpanded, setPropertyInfoExpanded] = useState(true);
 
   useEffect(() => {
-    console.log('[Property Detail] useEffect triggered, id:', id);
+    console.log('[Property Detail] useEffect triggered. ID from router.query:', id, 'Router is ready:', router.isReady);
     if (id) {
       console.log('[Property Detail] Starting auth check for property ID:', id);
       checkAuth();
@@ -44,7 +45,11 @@ export default function PropertyDetailPage() {
       }
       
       setUser(currentUser);
-      await loadProperty(id, currentUser.id);
+      
+      // Ensure we're using the ID from the URL, not from any other source
+      const propertyId = router.query.id;
+      console.log('[Property Detail] About to load property with ID from router:', propertyId);
+      await loadProperty(propertyId, currentUser.id);
     } catch (error) {
       console.error('[Property Detail] Unexpected error during auth:', error);
       setTimeout(() => {
@@ -89,6 +94,7 @@ export default function PropertyDetailPage() {
         }
       }
       
+      console.log(`[Property Detail] Executing Supabase query with propertyId: ${propertyId} and userId: ${userId}`);
       const { data, error } = await supabase
         .from('properties')
         .select('*')

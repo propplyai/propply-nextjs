@@ -114,6 +114,66 @@ The `user_profiles` table must have these columns:
 - `current_period_start` (timestamp)
 - `current_period_end` (timestamp)
 
+## Managing Subscriptions
+
+### Stripe Customer Portal
+
+Users with active subscriptions can manage them through the Stripe Customer Portal, which allows them to:
+
+- **Update payment methods** - Add, remove, or update credit cards
+- **View invoices** - Download past invoices and receipts
+- **View billing history** - See all past payments
+- **Cancel subscription** - Self-service cancellation
+- **Update subscription** - Upgrade or downgrade plans (if configured)
+
+### How It Works
+
+1. **User clicks "Manage Subscription"** on the profile page
+2. **API creates portal session** (`/api/stripe/create-portal-session`)
+   - Verifies user authentication
+   - Retrieves user's Stripe customer ID from database
+   - Creates a Stripe Customer Portal session
+3. **User is redirected to Stripe** - Secure Stripe-hosted portal
+4. **User makes changes** - Updates payment, cancels, etc.
+5. **Stripe sends webhooks** - Updates are sent back to your app
+6. **Database updates automatically** - Webhook handler processes changes
+7. **User returns to profile** - Sees updated subscription info
+
+### Implementation
+
+**API Endpoint**: `/pages/api/stripe/create-portal-session.js`
+```javascript
+// Creates a secure portal session for the authenticated user
+POST /api/stripe/create-portal-session
+Returns: { url: 'https://billing.stripe.com/session/...' }
+```
+
+**Profile Page**: `/pages/profile.js`
+- Shows "Manage Subscription" button for active subscribers
+- Handles portal session creation and redirect
+- Shows loading state while opening portal
+
+### Configuration
+
+The Stripe Customer Portal must be configured in your Stripe Dashboard:
+
+1. Go to **Settings → Billing → Customer Portal**
+2. Enable the portal
+3. Configure allowed actions:
+   - ✅ Update payment methods
+   - ✅ View invoices
+   - ✅ Cancel subscriptions
+   - ✅ Update subscriptions (optional)
+4. Set branding (logo, colors, etc.)
+5. Configure cancellation flow (immediate vs. end of period)
+
+### Security
+
+- Portal sessions are **single-use** and expire after 1 hour
+- Users can only access **their own** subscription data
+- All changes are validated by Stripe
+- Webhooks ensure database stays in sync
+
 ## Troubleshooting
 
 ### Webhook Not Receiving Events

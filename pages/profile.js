@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
 import { authHelpers, supabase } from '@/lib/supabase';
-import { User, Mail, Calendar, CreditCard, CheckCircle, XCircle, Clock, Shield } from 'lucide-react';
+import { User, Mail, Calendar, CreditCard, CheckCircle, XCircle, Clock, Shield, Settings, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function ProfilePage() {
@@ -10,6 +10,7 @@ export default function ProfilePage() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [managingSubscription, setManagingSubscription] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -49,6 +50,31 @@ export default function ProfilePage() {
   const handleLogout = async () => {
     await authHelpers.signOut();
     router.push('/');
+  };
+
+  const handleManageSubscription = async () => {
+    setManagingSubscription(true);
+    try {
+      const response = await fetch('/api/stripe/create-portal-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create portal session');
+      }
+
+      // Redirect to Stripe Customer Portal
+      window.location.href = data.url;
+    } catch (error) {
+      console.error('Error opening customer portal:', error);
+      alert(error.message || 'Failed to open subscription management. Please try again.');
+      setManagingSubscription(false);
+    }
   };
 
   const formatDate = (dateString) => {
@@ -208,7 +234,40 @@ export default function ProfilePage() {
                   </>
                 )}
 
-                {!profile?.subscription_status || profile?.subscription_status === 'free' && (
+                {profile?.subscription_status === 'active' && profile?.customer_id && (
+                  <div className="p-6 bg-gradient-to-r from-corporate-500/10 to-emerald-500/10 rounded-xl border border-corporate-500/30">
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <p className="text-white font-medium mb-2">
+                          ⚙️ Manage Your Subscription
+                        </p>
+                        <p className="text-slate-400 text-sm">
+                          Update payment method, view invoices, or cancel subscription
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleManageSubscription}
+                      disabled={managingSubscription}
+                      className="btn-primary inline-flex items-center"
+                    >
+                      {managingSubscription ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Opening Portal...
+                        </>
+                      ) : (
+                        <>
+                          <Settings className="w-4 h-4 mr-2" />
+                          Manage Subscription
+                          <ExternalLink className="w-4 h-4 ml-2" />
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
+
+                {(!profile?.subscription_status || profile?.subscription_status === 'free') && (
                   <div className="p-6 bg-gradient-to-r from-corporate-500/10 to-emerald-500/10 rounded-xl border border-corporate-500/30">
                     <p className="text-white font-medium mb-4">
                       🚀 Upgrade your plan to unlock premium features
