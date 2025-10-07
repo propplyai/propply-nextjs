@@ -594,24 +594,31 @@ export default function ComplianceReportPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {[...data.dob_violations]
-                        .sort((a, b) => {
-                          // Try multiple date fields
-                          const dateA = new Date(a.issue_date || a.issuedate || a.violation_date || 0);
-                          const dateB = new Date(b.issue_date || b.issuedate || b.violation_date || 0);
-                          return dateB - dateA; // Newest first
-                        })
-                        .slice(0, dobVisibleCount)
-                        .map((violation, index) => {
-                          // Get the best available description
-                          const description = violation.violation_description || 
-                                             violation.description || 
-                                             violation.violation_type_code || 
-                                             'No description available';
-                          // Try multiple date fields
-                          const displayDate = violation.issue_date || violation.issuedate || violation.violation_date;
-                          
-                          return (
+                      {(() => {
+                        const violations = [...data.dob_violations];
+                        // Debug: log first violation to see available fields
+                        if (violations.length > 0) {
+                          console.log('[DOB Violation Fields]', Object.keys(violations[0]));
+                          console.log('[DOB Violation Sample]', violations[0]);
+                        }
+                        return violations
+                          .sort((a, b) => {
+                            // Try multiple date fields
+                            const dateA = new Date(a.issue_date || a.issuedate || a.violation_date || a.certify_date || 0);
+                            const dateB = new Date(b.issue_date || b.issuedate || b.violation_date || b.certify_date || 0);
+                            return dateB - dateA; // Newest first
+                          })
+                          .slice(0, dobVisibleCount)
+                          .map((violation, index) => {
+                            // Get the best available description
+                            const description = violation.violation_description || 
+                                               violation.description || 
+                                               violation.violation_type_code || 
+                                               'No description available';
+                            // Try multiple date fields
+                            const displayDate = violation.issue_date || violation.issuedate || violation.violation_date || violation.certify_date;
+                            
+                            return (
                         <tr key={index} className="border-b border-slate-800 hover:bg-slate-800/50">
                           <td className="py-3 px-4 text-white font-mono text-xs">{violation.isn_dob_bis_viol}</td>
                           <td className="py-3 px-4">
@@ -640,7 +647,8 @@ export default function ComplianceReportPage() {
                           <td className="py-3 px-4 text-slate-300">{formatDate(displayDate)}</td>
                         </tr>
                           );
-                        })}
+                        });
+                      })()}
                     </tbody>
                   </table>
                 </div>
