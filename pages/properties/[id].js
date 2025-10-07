@@ -109,7 +109,8 @@ export default function PropertyDetailPage() {
       // Reload property data
       await loadProperty(id, user.id);
       
-      alert(`Compliance report generated successfully!\n\nOverall Score: ${complianceData.scores.overall_score}%\nHPD Violations: ${complianceData.scores.hpd_violations_active}\nDOB Violations: ${complianceData.scores.dob_violations_active}`);
+      const scores = complianceData.scores;
+      alert(`✅ Compliance Report Generated Successfully!\n\n📊 Overall Score: ${scores.overall_score}%\n\n🏗️ Violations:\n  • HPD: ${scores.hpd_violations_active}\n  • DOB: ${scores.dob_violations_active}\n\n🏢 Equipment:\n  • Elevators: ${scores.elevator_devices || 0}\n  • Boilers: ${scores.boiler_devices || 0}\n  • Electrical Permits: ${scores.electrical_permits || 0}`);
     } catch (error) {
       console.error('Error generating report:', error);
       const errorMsg = error.message || 'Unknown error occurred';

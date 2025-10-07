@@ -61,9 +61,42 @@ export default async function handler(req, res) {
       dobViolations = [];
     }
     
+    // Fetch Elevator Inspections
+    const elevatorUrl = `https://data.cityofnewyork.us/resource/e5aq-a4j2.json?bin=${bin}&$limit=100`;
+    const elevatorResponse = await fetch(elevatorUrl, { headers });
+    let elevatorData = await elevatorResponse.json();
+    
+    if (!Array.isArray(elevatorData)) {
+      console.log('[Compliance API] Elevator response is not an array:', elevatorData);
+      elevatorData = [];
+    }
+    
+    // Fetch Boiler Inspections
+    const boilerUrl = `https://data.cityofnewyork.us/resource/52dp-yji6.json?bin_number=${bin}&$limit=100`;
+    const boilerResponse = await fetch(boilerUrl, { headers });
+    let boilerData = await boilerResponse.json();
+    
+    if (!Array.isArray(boilerData)) {
+      console.log('[Compliance API] Boiler response is not an array:', boilerData);
+      boilerData = [];
+    }
+    
+    // Fetch Electrical Permits
+    const electricalUrl = `https://data.cityofnewyork.us/resource/dm9a-ab7w.json?bin=${bin}&$limit=100`;
+    const electricalResponse = await fetch(electricalUrl, { headers });
+    let electricalData = await electricalResponse.json();
+    
+    if (!Array.isArray(electricalData)) {
+      console.log('[Compliance API] Electrical response is not an array:', electricalData);
+      electricalData = [];
+    }
+    
     // Calculate scores
     const hpdActive = hpdViolations.length;
     const dobActive = dobViolations.length;
+    const elevatorDevices = elevatorData.length;
+    const boilerDevices = boilerData.length;
+    const electricalPermits = electricalData.length;
     
     const hpdScore = Math.max(0, 100 - (hpdActive * 10));
     const dobScore = Math.max(0, 100 - (dobActive * 15));
@@ -82,16 +115,24 @@ export default async function handler(req, res) {
         dob_score: Math.round(dobScore * 10) / 10,
         overall_score: Math.round(overallScore * 10) / 10,
         hpd_violations_active: hpdActive,
-        dob_violations_active: dobActive
+        dob_violations_active: dobActive,
+        elevator_devices: elevatorDevices,
+        boiler_devices: boilerDevices,
+        electrical_permits: electricalPermits
       },
       data: {
         hpd_violations: hpdViolations.slice(0, 50),
-        dob_violations: dobViolations.slice(0, 50)
+        dob_violations: dobViolations.slice(0, 50),
+        elevator_data: elevatorData.slice(0, 50),
+        boiler_data: boilerData.slice(0, 50),
+        electrical_permits: electricalData.slice(0, 50)
       },
       generated_at: new Date().toISOString()
     };
     
-    console.log(`Report generated - Overall Score: ${reportData.scores.overall_score}%, HPD: ${hpdActive}, DOB: ${dobActive}`);
+    console.log(`[Compliance API] Report generated - Overall Score: ${reportData.scores.overall_score}%`);
+    console.log(`[Compliance API] - HPD Violations: ${hpdActive}, DOB Violations: ${dobActive}`);
+    console.log(`[Compliance API] - Elevators: ${elevatorDevices}, Boilers: ${boilerDevices}, Electrical Permits: ${electricalPermits}`);
     
     return res.status(200).json(reportData);
 
