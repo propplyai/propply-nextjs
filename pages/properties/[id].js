@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
+import Script from 'next/script';
 import Layout from '@/components/Layout';
 import { authHelpers, supabase } from '@/lib/supabase';
 import {
@@ -218,38 +219,92 @@ export default function PropertyDetailPage() {
           Back to Properties
         </Link>
 
-        {/* Property Header Card */}
+        {/* Property Analysis Results */}
+        <div className="card mb-8 bg-gradient-to-br from-slate-800/50 to-slate-900/50">
+          <h2 className="text-xl font-bold text-white mb-6">Property Analysis Results</h2>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Compliance Score Card */}
+            <div className="bg-gradient-to-br from-gold-500/5 to-ruby-500/5 rounded-xl p-6 border border-slate-700">
+              <div className="flex flex-col items-center">
+                <div className={cn(
+                  "px-4 py-1 rounded-full text-xs font-bold uppercase mb-4",
+                  property.compliance_score >= 70 ? "bg-emerald-500/20 text-emerald-400" :
+                  property.compliance_score >= 40 ? "bg-gold-500/20 text-gold-400" :
+                  "bg-ruby-500/20 text-ruby-400"
+                )}>
+                  {property.compliance_score >= 70 ? "GOOD" : property.compliance_score >= 40 ? "CAUTION" : "CRITICAL"}
+                </div>
+                
+                {/* Circular Progress */}
+                <div className="relative w-32 h-32 mb-4">
+                  <svg className="transform -rotate-90 w-32 h-32">
+                    <circle
+                      cx="64"
+                      cy="64"
+                      r="56"
+                      stroke="currentColor"
+                      strokeWidth="8"
+                      fill="transparent"
+                      className="text-slate-700"
+                    />
+                    <circle
+                      cx="64"
+                      cy="64"
+                      r="56"
+                      stroke="currentColor"
+                      strokeWidth="8"
+                      fill="transparent"
+                      strokeDasharray={`${2 * Math.PI * 56}`}
+                      strokeDashoffset={`${2 * Math.PI * 56 * (1 - (property.compliance_score || 0) / 100)}`}
+                      className={cn(
+                        property.compliance_score >= 70 ? "text-emerald-400" :
+                        property.compliance_score >= 40 ? "text-gold-400" :
+                        "text-ruby-400"
+                      )}
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-3xl font-bold text-corporate-400">{property.compliance_score || 0}</span>
+                  </div>
+                </div>
+                
+                <p className="text-xs text-slate-400">
+                  Report generated on: {latestReport ? formatDate(latestReport.generated_at) : 'Not yet generated'}
+                </p>
+              </div>
+            </div>
+            
+            {/* Google Maps */}
+            <div className="rounded-xl overflow-hidden border border-slate-700" style={{ height: '280px' }}>
+              <iframe
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                loading="lazy"
+                allowFullScreen
+                referrerPolicy="no-referrer-when-downgrade"
+                src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&q=${encodeURIComponent(property.address)}&zoom=18&maptype=satellite`}>
+              </iframe>
+            </div>
+          </div>
+        </div>
+
+        {/* Property Details Card (Collapsible) */}
         <div className="card mb-8 cursor-pointer" onClick={() => setPropertyInfoExpanded(!propertyInfoExpanded)}>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-corporate-500 to-corporate-600 rounded-xl flex items-center justify-center flex-shrink-0">
-                <Building2 className="w-6 h-6 text-white" />
+              <div className="w-10 h-10 bg-gradient-to-r from-corporate-500 to-corporate-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Building2 className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="text-lg font-bold text-white">
-                  {property.address?.split(',')[0] || property.address}
-                </h1>
-                <div className="flex items-center gap-3 text-sm text-slate-400 mt-1">
-                  <span className="flex items-center">
-                    <MapPin className="w-3 h-3 mr-1" />
-                    {property.city}
-                  </span>
-                  <span className="flex items-center">
-                    <Building2 className="w-3 h-3 mr-1" />
-                    {property.property_type}
-                  </span>
-                </div>
+                <h3 className="text-base font-bold text-white">
+                  {property.address?.split(',')[0]?.toUpperCase() || property.address}
+                </h3>
               </div>
             </div>
             <div className="flex items-center space-x-3">
-              <span
-                className={cn(
-                  'px-4 py-2 rounded-full text-sm font-semibold border',
-                  getComplianceScoreBadge(property.compliance_score || 0)
-                )}
-              >
-                {property.compliance_score || 0}% Compliant
-              </span>
               {propertyInfoExpanded ? (
                 <ChevronUp className="w-5 h-5 text-slate-400" />
               ) : (
@@ -264,13 +319,13 @@ export default function PropertyDetailPage() {
                 {property.bin_number && (
                   <div>
                     <div className="text-xs text-slate-500 mb-1">BIN:</div>
-                    <div className="text-white font-semibold font-mono">{property.bin_number}</div>
+                    <div className="text-white font-semibold">{property.bin_number}</div>
                   </div>
                 )}
                 {latestReport?.report_data?.property?.bbl && (
                   <div>
                     <div className="text-xs text-slate-500 mb-1">BBL:</div>
-                    <div className="text-white font-semibold font-mono">{latestReport.report_data.property.bbl}</div>
+                    <div className="text-white font-semibold">{latestReport.report_data.property.bbl}</div>
                   </div>
                 )}
                 {latestReport?.report_data?.property?.borough && (
@@ -282,7 +337,7 @@ export default function PropertyDetailPage() {
                 {latestReport?.report_data?.property?.block && latestReport?.report_data?.property?.lot && (
                   <div>
                     <div className="text-xs text-slate-500 mb-1">BLOCK/LOT:</div>
-                    <div className="text-white font-semibold font-mono">
+                    <div className="text-white font-semibold">
                       {latestReport.report_data.property.block}/{latestReport.report_data.property.lot}
                     </div>
                   </div>
