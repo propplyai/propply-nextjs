@@ -5,7 +5,7 @@ import Layout from '@/components/Layout';
 import { authHelpers, supabase } from '@/lib/supabase';
 import {
   Building2, MapPin, Calendar, Users, Ruler, AlertTriangle,
-  CheckCircle, FileText, Edit, Trash2, ArrowLeft
+  CheckCircle, FileText, Edit, Trash2, ArrowLeft, RefreshCw
 } from 'lucide-react';
 import { cn, getComplianceScoreBadge, formatDate } from '@/lib/utils';
 
@@ -16,6 +16,8 @@ export default function PropertyDetailPage() {
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [reportError, setReportError] = useState('');
 
   useEffect(() => {
     if (id) {
@@ -68,6 +70,51 @@ export default function PropertyDetailPage() {
       console.error('Error deleting property:', error);
       alert('Failed to delete property');
       setDeleting(false);
+    }
+  };
+
+  const handleGenerateReport = async () => {
+    setGenerating(true);
+    setReportError('');
+    
+    try {
+      const response = await fetch('/api/properties/generate-compliance', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          address: `${property.address}, ${property.city}`,
+          propertyId: property.id
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to generate report');
+      }
+
+      // Update property with compliance data
+      const complianceData = result.data;
+      
+      await supabase
+        .from('properties')
+        .update({
+          compliance_score: complianceData.scores.overall_score,
+          active_violations: complianceData.scores.hpd_violations_active + complianceData.scores.dob_violations_active
+        })
+        .eq('id', property.id);
+
+      // Reload property data
+      await loadProperty(id, user.id);
+      
+      alert('Compliance report generated successfully!');
+    } catch (error) {
+      console.error('Error generating report:', error);
+      setReportError(error.message);
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -125,7 +172,7 @@ export default function PropertyDetailPage() {
                 <Building2 className="w-8 h-8 text-white" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-white mb-2">{property.address}</h1>
+                <h1 className="text-xl font-bold text-white mb-2">{property.address}</h1>
                 <div className="flex flex-wrap items-center gap-4 text-sm text-slate-400">
                   <span className="flex items-center">
                     <MapPin className="w-4 h-4 mr-1" />
@@ -245,6 +292,24 @@ export default function PropertyDetailPage() {
             <div className="card">
               <h3 className="text-lg font-bold text-white mb-4">Actions</h3>
               <div className="space-y-3">
+                <button
+                  onClick={handleGenerateReport}
+                  disabled={generating || property.city !== 'NYC'}
+                  className="btn-primary w-full flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <RefreshCw className={`w-5 h-5 mr-2 ${generating ? 'animate-spin' : ''}`} />
+                  {generating ? 'Generating Report...' : 'Generate NYC Compliance Report'}
+                </button>
+                {reportError && (
+                  <div className="text-sm text-ruby-400 bg-ruby-500/10 p-2 rounded border border-ruby-500/30">
+                    {reportError}
+                  </div>
+                )}
+                {property.city !== 'NYC' && (
+                  <div className="text-xs text-slate-400 text-center">
+                    NYC compliance reports only available for NYC properties
+                  </div>
+                )}
                 <Link
                   href={`/compliance/${property.id}`}
                   className="btn-secondary w-full flex items-center justify-center"
