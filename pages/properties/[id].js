@@ -263,6 +263,26 @@ export default function PropertyDetailPage() {
             <div className="card">
               <h2 className="text-2xl font-bold text-white mb-6">Property Details</h2>
               <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <div className="text-sm text-slate-400 mb-1">Property Type</div>
+                  <div className="text-white font-semibold flex items-center">
+                    <Building2 className="w-4 h-4 mr-2 text-slate-500" />
+                    {property.property_type || 'Not specified'}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-sm text-slate-400 mb-1">Location</div>
+                  <div className="text-white font-semibold flex items-center">
+                    <MapPin className="w-4 h-4 mr-2 text-slate-500" />
+                    {property.city}, {property.state}
+                  </div>
+                </div>
+                {property.bin_number && (
+                  <div>
+                    <div className="text-sm text-slate-400 mb-1">BIN Number</div>
+                    <div className="text-white font-semibold font-mono">{property.bin_number}</div>
+                  </div>
+                )}
                 {property.year_built && (
                   <div>
                     <div className="text-sm text-slate-400 mb-1">Year Built</div>
@@ -279,6 +299,12 @@ export default function PropertyDetailPage() {
                       <Ruler className="w-4 h-4 mr-2 text-slate-500" />
                       {property.square_footage.toLocaleString()} sq ft
                     </div>
+                  </div>
+                )}
+                {property.units && (
+                  <div>
+                    <div className="text-sm text-slate-400 mb-1">Units</div>
+                    <div className="text-white font-semibold">{property.units}</div>
                   </div>
                 )}
                 {property.contact_name && (
