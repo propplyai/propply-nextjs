@@ -61,13 +61,40 @@ export default async function handler(req, res) {
       dobViolations = [];
     }
     
-    // Fetch Elevator Inspections
-    const elevatorUrl = `https://data.cityofnewyork.us/resource/e5aq-a4j2.json?bin=${bin}&$limit=100`;
-    const elevatorResponse = await fetch(elevatorUrl, { headers });
-    let elevatorData = await elevatorResponse.json();
+    // Fetch Elevator Inspections - Multi-key search strategy
+    let elevatorData = [];
+    
+    // Strategy 1: Search by BIN
+    try {
+      const elevatorBinUrl = `https://data.cityofnewyork.us/resource/e5aq-a4j2.json?bin=${bin}&$limit=500`;
+      const elevatorResponse = await fetch(elevatorBinUrl, { headers });
+      elevatorData = await elevatorResponse.json();
+      
+      if (Array.isArray(elevatorData) && elevatorData.length > 0) {
+        console.log(`[Compliance API] Found ${elevatorData.length} elevator records using BIN`);
+      } else {
+        // Strategy 2: Search by block/lot if BIN fails
+        const block = bbl ? bbl.substring(1, 6).replace(/^0+/, '') : null;
+        const lot = bbl ? bbl.substring(6).replace(/^0+/, '') : null;
+        
+        if (block && lot) {
+          const elevatorBlockUrl = `https://data.cityofnewyork.us/resource/e5aq-a4j2.json?block=${block}&lot=${lot}&$limit=500`;
+          const elevatorBlockResponse = await fetch(elevatorBlockUrl, { headers });
+          const elevatorBlockData = await elevatorBlockResponse.json();
+          
+          if (Array.isArray(elevatorBlockData) && elevatorBlockData.length > 0) {
+            // Filter to match BIN if available
+            elevatorData = elevatorBlockData.filter(record => record.bin === bin);
+            console.log(`[Compliance API] Found ${elevatorData.length} elevator records using block/lot (filtered by BIN)`);
+          }
+        }
+      }
+    } catch (error) {
+      console.log('[Compliance API] Error fetching elevator data:', error.message);
+      elevatorData = [];
+    }
     
     if (!Array.isArray(elevatorData)) {
-      console.log('[Compliance API] Elevator response is not an array:', elevatorData);
       elevatorData = [];
     }
     
