@@ -35,6 +35,8 @@ export default function ComplianceReportPage() {
 
   const loadReport = async (reportId, userId) => {
     try {
+      console.log('[Compliance Page] Loading report:', reportId, 'for user:', userId);
+      
       const { data, error } = await supabase
         .from('nyc_compliance_reports')
         .select('*')
@@ -42,10 +44,24 @@ export default function ComplianceReportPage() {
         .eq('user_id', userId)
         .single();
 
-      if (error) throw error;
+      console.log('[Compliance Page] Query result:', { data, error });
+
+      if (error) {
+        console.error('[Compliance Page] Database error:', error);
+        throw error;
+      }
+      
+      if (!data) {
+        console.error('[Compliance Page] No report found');
+        throw new Error('Report not found');
+      }
+      
+      console.log('[Compliance Page] Report loaded successfully');
       setReport(data);
     } catch (error) {
-      console.error('Error loading report:', error);
+      console.error('[Compliance Page] Error loading report:', error);
+      console.error('[Compliance Page] Error details:', error.message, error.code);
+      alert(`Error loading report: ${error.message}. Redirecting to properties...`);
       router.push('/properties');
     } finally {
       setLoading(false);
