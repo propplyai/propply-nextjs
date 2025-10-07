@@ -37,17 +37,19 @@ export default function ComplianceReportPage() {
     try {
       console.log('[Compliance Page] Loading report:', reportId, 'for user:', userId);
       
+      // RLS policy handles user filtering, so we only filter by ID
       const { data, error } = await supabase
         .from('nyc_compliance_reports')
         .select('*')
         .eq('id', reportId)
-        .eq('user_id', userId)
         .single();
 
       console.log('[Compliance Page] Query result:', { data, error });
 
       if (error) {
         console.error('[Compliance Page] Database error:', error);
+        console.error('[Compliance Page] Error code:', error.code);
+        console.error('[Compliance Page] Error message:', error.message);
         throw error;
       }
       
@@ -56,13 +58,13 @@ export default function ComplianceReportPage() {
         throw new Error('Report not found');
       }
       
-      console.log('[Compliance Page] Report loaded successfully');
+      console.log('[Compliance Page] Report loaded successfully:', data.id);
       setReport(data);
     } catch (error) {
       console.error('[Compliance Page] Error loading report:', error);
-      console.error('[Compliance Page] Error details:', error.message, error.code);
-      alert(`Error loading report: ${error.message}. Redirecting to properties...`);
-      router.push('/properties');
+      console.error('[Compliance Page] Full error:', JSON.stringify(error));
+      // Don't redirect, show error on page
+      setReport(null);
     } finally {
       setLoading(false);
     }
@@ -89,12 +91,19 @@ export default function ComplianceReportPage() {
     );
   }
 
-  if (!report) {
+  if (!report && !loading) {
     return (
       <Layout user={user} onLogout={handleLogout}>
         <div className="container-modern py-8">
           <div className="card text-center py-20">
+            <AlertTriangle className="w-16 h-16 text-ruby-400 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-white mb-2">Report not found</h2>
+            <p className="text-slate-400 mb-6">
+              This compliance report doesn't exist or you don't have permission to view it.
+            </p>
+            <p className="text-xs text-slate-500 mb-6">
+              Report ID: {id}
+            </p>
             <Link href="/properties" className="btn-primary inline-flex items-center mt-4">
               <ArrowLeft className="w-5 h-5 mr-2" />
               Back to Properties
