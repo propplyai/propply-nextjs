@@ -18,54 +18,103 @@ export default function ComplianceReportPage() {
   const [expandedSection, setExpandedSection] = useState(null);
 
   useEffect(() => {
-    if (id) {
+    console.log('[Compliance Page] useEffect triggered, id:', id, 'router.isReady:', router.isReady);
+    
+    // Wait for router to be ready and id to be available
+    if (router.isReady && id) {
+      console.log('[Compliance Page] Router is ready, starting auth check');
       checkAuth();
+    } else if (router.isReady && !id) {
+      console.error('[Compliance Page] Router is ready but no ID provided');
+      setLoading(false);
     }
-  }, [id]);
+  }, [id, router.isReady]);
 
   const checkAuth = async () => {
-    const { user: currentUser } = await authHelpers.getUser();
-    if (!currentUser) {
-      router.push('/login');
-      return;
+    console.log('[Compliance Page] Checking authentication...');
+    try {
+      const { user: currentUser } = await authHelpers.getUser();
+      console.log('[Compliance Page] Auth result:', { 
+        hasUser: !!currentUser, 
+        userId: currentUser?.id 
+      });
+      
+      if (!currentUser) {
+        console.log('[Compliance Page] No user found, redirecting to login');
+        router.push('/login');
+        return;
+      }
+      
+      console.log('[Compliance Page] User authenticated:', currentUser.id);
+      setUser(currentUser);
+      await loadReport(id, currentUser.id);
+    } catch (error) {
+      console.error('[Compliance Page] Error during auth check:', error);
+      setLoading(false);
     }
-    setUser(currentUser);
-    await loadReport(id, currentUser.id);
   };
 
   const loadReport = async (reportId, userId) => {
     try {
       console.log('[Compliance Page] Loading report:', reportId, 'for user:', userId);
       
-      // RLS policy handles user filtering, so we only filter by ID
+      // First, try to get the report with explicit user filtering
+      // This works around potential RLS issues
       const { data, error } = await supabase
         .from('nyc_compliance_reports')
         .select('*')
         .eq('id', reportId)
+        .eq('user_id', userId)
         .single();
 
-      console.log('[Compliance Page] Query result:', { data, error });
+      console.log('[Compliance Page] Query result:', { 
+        hasData: !!data, 
+        error: error ? {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint
+        } : null 
+      });
 
       if (error) {
         console.error('[Compliance Page] Database error:', error);
         console.error('[Compliance Page] Error code:', error.code);
         console.error('[Compliance Page] Error message:', error.message);
+        console.error('[Compliance Page] Error details:', error.details);
+        console.error('[Compliance Page] Error hint:', error.hint);
+        
+        // If it's a PGRST116 error (no rows), show not found message
+        if (error.code === 'PGRST116') {
+          console.error('[Compliance Page] No rows returned - report not found or access denied');
+        }
+        
         throw error;
       }
       
       if (!data) {
-        console.error('[Compliance Page] No report found');
+        console.error('[Compliance Page] No report found - data is null/undefined');
         throw new Error('Report not found');
       }
       
-      console.log('[Compliance Page] Report loaded successfully:', data.id);
+      console.log('[Compliance Page] Report loaded successfully:', {
+        id: data.id,
+        address: data.address,
+        score: data.overall_score,
+        generated_at: data.generated_at
+      });
       setReport(data);
     } catch (error) {
       console.error('[Compliance Page] Error loading report:', error);
-      console.error('[Compliance Page] Full error:', JSON.stringify(error));
+      console.error('[Compliance Page] Full error object:', error);
+      console.error('[Compliance Page] Error name:', error?.name);
+      console.error('[Compliance Page] Error message:', error?.message);
+      console.error('[Compliance Page] Error stack:', error?.stack);
+      
       // Don't redirect, show error on page
       setReport(null);
     } finally {
+      console.log('[Compliance Page] Loading complete, setting loading to false');
       setLoading(false);
     }
   };
@@ -101,9 +150,26 @@ export default function ComplianceReportPage() {
             <p className="text-slate-400 mb-6">
               This compliance report doesn't exist or you don't have permission to view it.
             </p>
-            <p className="text-xs text-slate-500 mb-6">
-              Report ID: {id}
-            </p>
+            <div className="mb-6 p-4 bg-slate-800/50 rounded-lg text-left max-w-2xl mx-auto">
+              <p className="text-xs text-slate-500 mb-2">
+                <span className="font-semibold text-slate-400">Report ID:</span> {id}
+              </p>
+              <p className="text-xs text-slate-500 mb-2">
+                <span className="font-semibold text-slate-400">User ID:</span> {user?.id || 'Not available'}
+              </p>
+              <p className="text-xs text-slate-500">
+                <span className="font-semibold text-slate-400">Possible causes:</span>
+              </p>
+              <ul className="text-xs text-slate-500 list-disc list-inside ml-4 mt-2">
+                <li>The report was created by a different user</li>
+                <li>The report ID is incorrect or the report was deleted</li>
+                <li>Database permissions (RLS) are blocking access</li>
+                <li>The report has not finished generating yet</li>
+              </ul>
+            </div>
+            <div className="text-xs text-slate-400 mb-6">
+              Check the browser console for detailed error logs
+            </div>
             <Link href="/properties" className="btn-primary inline-flex items-center mt-4">
               <ArrowLeft className="w-5 h-5 mr-2" />
               Back to Properties
