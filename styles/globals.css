@@ -1,0 +1,165 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply antialiased;
+  }
+  
+  body {
+    @apply bg-slate-900 text-slate-100 font-sans;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display font-bold !important;
+  }
+  
+  h1 {
+    @apply text-4xl md:text-5xl lg:text-6xl !important;
+  }
+  
+  h2 {
+    @apply text-3xl md:text-4xl lg:text-5xl !important;
+  }
+  
+  h3 {
+    @apply text-2xl md:text-3xl !important;
+  }
+}
+
+@layer components {
+  /* Modern Buttons */
+  .btn-primary {
+    @apply px-6 py-3 bg-gradient-to-r from-corporate-500 to-corporate-600 text-white font-semibold rounded-xl hover:from-corporate-600 hover:to-corporate-700 transition-all duration-200 shadow-lg hover:shadow-enterprise hover:scale-[1.02] active:scale-[0.98];
+  }
+  
+  .btn-secondary {
+    @apply px-6 py-3 bg-slate-800 text-slate-100 font-semibold rounded-xl hover:bg-slate-700 transition-all duration-200 border border-slate-700 hover:border-corporate-500;
+  }
+  
+  .btn-outline {
+    @apply px-6 py-3 bg-transparent text-corporate-400 font-semibold rounded-xl border-2 border-corporate-500 hover:bg-corporate-500 hover:text-white transition-all duration-200;
+  }
+  
+  /* Neo-Brutalism Buttons */
+  .btn-brutal {
+    @apply px-6 py-3 bg-brutal-yellow text-black font-bold rounded-none border-4 border-black shadow-brutal hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-150;
+  }
+  
+  /* Modern Cards */
+  .card {
+    @apply bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-6 transition-all duration-300 hover:border-corporate-500 hover:shadow-2xl hover:shadow-corporate-500/20;
+  }
+  
+  .card-brutal {
+    @apply bg-white border-4 border-black rounded-none p-6 shadow-brutal hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-150;
+  }
+  
+  /* Glassmorphism */
+  .glass {
+    @apply backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl;
+  }
+  
+  .glass-card {
+    @apply backdrop-blur-xl bg-gradient-to-br from-white/10 to-white/5 border border-white/20 rounded-2xl p-6 shadow-2xl;
+  }
+  
+  /* Gradient Text */
+  .gradient-text {
+    @apply bg-gradient-to-r from-corporate-400 via-emerald-400 to-gold-400 bg-clip-text text-transparent;
+  }
+  
+  .gradient-text-brutal {
+    @apply bg-gradient-to-r from-brutal-pink via-brutal-purple to-brutal-cyan bg-clip-text text-transparent;
+  }
+  
+  /* Input Fields */
+  .input-modern {
+    @apply w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-400 focus:border-corporate-500 focus:ring-2 focus:ring-corporate-500/20 transition-all duration-200;
+  }
+  
+  .input-brutal {
+    @apply w-full px-4 py-3 bg-white border-4 border-black rounded-none text-black placeholder-slate-600 focus:border-brutal-pink focus:outline-none transition-all duration-150;
+  }
+  
+  /* Navigation */
+  .nav-link {
+    @apply px-4 py-2 text-slate-300 hover:text-white transition-colors duration-200 rounded-lg hover:bg-slate-800/50;
+  }
+  
+  .nav-link-active {
+    @apply px-4 py-2 text-white bg-corporate-500/10 rounded-lg border border-corporate-500/30;
+  }
+  
+  /* Container */
+  .container-modern {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  
+  /* Page transitions */
+  .page-transition {
+    @apply animate-fade-in;
+  }
+}
+
+@layer utilities {
+  .text-shadow {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .text-shadow-lg {
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+  
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-slate-900;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-700 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-slate-600;
+}
+
+/* Loading Animation */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.shimmer {
+  animation: shimmer 2s infinite;
+  background: linear-gradient(
+    to right,
+    #334155 0%,
+    #475569 20%,
+    #334155 40%,
+    #334155 100%
+  );
+  background-size: 1000px 100%;
+}
