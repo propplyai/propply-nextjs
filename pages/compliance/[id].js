@@ -16,6 +16,9 @@ export default function ComplianceReportPage() {
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);
   const [expandedSection, setExpandedSection] = useState(null);
+  const [expandedDescription, setExpandedDescription] = useState(null);
+  const [hpdVisibleCount, setHpdVisibleCount] = useState(10);
+  const [dobVisibleCount, setDobVisibleCount] = useState(10);
 
   useEffect(() => {
     console.log('[Compliance Page] useEffect triggered, id:', id, 'router.isReady:', router.isReady);
@@ -148,6 +151,10 @@ export default function ComplianceReportPage() {
 
   const toggleSection = (section) => {
     setExpandedSection(expandedSection === section ? null : section);
+  };
+
+  const toggleDescription = (id) => {
+    setExpandedDescription(expandedDescription === id ? null : id);
   };
 
   const handleLogout = async () => {
@@ -320,7 +327,13 @@ export default function ComplianceReportPage() {
                 <div>
                   <h3 className="text-lg font-semibold text-white">Boiler Equipment</h3>
                   <p className="text-sm text-slate-400">
-                    {report.boiler_devices} total, {report.boiler_devices} active
+                    {data.boiler_data && data.boiler_data.length > 0 
+                      ? (() => {
+                          const uniqueBoilers = new Set(data.boiler_data.map(b => b.boiler_id)).size;
+                          return `${uniqueBoilers} boiler${uniqueBoilers !== 1 ? 's' : ''} · ${data.boiler_data.length} inspection record${data.boiler_data.length !== 1 ? 's' : ''}`;
+                        })()
+                      : `${report.boiler_devices} boiler${report.boiler_devices !== 1 ? 's' : ''}`
+                    }
                   </p>
                 </div>
               </div>
@@ -348,7 +361,14 @@ export default function ComplianceReportPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {data.boiler_data.slice(0, 10).map((boiler, index) => (
+                      {[...data.boiler_data]
+                        .sort((a, b) => {
+                          const dateA = new Date(a.inspection_date || 0);
+                          const dateB = new Date(b.inspection_date || 0);
+                          return dateB - dateA; // Newest first
+                        })
+                        .slice(0, 10)
+                        .map((boiler, index) => (
                         <tr key={index} className="border-b border-slate-800 hover:bg-slate-800/50">
                           <td className="py-3 px-4 text-white font-mono text-xs">{boiler.boiler_id}</td>
                           <td className="py-3 px-4 text-slate-300">{boiler.boiler_make} {boiler.boiler_model}</td>
@@ -362,7 +382,7 @@ export default function ComplianceReportPage() {
                               {boiler.defects_exist || 'No'}
                             </span>
                           </td>
-                          <td className="py-3 px-4 text-slate-300">{boiler.inspection_date || 'N/A'}</td>
+                          <td className="py-3 px-4 text-slate-300">{formatDate(boiler.inspection_date)}</td>
                           <td className="py-3 px-4 text-slate-300">{boiler.report_status || 'N/A'}</td>
                         </tr>
                       ))}
@@ -467,7 +487,14 @@ export default function ComplianceReportPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {data.hpd_violations.slice(0, 10).map((violation, index) => (
+                      {[...data.hpd_violations]
+                        .sort((a, b) => {
+                          const dateA = new Date(a.inspectiondate || 0);
+                          const dateB = new Date(b.inspectiondate || 0);
+                          return dateB - dateA; // Newest first
+                        })
+                        .slice(0, hpdVisibleCount)
+                        .map((violation, index) => (
                         <tr key={index} className="border-b border-slate-800 hover:bg-slate-800/50">
                           <td className="py-3 px-4 text-white font-mono text-xs">{violation.violationid}</td>
                           <td className="py-3 px-4">
@@ -475,14 +502,57 @@ export default function ComplianceReportPage() {
                               Class {violation.class}
                             </span>
                           </td>
-                          <td className="py-3 px-4 text-slate-300 max-w-xs truncate">{violation.novdescription}</td>
+                          <td className="py-3 px-4 text-slate-300">
+                            <div 
+                              className="cursor-pointer hover:text-white transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleDescription(`hpd-${violation.violationid}`);
+                              }}
+                            >
+                              {expandedDescription === `hpd-${violation.violationid}` ? (
+                                <span>{violation.novdescription}</span>
+                              ) : (
+                                <span className="max-w-xs truncate block">{violation.novdescription}</span>
+                              )}
+                              <span className="text-xs text-slate-500 mt-1 block">
+                                {expandedDescription === `hpd-${violation.violationid}` ? '(click to collapse)' : '(click to expand)'}
+                              </span>
+                            </div>
+                          </td>
                           <td className="py-3 px-4 text-slate-300">{violation.violationstatus}</td>
-                          <td className="py-3 px-4 text-slate-300">{violation.inspectiondate || 'N/A'}</td>
+                          <td className="py-3 px-4 text-slate-300">{formatDate(violation.inspectiondate)}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
+                {hpdVisibleCount < data.hpd_violations.length && (
+                  <div className="mt-4 text-center">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setHpdVisibleCount(prev => prev + 10);
+                      }}
+                      className="btn-secondary"
+                    >
+                      Show More ({data.hpd_violations.length - hpdVisibleCount} remaining)
+                    </button>
+                  </div>
+                )}
+                {hpdVisibleCount >= data.hpd_violations.length && data.hpd_violations.length > 10 && (
+                  <div className="mt-4 text-center">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setHpdVisibleCount(10);
+                      }}
+                      className="btn-secondary"
+                    >
+                      Show Less
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -524,7 +594,14 @@ export default function ComplianceReportPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {data.dob_violations.slice(0, 10).map((violation, index) => (
+                      {[...data.dob_violations]
+                        .sort((a, b) => {
+                          const dateA = new Date(a.issue_date || 0);
+                          const dateB = new Date(b.issue_date || 0);
+                          return dateB - dateA; // Newest first
+                        })
+                        .slice(0, dobVisibleCount)
+                        .map((violation, index) => (
                         <tr key={index} className="border-b border-slate-800 hover:bg-slate-800/50">
                           <td className="py-3 px-4 text-white font-mono text-xs">{violation.isn_dob_bis_viol}</td>
                           <td className="py-3 px-4">
@@ -532,13 +609,56 @@ export default function ComplianceReportPage() {
                               {violation.violation_type || 'N/A'}
                             </span>
                           </td>
-                          <td className="py-3 px-4 text-slate-300 max-w-xs truncate">{violation.violation_type_code}</td>
-                          <td className="py-3 px-4 text-slate-300">{violation.issue_date || 'N/A'}</td>
+                          <td className="py-3 px-4 text-slate-300">
+                            <div 
+                              className="cursor-pointer hover:text-white transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleDescription(`dob-${violation.isn_dob_bis_viol}`);
+                              }}
+                            >
+                              {expandedDescription === `dob-${violation.isn_dob_bis_viol}` ? (
+                                <span>{violation.violation_type_code}</span>
+                              ) : (
+                                <span className="max-w-xs truncate block">{violation.violation_type_code}</span>
+                              )}
+                              <span className="text-xs text-slate-500 mt-1 block">
+                                {expandedDescription === `dob-${violation.isn_dob_bis_viol}` ? '(click to collapse)' : '(click to expand)'}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 text-slate-300">{formatDate(violation.issue_date)}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
+                {dobVisibleCount < data.dob_violations.length && (
+                  <div className="mt-4 text-center">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDobVisibleCount(prev => prev + 10);
+                      }}
+                      className="btn-secondary"
+                    >
+                      Show More ({data.dob_violations.length - dobVisibleCount} remaining)
+                    </button>
+                  </div>
+                )}
+                {dobVisibleCount >= data.dob_violations.length && data.dob_violations.length > 10 && (
+                  <div className="mt-4 text-center">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDobVisibleCount(10);
+                      }}
+                      className="btn-secondary"
+                    >
+                      Show Less
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
