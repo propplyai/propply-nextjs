@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Favicon Generator</title>
+</head>
+<body>
+    <canvas id="canvas32" width="32" height="32"></canvas>
+    <canvas id="canvas192" width="192" height="192"></canvas>
+    <div id="downloads"></div>
+
+    <script>
+        function drawFavicon(canvas, size) {
+            const ctx = canvas.getContext('2d');
+            const scale = size / 64;
+            
+            ctx.scale(scale, scale);
+            
+            // Building base - gradient
+            const buildingGradient = ctx.createLinearGradient(12, 20, 40, 56);
+            buildingGradient.addColorStop(0, '#3B82F6');
+            buildingGradient.addColorStop(1, '#2563EB');
+            
+            ctx.fillStyle = buildingGradient;
+            ctx.beginPath();
+            ctx.roundRect(12, 20, 28, 36, 2);
+            ctx.fill();
+            
+            // Windows
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            [[17, 26], [27, 26], [17, 35], [27, 35], [17, 44], [27, 44]].forEach(([x, y]) => {
+                ctx.beginPath();
+                ctx.roundRect(x, y, 5, 5, 1);
+                ctx.fill();
+            });
+            
+            // Door
+            ctx.fillStyle = '#1E40AF';
+            ctx.beginPath();
+            ctx.roundRect(22, 49, 6, 7, 1);
+            ctx.fill();
+            
+            // Checkmark circle - gradient
+            const checkGradient = ctx.createLinearGradient(32, 32, 60, 60);
+            checkGradient.addColorStop(0, '#10B981');
+            checkGradient.addColorStop(1, '#059669');
+            
+            ctx.fillStyle = checkGradient;
+            ctx.beginPath();
+            ctx.arc(46, 46, 14, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Checkmark
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            ctx.moveTo(42, 46);
+            ctx.lineTo(44.5, 48.5);
+            ctx.lineTo(50, 43);
+            ctx.stroke();
+        }
+
+        // Draw both sizes
+        drawFavicon(document.getElementById('canvas32'), 32);
+        drawFavicon(document.getElementById('canvas192'), 192);
+
+        // Create download links
+        const downloads = document.getElementById('downloads');
+        downloads.innerHTML = `
+            <h2>Generated Favicons:</h2>
+            <p>Right-click and "Save As" each image:</p>
+            <div>
+                <h3>favicon-32x32.png</h3>
+                <img id="img32" style="border: 1px solid #ccc; image-rendering: pixelated; width: 64px; height: 64px;">
+                <br><a id="download32" download="favicon-32x32.png">Download 32x32</a>
+            </div>
+            <div>
+                <h3>apple-touch-icon.png (192x192)</h3>
+                <img id="img192" style="border: 1px solid #ccc; width: 192px; height: 192px;">
+                <br><a id="download192" download="apple-touch-icon.png">Download 192x192</a>
+            </div>
+            <div>
+                <h3>favicon.ico (32x32 for older browsers)</h3>
+                <p>Use the 32x32 PNG and rename it to favicon.ico, or use an online ICO converter</p>
+            </div>
+        `;
+
+        // Set up downloads
+        const canvas32 = document.getElementById('canvas32');
+        const canvas192 = document.getElementById('canvas192');
+        
+        canvas32.toBlob(blob => {
+            const url = URL.createObjectURL(blob);
+            document.getElementById('img32').src = url;
+            document.getElementById('download32').href = url;
+        });
+
+        canvas192.toBlob(blob => {
+            const url = URL.createObjectURL(blob);
+            document.getElementById('img192').src = url;
+            document.getElementById('download192').href = url;
+        });
+    </script>
+</body>
+</html>
