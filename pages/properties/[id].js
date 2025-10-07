@@ -98,6 +98,36 @@ export default function PropertyDetailPage() {
       // The result IS the compliance data (has success, scores, data, property, etc.)
       const complianceData = result;
       
+      // Save the full report to database
+      const { data: savedReport, error: saveError } = await supabase
+        .from('nyc_compliance_reports')
+        .insert([{
+          property_id: property.id,
+          user_id: user.id,
+          bin: complianceData.property.bin,
+          bbl: complianceData.property.bbl,
+          address: complianceData.property.address,
+          borough: complianceData.property.borough,
+          overall_score: complianceData.scores.overall_score,
+          hpd_score: complianceData.scores.hpd_score,
+          dob_score: complianceData.scores.dob_score,
+          hpd_violations_total: complianceData.scores.hpd_violations_active,
+          hpd_violations_active: complianceData.scores.hpd_violations_active,
+          dob_violations_total: complianceData.scores.dob_violations_active,
+          dob_violations_active: complianceData.scores.dob_violations_active,
+          elevator_devices: complianceData.scores.elevator_devices || 0,
+          boiler_devices: complianceData.scores.boiler_devices || 0,
+          electrical_permits: complianceData.scores.electrical_permits || 0,
+          report_data: complianceData
+        }])
+        .select()
+        .single();
+      
+      if (saveError) {
+        console.error('Error saving report:', saveError);
+      }
+      
+      // Update property summary
       await supabase
         .from('properties')
         .update({
@@ -108,6 +138,12 @@ export default function PropertyDetailPage() {
 
       // Reload property data
       await loadProperty(id, user.id);
+      
+      // Redirect to detailed report page
+      if (savedReport) {
+        router.push(`/compliance/${savedReport.id}`);
+        return;
+      }
       
       const scores = complianceData.scores;
       alert(`✅ Compliance Report Generated Successfully!\n\n📊 Overall Score: ${scores.overall_score}%\n\n🏗️ Violations:\n  • HPD: ${scores.hpd_violations_active}\n  • DOB: ${scores.dob_violations_active}\n\n🏢 Equipment:\n  • Elevators: ${scores.elevator_devices || 0}\n  • Boilers: ${scores.boiler_devices || 0}\n  • Electrical Permits: ${scores.electrical_permits || 0}`);
