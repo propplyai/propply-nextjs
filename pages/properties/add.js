@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
+import Script from 'next/script';
 import Layout from '@/components/Layout';
 import { authHelpers, supabase } from '@/lib/supabase';
-import { Building2, MapPin, Mail, Phone, User, Loader2, CheckCircle } from 'lucide-react';
+import { Building2, MapPin, Loader2, CheckCircle } from 'lucide-react';
 
 export default function AddPropertyPage() {
   const router = useRouter();
@@ -14,14 +15,11 @@ export default function AddPropertyPage() {
   const [formData, setFormData] = useState({
     address: '',
     city: 'NYC',
-    property_type: 'Residential',
-    units: '',
-    year_built: '',
-    square_footage: '',
-    contact_name: '',
-    contact_email: '',
-    contact_phone: '',
   });
+  
+  const addressInputRef = useRef(null);
+  const autocompleteRef = useRef(null);
+  const [googleMapsLoaded, setGoogleMapsLoaded] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -35,6 +33,28 @@ export default function AddPropertyPage() {
     }
     setUser(currentUser);
   };
+  
+  useEffect(() => {
+    if (googleMapsLoaded && addressInputRef.current && !autocompleteRef.current) {
+      autocompleteRef.current = new window.google.maps.places.Autocomplete(
+        addressInputRef.current,
+        {
+          componentRestrictions: { country: 'us' },
+          fields: ['formatted_address', 'address_components'],
+        }
+      );
+      
+      autocompleteRef.current.addListener('place_changed', () => {
+        const place = autocompleteRef.current.getPlace();
+        if (place.formatted_address) {
+          setFormData(prev => ({
+            ...prev,
+            address: place.formatted_address
+          }));
+        }
+      });
+    }
+  }, [googleMapsLoaded]);
 
   const handleChange = (e) => {
     setFormData({
@@ -57,13 +77,7 @@ export default function AddPropertyPage() {
             user_id: user.id,
             address: formData.address,
             city: formData.city,
-            property_type: formData.property_type,
-            units: formData.units ? parseInt(formData.units) : null,
-            year_built: formData.year_built ? parseInt(formData.year_built) : null,
-            square_footage: formData.square_footage ? parseInt(formData.square_footage) : null,
-            contact_name: formData.contact_name,
-            contact_email: formData.contact_email,
-            contact_phone: formData.contact_phone,
+            property_type: 'Residential',
             status: 'active',
             compliance_score: 0,
           },
@@ -91,7 +105,12 @@ export default function AddPropertyPage() {
   };
 
   return (
-    <Layout user={user} onLogout={handleLogout}>
+    <>
+      <Script
+        src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`}
+        onLoad={() => setGoogleMapsLoaded(true)}
+      />
+      <Layout user={user} onLogout={handleLogout}>
       <div className="container-modern py-8 max-w-3xl">
         {/* Header */}
         <div className="mb-8">
@@ -137,6 +156,7 @@ export default function AddPropertyPage() {
                 <div className="relative">
                   <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                   <input
+                    ref={addressInputRef}
                     type="text"
                     name="address"
                     value={formData.address}
@@ -146,155 +166,24 @@ export default function AddPropertyPage() {
                     className="input-modern pl-11"
                   />
                 </div>
+                <p className="text-xs text-slate-500 mt-1">Start typing to see address suggestions</p>
               </div>
 
-              {/* City and Property Type */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
-                    City *
-                  </label>
-                  <select
-                    name="city"
-                    value={formData.city}
-                    onChange={handleChange}
-                    required
-                    className="input-modern"
-                  >
-                    <option value="NYC">New York City</option>
-                    <option value="Philadelphia">Philadelphia</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
-                    Property Type *
-                  </label>
-                  <select
-                    name="property_type"
-                    value={formData.property_type}
-                    onChange={handleChange}
-                    required
-                    className="input-modern"
-                  >
-                    <option value="Residential">Residential</option>
-                    <option value="Commercial">Commercial</option>
-                    <option value="Mixed-Use">Mixed-Use</option>
-                    <option value="Industrial">Industrial</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Units, Year Built, Square Footage */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
-                    Units
-                  </label>
-                  <input
-                    type="number"
-                    name="units"
-                    value={formData.units}
-                    onChange={handleChange}
-                    placeholder="10"
-                    min="1"
-                    className="input-modern"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
-                    Year Built
-                  </label>
-                  <input
-                    type="number"
-                    name="year_built"
-                    value={formData.year_built}
-                    onChange={handleChange}
-                    placeholder="1990"
-                    min="1800"
-                    max={new Date().getFullYear()}
-                    className="input-modern"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
-                    Square Footage
-                  </label>
-                  <input
-                    type="number"
-                    name="square_footage"
-                    value={formData.square_footage}
-                    onChange={handleChange}
-                    placeholder="5000"
-                    min="1"
-                    className="input-modern"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Contact Information */}
-          <div className="mb-8">
-            <h2 className="text-xl font-bold text-white mb-6 flex items-center">
-              <User className="w-6 h-6 mr-2 text-corporate-400" />
-              Contact Information
-            </h2>
-
-            <div className="space-y-4">
+              {/* City */}
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Contact Name
+                  City *
                 </label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                  <input
-                    type="text"
-                    name="contact_name"
-                    value={formData.contact_name}
-                    onChange={handleChange}
-                    placeholder="John Doe"
-                    className="input-modern pl-11"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
-                    Email
-                  </label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                    <input
-                      type="email"
-                      name="contact_email"
-                      value={formData.contact_email}
-                      onChange={handleChange}
-                      placeholder="contact@example.com"
-                      className="input-modern pl-11"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
-                    Phone
-                  </label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                    <input
-                      type="tel"
-                      name="contact_phone"
-                      value={formData.contact_phone}
-                      onChange={handleChange}
-                      placeholder="(555) 123-4567"
-                      className="input-modern pl-11"
-                    />
-                  </div>
-                </div>
+                <select
+                  name="city"
+                  value={formData.city}
+                  onChange={handleChange}
+                  required
+                  className="input-modern"
+                >
+                  <option value="NYC">New York City</option>
+                  <option value="Philadelphia">Philadelphia</option>
+                </select>
               </div>
             </div>
           </div>
@@ -327,5 +216,6 @@ export default function AddPropertyPage() {
         </form>
       </div>
     </Layout>
+    </>
   );
 }
