@@ -18,6 +18,7 @@ export default function PropertyDetailPage() {
   const [deleting, setDeleting] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [reportError, setReportError] = useState('');
+  const [latestReport, setLatestReport] = useState(null);
 
   useEffect(() => {
     if (id) {
@@ -46,6 +47,18 @@ export default function PropertyDetailPage() {
 
       if (error) throw error;
       setProperty(data);
+      
+      // Load the latest compliance report for this property
+      const { data: reports } = await supabase
+        .from('nyc_compliance_reports')
+        .select('id, generated_at')
+        .eq('property_id', propertyId)
+        .order('generated_at', { ascending: false })
+        .limit(1);
+      
+      if (reports && reports.length > 0) {
+        setLatestReport(reports[0]);
+      }
     } catch (error) {
       console.error('Error loading property:', error);
       router.push('/properties');
@@ -298,13 +311,24 @@ export default function PropertyDetailPage() {
                       {property.active_violations !== 1 ? 's' : ''} that need attention.
                     </p>
                   </div>
-                  <Link
-                    href={`/compliance/${property.id}`}
-                    className="btn-primary w-full flex items-center justify-center"
-                  >
-                    <FileText className="w-5 h-5 mr-2" />
-                    View Full Compliance Report
-                  </Link>
+                  {latestReport ? (
+                    <Link
+                      href={`/compliance/${latestReport.id}`}
+                      className="btn-primary w-full flex items-center justify-center"
+                    >
+                      <FileText className="w-5 h-5 mr-2" />
+                      View Full Compliance Report
+                    </Link>
+                  ) : (
+                    <button
+                      onClick={handleGenerateReport}
+                      disabled={generating}
+                      className="btn-primary w-full flex items-center justify-center"
+                    >
+                      <FileText className="w-5 h-5 mr-2" />
+                      Generate Compliance Report
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="p-6 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-center">
@@ -313,13 +337,24 @@ export default function PropertyDetailPage() {
                   <p className="text-emerald-300 mb-4">
                     No active violations detected for this property.
                   </p>
-                  <Link
-                    href={`/compliance/${property.id}`}
-                    className="btn-secondary inline-flex items-center"
-                  >
-                    <FileText className="w-5 h-5 mr-2" />
-                    View Full Report
-                  </Link>
+                  {latestReport ? (
+                    <Link
+                      href={`/compliance/${latestReport.id}`}
+                      className="btn-secondary inline-flex items-center"
+                    >
+                      <FileText className="w-5 h-5 mr-2" />
+                      View Full Report
+                    </Link>
+                  ) : (
+                    <button
+                      onClick={handleGenerateReport}
+                      disabled={generating}
+                      className="btn-secondary inline-flex items-center"
+                    >
+                      <FileText className="w-5 h-5 mr-2" />
+                      Generate Report
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -349,13 +384,15 @@ export default function PropertyDetailPage() {
                     NYC compliance reports only available for NYC properties
                   </div>
                 )}
-                <Link
-                  href={`/compliance/${property.id}`}
-                  className="btn-secondary w-full flex items-center justify-center"
-                >
-                  <FileText className="w-5 h-5 mr-2" />
-                  View Compliance
-                </Link>
+                {latestReport && (
+                  <Link
+                    href={`/compliance/${latestReport.id}`}
+                    className="btn-secondary w-full flex items-center justify-center"
+                  >
+                    <FileText className="w-5 h-5 mr-2" />
+                    View Compliance Report
+                  </Link>
+                )}
                 <button className="btn-secondary w-full flex items-center justify-center">
                   <Edit className="w-5 h-5 mr-2" />
                   Edit Property
