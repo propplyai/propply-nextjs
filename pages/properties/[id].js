@@ -24,7 +24,9 @@ export default function PropertyDetailPage() {
   const [propertyInfoExpanded, setPropertyInfoExpanded] = useState(true);
 
   useEffect(() => {
+    console.log('[Property Detail] useEffect triggered, id:', id);
     if (id) {
+      console.log('[Property Detail] Starting auth check for property ID:', id);
       checkAuth();
     }
   }, [id]);
@@ -41,6 +43,8 @@ export default function PropertyDetailPage() {
 
   const loadProperty = async (propertyId, userId) => {
     try {
+      console.log('[Property Detail] Loading property:', propertyId, 'for user:', userId);
+      
       const { data, error } = await supabase
         .from('properties')
         .select('*')
@@ -48,7 +52,19 @@ export default function PropertyDetailPage() {
         .eq('user_id', userId)
         .single();
 
-      if (error) throw error;
+      console.log('[Property Detail] Query result:', { hasData: !!data, error: error?.message });
+
+      if (error) {
+        console.error('[Property Detail] Database error:', error);
+        throw error;
+      }
+      
+      if (!data) {
+        console.error('[Property Detail] No property found for ID:', propertyId);
+        throw new Error('Property not found');
+      }
+      
+      console.log('[Property Detail] Property loaded successfully:', data.address);
       setProperty(data);
       
       // Load the latest compliance report for this property
@@ -60,10 +76,15 @@ export default function PropertyDetailPage() {
         .limit(1);
       
       if (reports && reports.length > 0) {
+        console.log('[Property Detail] Latest report found:', reports[0].id);
         setLatestReport(reports[0]);
+      } else {
+        console.log('[Property Detail] No compliance reports found for this property');
       }
     } catch (error) {
-      console.error('Error loading property:', error);
+      console.error('[Property Detail] Error loading property:', error);
+      console.error('[Property Detail] Error details:', error?.message, error?.code);
+      console.warn('[Property Detail] Redirecting to properties list');
       router.push('/properties');
     } finally {
       setLoading(false);
