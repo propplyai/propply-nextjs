@@ -53,16 +53,24 @@ export default function PropertyDetailPage() {
     }
   };
 
-  const loadProperty = async (propertyId, userId) => {
+  const loadProperty = async (propertyId, userId, retryCount = 0) => {
     try {
       console.log('[Property Detail] Loading property:', propertyId, 'for user:', userId);
       
       // Verify we have a valid session before querying
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('[Property Detail] Session error:', sessionError);
+        throw new Error('Session validation failed - please log in again');
+      }
+      
       if (!session) {
         console.error('[Property Detail] No valid session, cannot load property');
-        throw new Error('No valid session');
+        throw new Error('No active session - please log in');
       }
+      
+      console.log('[Property Detail] Session valid, querying database...');
       
       const { data, error } = await supabase
         .from('properties')
@@ -74,17 +82,33 @@ export default function PropertyDetailPage() {
       console.log('[Property Detail] Query result:', { 
         hasData: !!data, 
         error: error?.message,
-        status: error?.status 
+        status: error?.status,
+        code: error?.code
       });
 
       if (error) {
         console.error('[Property Detail] Database error:', error);
         
-        // If it's a 406 error, it's likely an auth/header issue
-        if (error.status === 406) {
-          console.error('[Property Detail] 406 Not Acceptable - auth or header issue');
-          console.error('[Property Detail] Session state:', session ? 'exists' : 'missing');
-          throw new Error('Authentication issue - please try logging in again');
+        // Handle 406 Not Acceptable - typically an auth/header issue
+        if (error.code === 'PGRST106' || error.status === 406) {
+          console.error('[Property Detail] 406 Not Acceptable error detected');
+          console.error('[Property Detail] This usually means JWT token is invalid or expired');
+          
+          // Try to refresh the session once
+          if (retryCount === 0) {
+            console.log('[Property Detail] Attempting to refresh session...');
+            const { data: { session: newSession }, error: refreshError } = await supabase.auth.refreshSession();
+            
+            if (!refreshError && newSession) {
+              console.log('[Property Detail] Session refreshed, retrying query...');
+              return loadProperty(propertyId, userId, retryCount + 1);
+            }
+          }
+          
+          // If refresh failed or this is a retry, clear session and redirect
+          console.error('[Property Detail] Session refresh failed, clearing auth state');
+          await supabase.auth.signOut();
+          throw new Error('Authentication expired - please log in again');
         }
         
         throw error;
@@ -114,9 +138,21 @@ export default function PropertyDetailPage() {
       }
     } catch (error) {
       console.error('[Property Detail] Error loading property:', error);
-      console.error('[Property Detail] Error details:', error?.message, error?.code);
-      console.warn('[Property Detail] Redirecting to properties list');
-      router.push('/properties');
+      console.error('[Property Detail] Error details:', {
+        message: error?.message,
+        code: error?.code,
+        status: error?.status,
+        hint: error?.hint
+      });
+      
+      // If it's an auth error, redirect to login
+      if (error?.message?.includes('log in') || error?.message?.includes('Authentication')) {
+        console.warn('[Property Detail] Auth error, redirecting to login');
+        setTimeout(() => router.push('/login?error=session_expired'), 100);
+      } else {
+        console.warn('[Property Detail] Redirecting to properties list');
+        router.push('/properties');
+      }
     } finally {
       setLoading(false);
     }

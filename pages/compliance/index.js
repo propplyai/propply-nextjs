@@ -5,7 +5,7 @@ import Layout from '@/components/Layout';
 import { authHelpers, supabase } from '@/lib/supabase';
 import { 
   FileText, Building2, Calendar, TrendingUp, AlertTriangle, 
-  CheckCircle, ExternalLink 
+  CheckCircle, ExternalLink, Sparkles, BarChart3, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { cn, formatDate } from '@/lib/utils';
 
@@ -14,6 +14,7 @@ export default function ComplianceIndexPage() {
   const [user, setUser] = useState(null);
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [expandedCard, setExpandedCard] = useState(null);
 
   useEffect(() => {
     checkAuth();
@@ -48,6 +49,10 @@ export default function ComplianceIndexPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const toggleCard = (reportId) => {
+    setExpandedCard(expandedCard === reportId ? null : reportId);
   };
 
   const handleLogout = async () => {
@@ -102,69 +107,128 @@ export default function ComplianceIndexPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="space-y-6">
             {reports.map((report) => {
               const badge = getScoreBadge(report.overall_score);
               const totalViolations = (report.hpd_violations_active || 0) + (report.dob_violations_active || 0);
+              const isExpanded = expandedCard === report.id;
               
               return (
-                <Link 
+                <div 
                   key={report.id} 
-                  href={`/compliance/${report.id}`}
-                  className="card hover:scale-102 hover:shadow-xl transition-all duration-300 cursor-pointer group"
+                  className="card hover:shadow-xl transition-all duration-300"
                 >
-                  {/* Header */}
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-bold text-white mb-1 group-hover:text-corporate-400 transition-colors">
-                        {report.address}
-                      </h3>
-                      <p className="text-xs text-slate-500">
-                        {report.borough} • BIN: {report.bin}
-                      </p>
+                  {/* Collapsible Header - Click to expand/collapse */}
+                  <div 
+                    className="flex items-start justify-between cursor-pointer"
+                    onClick={() => toggleCard(report.id)}
+                  >
+                    <div className="flex-1 flex items-start gap-6">
+                      {/* Score Circle */}
+                      <div className="flex-shrink-0">
+                        <div className="w-20 h-20 rounded-full bg-slate-800/50 flex flex-col items-center justify-center border-2 border-slate-700">
+                          <div className="text-2xl font-bold text-white">
+                            {report.overall_score}%
+                          </div>
+                          <div className={cn('text-[10px] font-bold uppercase', badge.color)}>
+                            {badge.label}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Property Info */}
+                      <div className="flex-1">
+                        <h3 className="text-xl font-bold text-white mb-2 hover:text-corporate-400 transition-colors">
+                          {report.address}
+                        </h3>
+                        <div className="flex flex-wrap gap-4 text-sm text-slate-400 mb-3">
+                          <span>{report.borough}</span>
+                          <span>BIN: {report.bin}</span>
+                          <span>BBL: {report.bbl}</span>
+                        </div>
+                        
+                        {/* Quick Stats */}
+                        <div className="flex flex-wrap gap-4">
+                          <div className="flex items-center gap-2">
+                            <AlertTriangle className="w-4 h-4 text-ruby-400" />
+                            <span className={cn('text-sm font-semibold', totalViolations > 0 ? 'text-ruby-400' : 'text-emerald-400')}>
+                              {totalViolations} Active Violations
+                            </span>
+                          </div>
+                          <div className="text-sm text-slate-400">
+                            HPD: <span className="text-white font-semibold">{report.hpd_violations_active || 0}</span>
+                          </div>
+                          <div className="text-sm text-slate-400">
+                            DOB: <span className="text-white font-semibold">{report.dob_violations_active || 0}</span>
+                          </div>
+                          <div className="text-sm text-slate-400">
+                            <Calendar className="w-4 h-4 inline mr-1" />
+                            {formatDate(report.generated_at)}
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <ExternalLink className="w-5 h-5 text-slate-600 group-hover:text-corporate-400 transition-colors" />
+
+                    {/* Expand/Collapse Icon */}
+                    <div className="flex-shrink-0 ml-4">
+                      {isExpanded ? (
+                        <ChevronUp className="w-6 h-6 text-slate-400" />
+                      ) : (
+                        <ChevronDown className="w-6 h-6 text-slate-400" />
+                      )}
+                    </div>
                   </div>
 
-                  {/* Score Display */}
-                  <div className="mb-4 p-4 bg-slate-800/50 rounded-lg text-center">
-                    <div className="text-4xl font-bold text-white mb-1">
-                      {report.overall_score}%
-                    </div>
-                    <div className={cn('text-xs font-bold uppercase px-3 py-1 rounded-full inline-block', badge.color)}>
-                      {badge.label}
-                    </div>
-                  </div>
+                  {/* Expanded Content */}
+                  {isExpanded && (
+                    <div className="mt-6 pt-6 border-t border-slate-700 space-y-4">
+                      {/* Detailed Property Data Section */}
+                      <Link 
+                        href={`/compliance/${report.id}`}
+                        className="block p-4 bg-gradient-to-r from-corporate-500/10 to-emerald-500/10 border border-corporate-500/30 rounded-lg hover:border-corporate-500 transition-all group"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-corporate-500/20 rounded-lg flex items-center justify-center">
+                              <BarChart3 className="w-5 h-5 text-corporate-400" />
+                            </div>
+                            <div>
+                              <h4 className="text-lg font-semibold text-white group-hover:text-corporate-400 transition-colors">
+                                📊 Detailed Property Records
+                              </h4>
+                              <p className="text-sm text-slate-400">
+                                View elevators, boilers, permits, violations & more
+                              </p>
+                            </div>
+                          </div>
+                          <ExternalLink className="w-5 h-5 text-slate-500 group-hover:text-corporate-400 transition-colors" />
+                        </div>
+                      </Link>
 
-                  {/* Stats */}
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-slate-400">Active Violations:</span>
-                      <span className={cn(
-                        'font-semibold',
-                        totalViolations > 0 ? 'text-ruby-400' : 'text-emerald-400'
-                      )}>
-                        {totalViolations}
-                      </span>
+                      {/* AI Analysis Section - Coming Soon */}
+                      <div className="p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/30 rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                              <Sparkles className="w-5 h-5 text-purple-400" />
+                            </div>
+                            <div>
+                              <h4 className="text-lg font-semibold text-white">
+                                🤖 AI Property Analysis
+                              </h4>
+                              <p className="text-sm text-slate-400">
+                                Coming soon: AI-powered insights & recommendations
+                              </p>
+                            </div>
+                          </div>
+                          <div className="px-3 py-1 bg-purple-500/20 text-purple-400 text-xs font-semibold rounded-full">
+                            COMING SOON
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-slate-400">HPD:</span>
-                      <span className="text-white">{report.hpd_violations_active || 0}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-slate-400">DOB:</span>
-                      <span className="text-white">{report.dob_violations_active || 0}</span>
-                    </div>
-                  </div>
-
-                  {/* Footer */}
-                  <div className="pt-4 border-t border-slate-700">
-                    <div className="flex items-center text-xs text-slate-500">
-                      <Calendar className="w-4 h-4 mr-1" />
-                      Generated {formatDate(report.generated_at)}
-                    </div>
-                  </div>
-                </Link>
+                  )}
+                </div>
               );
             })}
           </div>

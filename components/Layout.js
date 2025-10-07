@@ -8,10 +8,8 @@ export default function Layout({ children, user, onLogout }) {
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
-    { name: 'Properties', href: '/properties', icon: Building2 },
     { name: 'Compliance', href: '/compliance', icon: FileCheck },
     { name: 'Marketplace', href: '/marketplace', icon: ShoppingBag },
-    { name: 'Analytics', href: '/analytics', icon: BarChart3 },
   ];
 
   const isActive = (href) => router.pathname === href || router.pathname.startsWith(href + '/');

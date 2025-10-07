@@ -21,15 +21,21 @@ export default function ComplianceReportPage() {
   const [dobVisibleCount, setDobVisibleCount] = useState(10);
 
   useEffect(() => {
-    console.log('[Compliance Page] useEffect triggered, id:', id, 'router.isReady:', router.isReady);
+    console.log('[Compliance Page] useEffect triggered');
+    console.log('[Compliance Page] - id:', id);
+    console.log('[Compliance Page] - router.isReady:', router.isReady);
+    console.log('[Compliance Page] - router.pathname:', router.pathname);
+    console.log('[Compliance Page] - router.asPath:', router.asPath);
     
     // Wait for router to be ready and id to be available
     if (router.isReady && id) {
-      console.log('[Compliance Page] Router is ready, starting auth check');
+      console.log('[Compliance Page] Router is ready with ID, starting auth check');
       checkAuth();
     } else if (router.isReady && !id) {
       console.error('[Compliance Page] Router is ready but no ID provided');
       setLoading(false);
+    } else {
+      console.log('[Compliance Page] Waiting for router to be ready...');
     }
   }, [id, router.isReady]);
 
@@ -140,11 +146,14 @@ export default function ComplianceReportPage() {
       console.error('[Compliance Page] Error name:', error?.name);
       console.error('[Compliance Page] Error message:', error?.message);
       console.error('[Compliance Page] Error stack:', error?.stack);
+      console.error('[Compliance Page] Error code:', error?.code);
+      console.error('[Compliance Page] Error status:', error?.status);
       
       // Don't redirect, show error on page
       setReport(null);
     } finally {
       console.log('[Compliance Page] Loading complete, setting loading to false');
+      console.log('[Compliance Page] Final report state:', report ? 'has report' : 'no report');
       setLoading(false);
     }
   };
@@ -248,9 +257,9 @@ export default function ComplianceReportPage() {
           </div>
         </div>
 
-        {/* Detailed Compliance Analysis Header */}
+        {/* Detailed Property Records Header */}
         <div className="card bg-gradient-to-r from-corporate-500/20 to-emerald-500/20 border-corporate-500/30 mb-6">
-          <h2 className="text-xl font-bold text-white mb-2">📊 Detailed Compliance Analysis</h2>
+          <h2 className="text-xl font-bold text-white mb-2">📊 Detailed Property Records</h2>
           <p className="text-slate-300">Click on any category to view detailed information</p>
         </div>
 

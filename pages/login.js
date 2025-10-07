@@ -18,6 +18,18 @@ export default function LoginPage() {
     if (router.query.signup === 'true') {
       setIsSignUp(true);
     }
+    
+    // Check for error messages in query params
+    if (router.query.error) {
+      const errorMessage = decodeURIComponent(router.query.error);
+      const errorMap = {
+        'session_expired': 'Your session has expired. Please log in again.',
+        'session_failed': 'Failed to establish session. Please try again.',
+        'auth_failed': 'Authentication failed. Please try again.',
+        'unexpected': 'An unexpected error occurred. Please try again.',
+      };
+      setError(errorMap[errorMessage] || errorMessage);
+    }
 
     // Check if user is already logged in
     const checkAuth = async () => {
@@ -27,7 +39,7 @@ export default function LoginPage() {
       }
     };
     checkAuth();
-  }, [router]);
+  }, [router.query]);
 
   const handleEmailAuth = async (e) => {
     e.preventDefault();

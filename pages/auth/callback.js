@@ -8,18 +8,54 @@ export default function AuthCallback() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        // Exchange code for session
-        const { error } = await supabase.auth.exchangeCodeForSession(window.location.href);
+        // Check if we have a code in the URL (OAuth callback)
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const searchParams = new URLSearchParams(window.location.search);
         
+        const code = searchParams.get('code');
+        const error = searchParams.get('error');
+        const error_description = searchParams.get('error_description');
+        
+        // Handle OAuth errors
         if (error) {
-          console.error('Auth callback error:', error);
-          router.push('/login?error=auth_failed');
-        } else {
-          // Successful authentication, redirect to dashboard
+          console.error('OAuth error:', error, error_description);
+          router.push(`/login?error=${encodeURIComponent(error_description || error)}`);
+          return;
+        }
+        
+        // If we have a code, the session should be automatically established
+        // by Supabase's detectSessionInUrl option in the client config
+        if (code) {
+          console.log('[Auth Callback] Code detected, waiting for session...');
+          
+          // Wait a bit for the session to be established
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Verify the session was established
+          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+          
+          if (sessionError || !session) {
+            console.error('[Auth Callback] Failed to establish session:', sessionError);
+            router.push('/login?error=session_failed');
+            return;
+          }
+          
+          console.log('[Auth Callback] Session established successfully');
           router.push('/dashboard');
+        } else {
+          // No code found, check if we already have a valid session
+          const { data: { session } } = await supabase.auth.getSession();
+          
+          if (session) {
+            console.log('[Auth Callback] Existing session found, redirecting to dashboard');
+            router.push('/dashboard');
+          } else {
+            console.log('[Auth Callback] No session found, redirecting to login');
+            router.push('/login');
+          }
         }
       } catch (err) {
-        console.error('Unexpected error in auth callback:', err);
+        console.error('[Auth Callback] Unexpected error:', err);
         router.push('/login?error=unexpected');
       }
     };
