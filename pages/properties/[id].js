@@ -5,7 +5,8 @@ import Layout from '@/components/Layout';
 import { authHelpers, supabase } from '@/lib/supabase';
 import {
   Building2, MapPin, Calendar, Users, Ruler, AlertTriangle,
-  CheckCircle, FileText, Edit, Trash2, ArrowLeft, RefreshCw
+  CheckCircle, FileText, Edit, Trash2, ArrowLeft, RefreshCw,
+  ChevronDown, ChevronUp
 } from 'lucide-react';
 import { cn, getComplianceScoreBadge, formatDate } from '@/lib/utils';
 
@@ -19,6 +20,7 @@ export default function PropertyDetailPage() {
   const [generating, setGenerating] = useState(false);
   const [reportError, setReportError] = useState('');
   const [latestReport, setLatestReport] = useState(null);
+  const [propertyInfoExpanded, setPropertyInfoExpanded] = useState(true);
 
   useEffect(() => {
     if (id) {
@@ -216,30 +218,26 @@ export default function PropertyDetailPage() {
           Back to Properties
         </Link>
 
-        {/* Header */}
-        <div className="card mb-8">
-          <div className="flex flex-col lg:flex-row lg:items-start justify-between">
-            <div className="flex items-start space-x-4 mb-6 lg:mb-0">
-              <div className="w-16 h-16 bg-gradient-to-r from-corporate-500 to-corporate-600 rounded-xl flex items-center justify-center flex-shrink-0">
-                <Building2 className="w-8 h-8 text-white" />
+        {/* Property Header Card */}
+        <div className="card mb-8 cursor-pointer" onClick={() => setPropertyInfoExpanded(!propertyInfoExpanded)}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-corporate-500 to-corporate-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Building2 className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-sm font-semibold text-white mb-2">{property.address}</h1>
-                <div className="flex flex-wrap items-center gap-4 text-sm text-slate-400">
+                <h1 className="text-lg font-bold text-white">
+                  {property.address?.split(',')[0] || property.address}
+                </h1>
+                <div className="flex items-center gap-3 text-sm text-slate-400 mt-1">
                   <span className="flex items-center">
-                    <MapPin className="w-4 h-4 mr-1" />
+                    <MapPin className="w-3 h-3 mr-1" />
                     {property.city}
                   </span>
                   <span className="flex items-center">
-                    <Building2 className="w-4 h-4 mr-1" />
+                    <Building2 className="w-3 h-3 mr-1" />
                     {property.property_type}
                   </span>
-                  {property.units && (
-                    <span className="flex items-center">
-                      <Users className="w-4 h-4 mr-1" />
-                      {property.units} units
-                    </span>
-                  )}
                 </div>
               </div>
             </div>
@@ -252,8 +250,52 @@ export default function PropertyDetailPage() {
               >
                 {property.compliance_score || 0}% Compliant
               </span>
+              {propertyInfoExpanded ? (
+                <ChevronUp className="w-5 h-5 text-slate-400" />
+              ) : (
+                <ChevronDown className="w-5 h-5 text-slate-400" />
+              )}
             </div>
           </div>
+          
+          {propertyInfoExpanded && (
+            <div className="mt-6 pt-6 border-t border-slate-700">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                {property.bin_number && (
+                  <div>
+                    <div className="text-xs text-slate-500 mb-1">BIN:</div>
+                    <div className="text-white font-semibold font-mono">{property.bin_number}</div>
+                  </div>
+                )}
+                {latestReport?.report_data?.property?.bbl && (
+                  <div>
+                    <div className="text-xs text-slate-500 mb-1">BBL:</div>
+                    <div className="text-white font-semibold font-mono">{latestReport.report_data.property.bbl}</div>
+                  </div>
+                )}
+                {latestReport?.report_data?.property?.borough && (
+                  <div>
+                    <div className="text-xs text-slate-500 mb-1">BOROUGH:</div>
+                    <div className="text-white font-semibold">{latestReport.report_data.property.borough}</div>
+                  </div>
+                )}
+                {latestReport?.report_data?.property?.block && latestReport?.report_data?.property?.lot && (
+                  <div>
+                    <div className="text-xs text-slate-500 mb-1">BLOCK/LOT:</div>
+                    <div className="text-white font-semibold font-mono">
+                      {latestReport.report_data.property.block}/{latestReport.report_data.property.lot}
+                    </div>
+                  </div>
+                )}
+                {property.zip_code && (
+                  <div>
+                    <div className="text-xs text-slate-500 mb-1">ZIP CODE:</div>
+                    <div className="text-white font-semibold">{property.zip_code}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
