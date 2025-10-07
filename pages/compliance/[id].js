@@ -307,7 +307,7 @@ export default function ComplianceReportPage() {
                               {elevator.device_status || 'Unknown'}
                             </span>
                           </td>
-                          <td className="py-3 px-4 text-slate-300">{elevator.status_date || 'N/A'}</td>
+                          <td className="py-3 px-4 text-slate-300">{formatDate(elevator.status_date)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -433,7 +433,7 @@ export default function ComplianceReportPage() {
                       {data.electrical_permits.slice(0, 10).map((permit, index) => (
                         <tr key={index} className="border-b border-slate-800 hover:bg-slate-800/50">
                           <td className="py-3 px-4 text-white font-mono text-xs">{permit.filing_number}</td>
-                          <td className="py-3 px-4 text-slate-300">{permit.filing_date || 'N/A'}</td>
+                          <td className="py-3 px-4 text-slate-300">{formatDate(permit.filing_date)}</td>
                           <td className="py-3 px-4">
                             <span className="px-2 py-1 rounded text-xs font-semibold bg-corporate-500/10 text-corporate-400">
                               {permit.filing_status || 'Unknown'}
@@ -617,6 +617,14 @@ export default function ComplianceReportPage() {
                                                'No description available';
                             // Try multiple date fields
                             const displayDate = violation.issue_date || violation.issuedate || violation.violation_date || violation.certify_date;
+                            
+                            // Debug: Log the first few violations to see what fields we have
+                            if (index < 3) {
+                              console.log(`[DOB Violation ${index}] Available fields:`, Object.keys(violation));
+                              console.log(`[DOB Violation ${index}] issue_date value:`, violation.issue_date);
+                              console.log(`[DOB Violation ${index}] displayDate:`, displayDate);
+                              console.log(`[DOB Violation ${index}] formatted:`, formatDate(displayDate));
+                            }
                             
                             return (
                         <tr key={index} className="border-b border-slate-800 hover:bg-slate-800/50">
