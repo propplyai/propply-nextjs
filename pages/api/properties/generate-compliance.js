@@ -4,14 +4,14 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { address, propertyId } = req.body;
-
-  if (!address) {
-    return res.status(400).json({ error: 'Address is required' });
-  }
-
   try {
-    console.log(`Generating compliance report for: ${address}`);
+    const { address, propertyId } = req.body;
+
+    if (!address) {
+      return res.status(400).json({ error: 'Address is required' });
+    }
+
+    console.log(`[Compliance API] Generating report for: ${address}`);
     
     // Step 1: Get property identifiers from NYC Planning GeoSearch
     const geoSearchUrl = `https://geosearch.planninglabs.nyc/v2/search?text=${encodeURIComponent(address)}&size=1`;
@@ -84,11 +84,13 @@ export default async function handler(req, res) {
     return res.status(200).json(reportData);
 
   } catch (error) {
-    console.error('Error generating compliance report:', error);
+    console.error('[Compliance API] Error:', error);
+    console.error('[Compliance API] Stack:', error.stack);
     return res.status(500).json({
       error: 'Failed to generate compliance report',
-      message: error.message,
-      details: error.toString()
+      message: error.message || 'Unknown error',
+      details: error.toString(),
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 }

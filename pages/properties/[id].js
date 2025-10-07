@@ -109,10 +109,12 @@ export default function PropertyDetailPage() {
       // Reload property data
       await loadProperty(id, user.id);
       
-      alert('Compliance report generated successfully!');
+      alert(`Compliance report generated successfully!\n\nOverall Score: ${complianceData.scores.overall_score}%\nHPD Violations: ${complianceData.scores.hpd_violations_active}\nDOB Violations: ${complianceData.scores.dob_violations_active}`);
     } catch (error) {
       console.error('Error generating report:', error);
-      setReportError(error.message);
+      const errorMsg = error.message || 'Unknown error occurred';
+      setReportError(`${errorMsg}. Check browser console for details.`);
+      console.error('Full error details:', error);
     } finally {
       setGenerating(false);
     }
