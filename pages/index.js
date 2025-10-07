@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { Building2, Shield, BarChart3, Zap, CheckCircle, ArrowRight } from 'lucide-react';
+import Pricing from '@/components/Pricing';
 
 export default function LandingPage() {
   const router = useRouter();
@@ -161,6 +162,9 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* Pricing Section */}
+      <Pricing />
 
       {/* CTA Section */}
       <section className="relative z-10 py-20">
