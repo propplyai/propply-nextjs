@@ -64,7 +64,7 @@ export default function AddPropertyPage() {
             contact_name: formData.contact_name,
             contact_email: formData.contact_email,
             contact_phone: formData.contact_phone,
-            status: 'Active',
+            status: 'active',
             compliance_score: 0,
           },
         ])
