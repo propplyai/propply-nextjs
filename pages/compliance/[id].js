@@ -596,12 +596,22 @@ export default function ComplianceReportPage() {
                     <tbody>
                       {[...data.dob_violations]
                         .sort((a, b) => {
-                          const dateA = new Date(a.issue_date || 0);
-                          const dateB = new Date(b.issue_date || 0);
+                          // Try multiple date fields
+                          const dateA = new Date(a.issue_date || a.issuedate || a.violation_date || 0);
+                          const dateB = new Date(b.issue_date || b.issuedate || b.violation_date || 0);
                           return dateB - dateA; // Newest first
                         })
                         .slice(0, dobVisibleCount)
-                        .map((violation, index) => (
+                        .map((violation, index) => {
+                          // Get the best available description
+                          const description = violation.violation_description || 
+                                             violation.description || 
+                                             violation.violation_type_code || 
+                                             'No description available';
+                          // Try multiple date fields
+                          const displayDate = violation.issue_date || violation.issuedate || violation.violation_date;
+                          
+                          return (
                         <tr key={index} className="border-b border-slate-800 hover:bg-slate-800/50">
                           <td className="py-3 px-4 text-white font-mono text-xs">{violation.isn_dob_bis_viol}</td>
                           <td className="py-3 px-4">
@@ -618,18 +628,19 @@ export default function ComplianceReportPage() {
                               }}
                             >
                               {expandedDescription === `dob-${violation.isn_dob_bis_viol}` ? (
-                                <span>{violation.violation_type_code}</span>
+                                <span>{description}</span>
                               ) : (
-                                <span className="max-w-xs truncate block">{violation.violation_type_code}</span>
+                                <span className="max-w-xs truncate block">{description}</span>
                               )}
                               <span className="text-xs text-slate-500 mt-1 block">
                                 {expandedDescription === `dob-${violation.isn_dob_bis_viol}` ? '(click to collapse)' : '(click to expand)'}
                               </span>
                             </div>
                           </td>
-                          <td className="py-3 px-4 text-slate-300">{formatDate(violation.issue_date)}</td>
+                          <td className="py-3 px-4 text-slate-300">{formatDate(displayDate)}</td>
                         </tr>
-                      ))}
+                          );
+                        })}
                     </tbody>
                   </table>
                 </div>
