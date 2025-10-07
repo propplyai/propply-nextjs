@@ -224,7 +224,7 @@ export default function PropertyDetailPage() {
                 <Building2 className="w-8 h-8 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white mb-2">{property.address}</h1>
+                <h1 className="text-sm font-semibold text-white mb-2">{property.address}</h1>
                 <div className="flex flex-wrap items-center gap-4 text-sm text-slate-400">
                   <span className="flex items-center">
                     <MapPin className="w-4 h-4 mr-1" />
