@@ -95,8 +95,8 @@ export default function PropertyDetailPage() {
         throw new Error(result.error || 'Failed to generate report');
       }
 
-      // Update property with compliance data
-      const complianceData = result.data;
+      // The result IS the compliance data (has success, scores, data, property, etc.)
+      const complianceData = result;
       
       await supabase
         .from('properties')
