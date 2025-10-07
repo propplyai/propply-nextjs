@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: propply-nextjs
+    env: node
+    buildCommand: |
+      # Install Node dependencies
+      npm install
+      # Install Python dependencies
+      pip install -r requirements.txt
+      # Build Next.js
+      npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
