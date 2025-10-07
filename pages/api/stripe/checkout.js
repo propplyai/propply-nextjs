@@ -1,4 +1,6 @@
 import Stripe from 'stripe';
+import { createServerSupabaseClient } from '@/lib/supabase';
+import { createOrGetStripeCustomer } from '@/lib/stripe-helpers';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -41,10 +43,52 @@ export default async function handler(req, res) {
     const plan = pricingPlans[planId];
     const origin = req.headers.origin || 'http://localhost:3000';
 
+    // Get authenticated user
+    const supabase = createServerSupabaseClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return res.status(401).json({ error: 'Unauthorized. Please log in to continue.' });
+    }
+
+    // Get or create Stripe customer
+    let stripeCustomerId;
+    
+    try {
+      // Check if user already has a Stripe customer
+      const { data: existingCustomer } = await supabase
+        .from('stripe_customers')
+        .select('stripe_customer_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (existingCustomer) {
+        stripeCustomerId = existingCustomer.stripe_customer_id;
+      } else {
+        // Create new Stripe customer
+        const customer = await stripe.customers.create({
+          email: user.email,
+          metadata: {
+            supabase_user_id: user.id,
+          },
+        });
+
+        stripeCustomerId = customer.id;
+
+        // Save to database
+        await createOrGetStripeCustomer(user.id, customer.id, user.email, user.user_metadata?.full_name);
+      }
+    } catch (customerError) {
+      console.error('Error creating Stripe customer:', customerError);
+      // Continue anyway - Stripe will create customer during checkout
+    }
+
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
       mode: plan.mode,
       payment_method_types: ['card'],
+      customer: stripeCustomerId, // Link to existing customer
+      customer_email: !stripeCustomerId ? user.email : undefined, // Fallback if no customer
       line_items: [
         {
           price_data: {
@@ -67,6 +111,7 @@ export default async function handler(req, res) {
       cancel_url: `${origin}/#pricing`,
       metadata: {
         planId,
+        supabase_user_id: user.id,
       },
     });
 

@@ -1,7 +1,10 @@
 import { useState } from 'react';
+import { useRouter } from 'next/router';
 import { Check, Sparkles } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 export default function Pricing() {
+  const router = useRouter();
   const [loading, setLoading] = useState(null);
 
   const plans = [
@@ -63,6 +66,15 @@ export default function Pricing() {
     try {
       setLoading(planId);
       
+      // Check if user is authenticated
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        // Redirect to login with return URL
+        router.push(`/login?redirect=${encodeURIComponent('/#pricing')}&plan=${planId}`);
+        return;
+      }
+      
       const response = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: {
@@ -74,6 +86,11 @@ export default function Pricing() {
       const { url, error } = await response.json();
 
       if (error) {
+        if (error.includes('Unauthorized')) {
+          // Session expired, redirect to login
+          router.push(`/login?redirect=${encodeURIComponent('/#pricing')}&plan=${planId}`);
+          return;
+        }
         throw new Error(error);
       }
 
