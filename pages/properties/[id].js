@@ -71,6 +71,23 @@ export default function PropertyDetailPage() {
       }
       
       console.log('[Property Detail] Session valid, querying database...');
+      console.log('[Property Detail] Session expires at:', new Date(session.expires_at * 1000).toISOString());
+      
+      // Check if session is about to expire (within 5 minutes)
+      const expiresAt = session.expires_at * 1000;
+      const now = Date.now();
+      const fiveMinutes = 5 * 60 * 1000;
+      
+      if (expiresAt - now < fiveMinutes) {
+        console.log('[Property Detail] Session expiring soon, refreshing...');
+        const { data: { session: newSession }, error: refreshError } = await supabase.auth.refreshSession();
+        
+        if (refreshError) {
+          console.error('[Property Detail] Proactive session refresh failed:', refreshError);
+        } else if (newSession) {
+          console.log('[Property Detail] Session refreshed proactively');
+        }
+      }
       
       const { data, error } = await supabase
         .from('properties')
@@ -101,6 +118,8 @@ export default function PropertyDetailPage() {
             
             if (!refreshError && newSession) {
               console.log('[Property Detail] Session refreshed, retrying query...');
+              // Wait a moment for the new session to propagate
+              await new Promise(resolve => setTimeout(resolve, 500));
               return loadProperty(propertyId, userId, retryCount + 1);
             }
           }

@@ -74,15 +74,39 @@ export default function ComplianceReportPage() {
     }
   };
 
-  const loadReport = async (reportId, userId) => {
+  const loadReport = async (reportId, userId, retryCount = 0) => {
     try {
       console.log('[Compliance Page] Loading report:', reportId, 'for user:', userId);
       
       // Verify we have a valid session before querying
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('[Compliance Page] Session error:', sessionError);
+        throw new Error('Session validation failed');
+      }
+      
       if (!session) {
         console.error('[Compliance Page] No valid session, cannot load report');
         throw new Error('No valid session');
+      }
+      
+      console.log('[Compliance Page] Session valid, expires at:', new Date(session.expires_at * 1000).toISOString());
+      
+      // Check if session is about to expire (within 5 minutes)
+      const expiresAt = session.expires_at * 1000;
+      const now = Date.now();
+      const fiveMinutes = 5 * 60 * 1000;
+      
+      if (expiresAt - now < fiveMinutes) {
+        console.log('[Compliance Page] Session expiring soon, refreshing...');
+        const { data: { session: newSession }, error: refreshError } = await supabase.auth.refreshSession();
+        
+        if (refreshError) {
+          console.error('[Compliance Page] Proactive session refresh failed:', refreshError);
+        } else if (newSession) {
+          console.log('[Compliance Page] Session refreshed proactively');
+        }
       }
       
       // First, try to get the report with explicit user filtering
@@ -117,6 +141,20 @@ export default function ComplianceReportPage() {
         if (error.status === 406) {
           console.error('[Compliance Page] 406 Not Acceptable - this indicates an auth or header issue');
           console.error('[Compliance Page] Session state:', session ? 'exists' : 'missing');
+          
+          // Try to refresh the session once
+          if (retryCount === 0) {
+            console.log('[Compliance Page] Attempting to refresh session...');
+            const { data: { session: newSession }, error: refreshError } = await supabase.auth.refreshSession();
+            
+            if (!refreshError && newSession) {
+              console.log('[Compliance Page] Session refreshed, retrying query...');
+              // Wait a moment for the new session to propagate
+              await new Promise(resolve => setTimeout(resolve, 500));
+              return loadReport(reportId, userId, retryCount + 1);
+            }
+          }
+          
           throw new Error('Authentication issue - please try logging in again');
         }
         
