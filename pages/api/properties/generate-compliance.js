@@ -1,4 +1,9 @@
-// Direct API implementation without Python dependency
+import { exec } from 'child_process';
+import { promisify } from 'util';
+import path from 'path';
+
+const execAsync = promisify(exec);
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -13,153 +18,39 @@ export default async function handler(req, res) {
 
     console.log(`[Compliance API] Generating report for: ${address}`);
     
-    // Step 1: Get property identifiers from NYC Planning GeoSearch
-    const geoSearchUrl = `https://geosearch.planninglabs.nyc/v2/search?text=${encodeURIComponent(address)}&size=1`;
-    const geoResponse = await fetch(geoSearchUrl);
-    const geoData = await geoResponse.json();
+    // Use Python script with comprehensive logic from user's scripts
+    const scriptPath = path.join(process.cwd(), 'python', 'generate_report.py');
+    const command = `python3 "${scriptPath}" "${address.replace(/"/g, '\\"')}"`;
     
-    if (!geoData.features || geoData.features.length === 0) {
-      return res.status(404).json({ error: 'Property not found in NYC database' });
-    }
+    console.log(`[Compliance API] Executing: ${command}`);
     
-    const feature = geoData.features[0];
-    const properties = feature.properties || {};
-    const padData = properties.addendum?.pad || {};
-    
-    const bin = padData.bin;
-    const bbl = padData.bbl;
-    
-    if (!bin) {
-      return res.status(404).json({ error: 'Could not find BIN for this property' });
-    }
-    
-    console.log(`Found property - BIN: ${bin}, BBL: ${bbl}`);
-    
-    // Step 2: Fetch compliance data from NYC Open Data
-    const appToken = process.env.NYC_APP_TOKEN || '';
-    const headers = appToken ? { 'X-App-Token': appToken } : {};
-    
-    // Fetch HPD Violations (active only)
-    const hpdUrl = `https://data.cityofnewyork.us/resource/wvxf-dwi5.json?bin=${bin}&violationstatus=Open&$limit=100`;
-    const hpdResponse = await fetch(hpdUrl, { headers });
-    let hpdViolations = await hpdResponse.json();
-    
-    // Ensure it's an array
-    if (!Array.isArray(hpdViolations)) {
-      console.log('[Compliance API] HPD response is not an array:', hpdViolations);
-      hpdViolations = [];
-    }
-    
-    // Fetch DOB Violations (active only)
-    const dobUrl = `https://data.cityofnewyork.us/resource/3h2n-5cm9.json?bin=${bin}&$where=violation_category LIKE '%ACTIVE%'&$limit=100`;
-    const dobResponse = await fetch(dobUrl, { headers });
-    let dobViolations = await dobResponse.json();
-    
-    // Ensure it's an array
-    if (!Array.isArray(dobViolations)) {
-      console.log('[Compliance API] DOB response is not an array:', dobViolations);
-      dobViolations = [];
-    }
-    
-    // Fetch Elevator Inspections - Multi-key search strategy
-    let elevatorData = [];
-    
-    // Strategy 1: Search by BIN
-    try {
-      const elevatorBinUrl = `https://data.cityofnewyork.us/resource/e5aq-a4j2.json?bin=${bin}&$limit=500`;
-      const elevatorResponse = await fetch(elevatorBinUrl, { headers });
-      elevatorData = await elevatorResponse.json();
-      
-      if (Array.isArray(elevatorData) && elevatorData.length > 0) {
-        console.log(`[Compliance API] Found ${elevatorData.length} elevator records using BIN`);
-      } else {
-        // Strategy 2: Search by block/lot if BIN fails
-        const block = bbl ? bbl.substring(1, 6).replace(/^0+/, '') : null;
-        const lot = bbl ? bbl.substring(6).replace(/^0+/, '') : null;
-        
-        if (block && lot) {
-          const elevatorBlockUrl = `https://data.cityofnewyork.us/resource/e5aq-a4j2.json?block=${block}&lot=${lot}&$limit=500`;
-          const elevatorBlockResponse = await fetch(elevatorBlockUrl, { headers });
-          const elevatorBlockData = await elevatorBlockResponse.json();
-          
-          if (Array.isArray(elevatorBlockData) && elevatorBlockData.length > 0) {
-            // Filter to match BIN if available
-            elevatorData = elevatorBlockData.filter(record => record.bin === bin);
-            console.log(`[Compliance API] Found ${elevatorData.length} elevator records using block/lot (filtered by BIN)`);
-          }
-        }
-      }
-    } catch (error) {
-      console.log('[Compliance API] Error fetching elevator data:', error.message);
-      elevatorData = [];
-    }
-    
-    if (!Array.isArray(elevatorData)) {
-      elevatorData = [];
-    }
-    
-    // Fetch Boiler Inspections
-    const boilerUrl = `https://data.cityofnewyork.us/resource/52dp-yji6.json?bin_number=${bin}&$limit=100`;
-    const boilerResponse = await fetch(boilerUrl, { headers });
-    let boilerData = await boilerResponse.json();
-    
-    if (!Array.isArray(boilerData)) {
-      console.log('[Compliance API] Boiler response is not an array:', boilerData);
-      boilerData = [];
-    }
-    
-    // Fetch Electrical Permits
-    const electricalUrl = `https://data.cityofnewyork.us/resource/dm9a-ab7w.json?bin=${bin}&$limit=100`;
-    const electricalResponse = await fetch(electricalUrl, { headers });
-    let electricalData = await electricalResponse.json();
-    
-    if (!Array.isArray(electricalData)) {
-      console.log('[Compliance API] Electrical response is not an array:', electricalData);
-      electricalData = [];
-    }
-    
-    // Calculate scores
-    const hpdActive = hpdViolations.length;
-    const dobActive = dobViolations.length;
-    const elevatorDevices = elevatorData.length;
-    const boilerDevices = boilerData.length;
-    const electricalPermits = electricalData.length;
-    
-    const hpdScore = Math.max(0, 100 - (hpdActive * 10));
-    const dobScore = Math.max(0, 100 - (dobActive * 15));
-    const overallScore = (hpdScore * 0.5) + (dobScore * 0.5);
-    
-    const reportData = {
-      success: true,
-      property: {
-        bin,
-        bbl,
-        borough: properties.borough,
-        address: `${properties.housenumber || ''} ${properties.street || ''}`.trim()
-      },
-      scores: {
-        hpd_score: Math.round(hpdScore * 10) / 10,
-        dob_score: Math.round(dobScore * 10) / 10,
-        overall_score: Math.round(overallScore * 10) / 10,
-        hpd_violations_active: hpdActive,
-        dob_violations_active: dobActive,
-        elevator_devices: elevatorDevices,
-        boiler_devices: boilerDevices,
-        electrical_permits: electricalPermits
-      },
-      data: {
-        hpd_violations: hpdViolations.slice(0, 50),
-        dob_violations: dobViolations.slice(0, 50),
-        elevator_data: elevatorData.slice(0, 50),
-        boiler_data: boilerData.slice(0, 50),
-        electrical_permits: electricalData.slice(0, 50)
-      },
-      generated_at: new Date().toISOString()
+    const env = {
+      ...process.env,
+      NYC_APP_TOKEN: process.env.NYC_APP_TOKEN || '',
+      API_KEY_SECRET: process.env.API_KEY_SECRET || ''
     };
     
-    console.log(`[Compliance API] Report generated - Overall Score: ${reportData.scores.overall_score}%`);
-    console.log(`[Compliance API] - HPD Violations: ${hpdActive}, DOB Violations: ${dobActive}`);
-    console.log(`[Compliance API] - Elevators: ${elevatorDevices}, Boilers: ${boilerDevices}, Electrical Permits: ${electricalPermits}`);
+    const { stdout, stderr } = await execAsync(command, {
+      env,
+      timeout: 120000, // 2 minute timeout
+      maxBuffer: 10 * 1024 * 1024 // 10MB buffer
+    });
+    
+    if (stderr) {
+      console.log('[Compliance API] Python stderr:', stderr);
+    }
+    
+    // Parse JSON output from Python script
+    const reportData = JSON.parse(stdout);
+    
+    if (!reportData.success) {
+      return res.status(404).json({ error: reportData.error || 'Failed to generate report' });
+    }
+    
+    console.log(`[Compliance API] Report generated successfully`);
+    console.log(`[Compliance API] - Overall Score: ${reportData.scores.overall_score}%`);
+    console.log(`[Compliance API] - HPD: ${reportData.scores.hpd_violations_active}, DOB: ${reportData.scores.dob_violations_active}`);
+    console.log(`[Compliance API] - Elevators: ${reportData.scores.elevator_devices}, Boilers: ${reportData.scores.boiler_devices}, Electrical: ${reportData.scores.electrical_permits}`);
     
     return res.status(200).json(reportData);
 
