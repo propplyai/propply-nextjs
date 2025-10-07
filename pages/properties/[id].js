@@ -250,7 +250,7 @@ export default function PropertyDetailPage() {
       }
       
       const scores = complianceData.scores;
-      alert(`✅ Compliance Report Generated Successfully!\n\n📊 Overall Score: ${scores.overall_score}%\n\n🏗️ Violations:\n  • HPD: ${scores.hpd_violations_active}\n  • DOB: ${scores.dob_violations_active}\n\n🏢 Equipment:\n  • Elevators: ${scores.elevator_devices || 0}\n  • Boilers: ${scores.boiler_devices || 0}\n  • Electrical Permits: ${scores.electrical_permits || 0}`);
+      alert(`✅ Property Data Retrieved Successfully!\n\n📊 Compliance Score: ${scores.overall_score}%\n\n🏗️ Violations Found:\n  • HPD: ${scores.hpd_violations_active}\n  • DOB: ${scores.dob_violations_active}\n\n🏢 Equipment Data:\n  • Elevators: ${scores.elevator_devices || 0}\n  • Boilers: ${scores.boiler_devices || 0}\n  • Electrical Permits: ${scores.electrical_permits || 0}`);
     } catch (error) {
       console.error('Error generating report:', error);
       const errorMsg = error.message || 'Unknown error occurred';
@@ -307,9 +307,9 @@ export default function PropertyDetailPage() {
           Back to Properties
         </Link>
 
-        {/* Property Analysis Results */}
+        {/* Property Data Overview */}
         <div className="card mb-8 bg-gradient-to-br from-slate-800/50 to-slate-900/50">
-          <h2 className="text-xl font-bold text-white mb-6">Property Analysis Results</h2>
+          <h2 className="text-xl font-bold text-white mb-6">Property Data Overview</h2>
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Compliance Score Card */}
@@ -359,7 +359,7 @@ export default function PropertyDetailPage() {
                 </div>
                 
                 <p className="text-xs text-slate-400">
-                  Report generated on: {latestReport ? formatDate(latestReport.generated_at) : 'Not yet generated'}
+                  Data last updated: {latestReport ? formatDate(latestReport.generated_at) : 'Not yet fetched'}
                 </p>
               </div>
             </div>
@@ -444,19 +444,19 @@ export default function PropertyDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Compliance Status */}
+            {/* Property Data & Compliance */}
             <div className="card">
-              <h2 className="text-2xl font-bold text-white mb-6">Compliance Status</h2>
+              <h2 className="text-2xl font-bold text-white mb-6">Property Data & Compliance</h2>
               {property.active_violations > 0 ? (
                 <div className="space-y-4">
                   <div className="p-4 bg-ruby-500/10 border border-ruby-500/30 rounded-lg">
                     <div className="flex items-center space-x-3 mb-2">
                       <AlertTriangle className="w-6 h-6 text-ruby-400" />
-                      <h3 className="text-lg font-semibold text-white">Active Violations</h3>
+                      <h3 className="text-lg font-semibold text-white">Active Violations Detected</h3>
                     </div>
                     <p className="text-ruby-300">
-                      This property has {property.active_violations} active violation
-                      {property.active_violations !== 1 ? 's' : ''} that need attention.
+                      Our data shows {property.active_violations} active violation
+                      {property.active_violations !== 1 ? 's' : ''} for this property.
                     </p>
                   </div>
                   {latestReport ? (
@@ -465,7 +465,7 @@ export default function PropertyDetailPage() {
                       className="btn-primary w-full flex items-center justify-center"
                     >
                       <FileText className="w-5 h-5 mr-2" />
-                      View Full Compliance Report
+                      View All Property Data
                     </Link>
                   ) : (
                     <button
@@ -473,8 +473,8 @@ export default function PropertyDetailPage() {
                       disabled={generating}
                       className="btn-primary w-full flex items-center justify-center"
                     >
-                      <FileText className="w-5 h-5 mr-2" />
-                      Generate Compliance Report
+                      <RefreshCw className={`w-5 h-5 mr-2 ${generating ? 'animate-spin' : ''}`} />
+                      Fetch Property Data
                     </button>
                   )}
                 </div>
@@ -483,7 +483,7 @@ export default function PropertyDetailPage() {
                   <CheckCircle className="w-12 h-12 text-emerald-400 mx-auto mb-3" />
                   <h3 className="text-lg font-semibold text-white mb-2">All Clear!</h3>
                   <p className="text-emerald-300 mb-4">
-                    No active violations detected for this property.
+                    {latestReport ? 'No active violations found in our property data.' : 'Fetch data to view compliance status.'}
                   </p>
                   {latestReport ? (
                     <Link
@@ -491,7 +491,7 @@ export default function PropertyDetailPage() {
                       className="btn-secondary inline-flex items-center"
                     >
                       <FileText className="w-5 h-5 mr-2" />
-                      View Full Report
+                      View All Property Data
                     </Link>
                   ) : (
                     <button
@@ -499,8 +499,8 @@ export default function PropertyDetailPage() {
                       disabled={generating}
                       className="btn-secondary inline-flex items-center"
                     >
-                      <FileText className="w-5 h-5 mr-2" />
-                      Generate Report
+                      <RefreshCw className={`w-5 h-5 mr-2 ${generating ? 'animate-spin' : ''}`} />
+                      Fetch Property Data
                     </button>
                   )}
                 </div>
@@ -520,7 +520,7 @@ export default function PropertyDetailPage() {
                   className="btn-primary w-full flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <RefreshCw className={`w-5 h-5 mr-2 ${generating ? 'animate-spin' : ''}`} />
-                  {generating ? 'Generating Report...' : 'Generate NYC Compliance Report'}
+                  {generating ? 'Fetching Data...' : 'Fetch NYC Property Data'}
                 </button>
                 {reportError && (
                   <div className="text-sm text-ruby-400 bg-ruby-500/10 p-2 rounded border border-ruby-500/30">
@@ -529,7 +529,7 @@ export default function PropertyDetailPage() {
                 )}
                 {property.city !== 'NYC' && (
                   <div className="text-xs text-slate-400 text-center">
-                    NYC compliance reports only available for NYC properties
+                    NYC property data only available for NYC properties
                   </div>
                 )}
                 {latestReport && (
@@ -538,7 +538,7 @@ export default function PropertyDetailPage() {
                     className="btn-secondary w-full flex items-center justify-center"
                   >
                     <FileText className="w-5 h-5 mr-2" />
-                    View Compliance Report
+                    View Property Data
                   </Link>
                 )}
                 <button className="btn-secondary w-full flex items-center justify-center">

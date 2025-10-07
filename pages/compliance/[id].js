@@ -232,14 +232,14 @@ export default function ComplianceReportPage() {
       <div className="container-modern py-8">
         {/* Header */}
         <Link
-          href="/properties"
+          href="/compliance"
           className="inline-flex items-center text-slate-400 hover:text-white mb-6 transition-colors"
         >
           <ArrowLeft className="w-5 h-5 mr-2" />
-          Back to Properties
+          Back to Compliance
         </Link>
 
-        {/* Report Header */}
+        {/* Property Header */}
         <div className="card mb-8">
           <div className="flex items-start justify-between mb-4">
             <div>
@@ -247,12 +247,12 @@ export default function ComplianceReportPage() {
               <div className="flex items-center space-x-4 text-sm text-slate-400">
                 <span>BIN: {report.bin}</span>
                 <span>BBL: {report.bbl}</span>
-                <span>Generated: {formatDate(report.generated_at)}</span>
+                <span>Data Updated: {formatDate(report.generated_at)}</span>
               </div>
             </div>
             <div className="text-right">
               <div className="text-4xl font-bold text-white mb-1">{report.overall_score}%</div>
-              <div className="text-sm text-slate-400">Overall Score</div>
+              <div className="text-sm text-slate-400">Compliance Score</div>
             </div>
           </div>
         </div>
