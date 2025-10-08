@@ -15,6 +15,9 @@ export default function LoginPage() {
   const [isNavigating, setIsNavigating] = useState(false);
 
   useEffect(() => {
+    // Only run when router is ready to avoid stale query params
+    if (!router.isReady) return;
+    
     // Check if signup query param is present
     if (router.query.signup === 'true') {
       setIsSignUp(true);
@@ -48,7 +51,7 @@ export default function LoginPage() {
       }
     };
     checkAuth();
-  }, [router.query]);
+  }, [router.isReady, router.query]);
 
   const handleEmailAuth = async (e) => {
     e.preventDefault();

@@ -6,6 +6,9 @@ export default function AuthCallback() {
   const router = useRouter();
 
   useEffect(() => {
+    // Only run when router is ready to avoid running with stale query params
+    if (!router.isReady) return;
+    
     const handleCallback = async () => {
       try {
         // Check if we have a code in the URL (OAuth callback)
@@ -94,7 +97,7 @@ export default function AuthCallback() {
     };
 
     handleCallback();
-  }, [router]);
+  }, [router.isReady, router.query]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">

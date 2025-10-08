@@ -12,8 +12,11 @@ export default function Pricing() {
 
   // Handle auto-checkout after login
   useEffect(() => {
+    // Only run when router is ready to avoid stale query params
+    if (!router.isReady) return;
+    
     const autoCheckout = router.query.autoCheckout;
-    console.log('[Pricing] Auto-checkout check:', { autoCheckout, allQuery: router.query });
+    console.log('[Pricing] Auto-checkout check:', { autoCheckout, allQuery: router.query, isReady: router.isReady });
     
     if (autoCheckout) {
       console.log('[Pricing] Triggering auto-checkout for plan:', autoCheckout);
@@ -28,7 +31,7 @@ export default function Pricing() {
         router.replace({ query: restQuery }, undefined, { shallow: true });
       }, 1000);
     }
-  }, [router.query.autoCheckout]);
+  }, [router.isReady, router.query.autoCheckout]);
 
   const plans = [
     {
