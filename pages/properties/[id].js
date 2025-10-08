@@ -25,12 +25,14 @@ export default function PropertyDetailPage() {
   const [propertyInfoExpanded, setPropertyInfoExpanded] = useState(true);
 
   useEffect(() => {
-    console.log('[Property Detail] useEffect triggered. ID from router.query:', id, 'Router is ready:', router.isReady);
-    if (id) {
+    console.log('[Property Detail] useEffect triggered. ID from router.query:', id, 'Router is ready:', router.isReady, 'Pathname:', router.pathname);
+    // Only run if we're actually on the property detail page
+    // This prevents the effect from running when navigating away to another dynamic route
+    if (id && router.isReady && router.pathname === '/properties/[id]') {
       console.log('[Property Detail] Starting auth check for property ID:', id);
       checkAuth();
     }
-  }, [id]);
+  }, [id, router.isReady, router.pathname]);
 
   const checkAuth = async () => {
     try {
