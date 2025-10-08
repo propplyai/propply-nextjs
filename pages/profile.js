@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
 import { authHelpers, supabase } from '@/lib/supabase';
-import { User, Mail, Calendar, CreditCard, CheckCircle, XCircle, Clock, Shield, Settings, ExternalLink } from 'lucide-react';
+import { User, Mail, Calendar, CreditCard, CheckCircle, XCircle, Clock, Shield, Settings, ExternalLink, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function ProfilePage() {
@@ -191,25 +191,62 @@ export default function ProfilePage() {
               </div>
 
               <div className="space-y-4">
-                <div className="flex items-center p-4 bg-slate-800/50 rounded-xl border border-slate-700">
-                  <div className="flex-1">
-                    <p className="text-sm text-slate-400 mb-2">Current Plan</p>
-                    <p className="text-xl text-white font-bold">
-                      {getSubscriptionTierName(profile?.subscription_tier)}
-                    </p>
+                {/* Current Plan Card */}
+                <div className="p-6 bg-slate-800/50 rounded-xl border border-slate-700">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex-1">
+                      <p className="text-sm text-slate-400 mb-2">Current Plan</p>
+                      <p className="text-2xl text-white font-bold">
+                        {getSubscriptionTierName(profile?.subscription_tier)}
+                      </p>
+                    </div>
+                    <span
+                      className={cn(
+                        'px-4 py-2 rounded-full text-sm font-semibold border',
+                        getSubscriptionStatusBadge(profile?.subscription_status)
+                      )}
+                    >
+                      {profile?.subscription_status 
+                        ? profile.subscription_status.charAt(0).toUpperCase() + profile.subscription_status.slice(1)
+                        : 'Active'}
+                    </span>
                   </div>
-                  <span
-                    className={cn(
-                      'px-4 py-2 rounded-full text-sm font-semibold border',
-                      getSubscriptionStatusBadge(profile?.subscription_status)
-                    )}
-                  >
-                    {profile?.subscription_status 
-                      ? profile.subscription_status.charAt(0).toUpperCase() + profile.subscription_status.slice(1)
-                      : 'Free'}
-                  </span>
+
+                  {/* Manage Subscription Button - Show for active subscriptions */}
+                  {profile?.subscription_status === 'active' && profile?.customer_id && (
+                    <button
+                      onClick={handleManageSubscription}
+                      disabled={managingSubscription}
+                      className="w-full mt-4 btn-secondary inline-flex items-center justify-center"
+                    >
+                      {managingSubscription ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Opening Portal...
+                        </>
+                      ) : (
+                        <>
+                          <Settings className="w-4 h-4 mr-2" />
+                          Manage Subscription
+                          <ExternalLink className="w-4 h-4 ml-2" />
+                        </>
+                      )}
+                    </button>
+                  )}
+
+                  {/* Upgrade Button - Show for free users */}
+                  {(!profile?.subscription_status || profile?.subscription_status === 'free') && (
+                    <button
+                      onClick={() => router.push('/#pricing')}
+                      className="w-full mt-4 btn-primary inline-flex items-center justify-center"
+                    >
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Upgrade Plan
+                    </button>
+                  )}
                 </div>
 
+                {/* Billing Details - Show for active subscriptions */}
                 {profile?.subscription_status === 'active' && (
                   <>
                     <div className="flex items-center p-4 bg-slate-800/50 rounded-xl border border-slate-700">
@@ -234,52 +271,6 @@ export default function ProfilePage() {
                   </>
                 )}
 
-                {profile?.subscription_status === 'active' && profile?.customer_id && (
-                  <div className="p-6 bg-gradient-to-r from-corporate-500/10 to-emerald-500/10 rounded-xl border border-corporate-500/30">
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <p className="text-white font-medium mb-2">
-                          ⚙️ Manage Your Subscription
-                        </p>
-                        <p className="text-slate-400 text-sm">
-                          Update payment method, view invoices, or cancel subscription
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={handleManageSubscription}
-                      disabled={managingSubscription}
-                      className="btn-primary inline-flex items-center"
-                    >
-                      {managingSubscription ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                          Opening Portal...
-                        </>
-                      ) : (
-                        <>
-                          <Settings className="w-4 h-4 mr-2" />
-                          Manage Subscription
-                          <ExternalLink className="w-4 h-4 ml-2" />
-                        </>
-                      )}
-                    </button>
-                  </div>
-                )}
-
-                {(!profile?.subscription_status || profile?.subscription_status === 'free') && (
-                  <div className="p-6 bg-gradient-to-r from-corporate-500/10 to-emerald-500/10 rounded-xl border border-corporate-500/30">
-                    <p className="text-white font-medium mb-4">
-                      🚀 Upgrade your plan to unlock premium features
-                    </p>
-                    <button
-                      onClick={() => router.push('/#pricing')}
-                      className="btn-primary"
-                    >
-                      View Pricing Plans
-                    </button>
-                  </div>
-                )}
               </div>
             </div>
           </div>
