@@ -4,23 +4,26 @@
  * Save vendor request or bookmark
  */
 
-import { authHelpers, supabase } from '@/lib/supabase';
+import { createServerSupabaseClient } from '@/lib/supabase';
 
 export default async function handler(req, res) {
   try {
+    // Create server-side Supabase client
+    const supabase = createServerSupabaseClient({ req, res });
+
     // Authenticate user
-    const { user, error: authError } = await authHelpers.getUser(req);
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
     // Handle different actions
     if (req.method === 'POST') {
-      return handleSaveRequest(req, res, user);
+      return handleSaveRequest(req, res, user, supabase);
     } else if (req.method === 'PUT') {
-      return handleUpdateRequest(req, res, user);
+      return handleUpdateRequest(req, res, user, supabase);
     } else if (req.method === 'DELETE') {
-      return handleDelete(req, res, user);
+      return handleDelete(req, res, user, supabase);
     } else {
       return res.status(405).json({ error: 'Method not allowed' });
     }
@@ -37,13 +40,13 @@ export default async function handler(req, res) {
 /**
  * POST - Save new vendor request or bookmark
  */
-async function handleSaveRequest(req, res, user) {
+async function handleSaveRequest(req, res, user, supabase) {
   const { action, ...data } = req.body;
 
   if (action === 'bookmark') {
-    return saveBookmark(req, res, user, data);
+    return saveBookmark(req, res, user, supabase, data);
   } else if (action === 'request_quote') {
-    return saveQuoteRequest(req, res, user, data);
+    return saveQuoteRequest(req, res, user, supabase, data);
   } else {
     return res.status(400).json({ error: 'Invalid action. Use "bookmark" or "request_quote"' });
   }
@@ -52,7 +55,7 @@ async function handleSaveRequest(req, res, user) {
 /**
  * Save a vendor bookmark
  */
-async function saveBookmark(req, res, user, data) {
+async function saveBookmark(req, res, user, supabase, data) {
   const {
     vendor_place_id,
     vendor_name,
@@ -122,7 +125,7 @@ async function saveBookmark(req, res, user, data) {
 /**
  * Save a quote request
  */
-async function saveQuoteRequest(req, res, user, data) {
+async function saveQuoteRequest(req, res, user, supabase, data) {
   const {
     property_id,
     report_id,
@@ -196,7 +199,7 @@ async function saveQuoteRequest(req, res, user, data) {
 /**
  * PUT - Update existing request status
  */
-async function handleUpdateRequest(req, res, user) {
+async function handleUpdateRequest(req, res, user, supabase) {
   const { request_id, status, notes, contact_date, completion_date } = req.body;
 
   if (!request_id) {
@@ -250,7 +253,7 @@ async function handleUpdateRequest(req, res, user) {
 /**
  * DELETE - Remove bookmark or request
  */
-async function handleDelete(req, res, user) {
+async function handleDelete(req, res, user, supabase) {
   const { type, id } = req.query;
 
   if (!type || !id) {

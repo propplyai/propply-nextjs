@@ -13,7 +13,7 @@ import {
   Search, MapPin, Filter, AlertCircle, Loader2,
   ShoppingBag, Bookmark, FileText
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, authenticatedFetch } from '@/lib/utils';
 
 const CATEGORY_INFO = {
   hpd: {
@@ -123,7 +123,7 @@ export default function MarketplacePage() {
       if (propertyId) params.append('property_id', propertyId);
       if (reportId) params.append('report_id', reportId);
 
-      const response = await fetch(`/api/marketplace/search?${params.toString()}`);
+      const response = await authenticatedFetch(`/api/marketplace/search?${params.toString()}`);
       const data = await response.json();
 
       if (!response.ok) {
@@ -164,7 +164,7 @@ export default function MarketplacePage() {
         params.append('categories', categoryFilter.join(','));
       }
 
-      const response = await fetch(`/api/marketplace/search?${params.toString()}`);
+      const response = await authenticatedFetch(`/api/marketplace/search?${params.toString()}`);
       const data = await response.json();
 
       if (!response.ok) {
@@ -186,9 +186,8 @@ export default function MarketplacePage() {
     try {
       if (shouldBookmark) {
         // Add bookmark
-        const response = await fetch('/api/marketplace/save', {
+        const response = await authenticatedFetch('/api/marketplace/save', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             action: 'bookmark',
             vendor_place_id: vendor.place_id,
@@ -224,9 +223,8 @@ export default function MarketplacePage() {
     }
 
     try {
-      const response = await fetch('/api/marketplace/save', {
+      const response = await authenticatedFetch('/api/marketplace/save', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'request_quote',
           property_id: selectedProperty || userProperties[0]?.id,

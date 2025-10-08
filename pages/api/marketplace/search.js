@@ -5,7 +5,7 @@
  */
 
 import vendorMatcher from '@/lib/services/vendorMatcher';
-import { authHelpers, supabase } from '@/lib/supabase';
+import { createServerSupabaseClient } from '@/lib/supabase';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -13,8 +13,11 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Create server-side Supabase client
+    const supabase = createServerSupabaseClient({ req, res });
+
     // Authenticate user
-    const { user, error: authError } = await authHelpers.getUser(req);
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
