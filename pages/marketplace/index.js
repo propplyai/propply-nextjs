@@ -64,6 +64,11 @@ export default function MarketplacePage() {
   const [showFilters, setShowFilters] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState([]);
   const [error, setError] = useState('');
+  const [activeTab, setActiveTab] = useState('search'); // 'search' or 'saved'
+
+  // Saved vendors state
+  const [savedVendors, setSavedVendors] = useState({ bookmarks: [], requests: [] });
+  const [loadingSaved, setLoadingSaved] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -78,6 +83,13 @@ export default function MarketplacePage() {
       }
     }
   }, [user, router.isReady, router.query]);
+
+  useEffect(() => {
+    // Load saved vendors when switching to saved tab
+    if (user && activeTab === 'saved' && savedVendors.bookmarks.length === 0 && savedVendors.requests.length === 0) {
+      loadSavedVendors();
+    }
+  }, [activeTab, user]);
 
   const checkAuth = async () => {
     try {
@@ -109,6 +121,25 @@ export default function MarketplacePage() {
       setUserProperties(data || []);
     } catch (error) {
       console.error('Error loading properties:', error);
+    }
+  };
+
+  const loadSavedVendors = async () => {
+    try {
+      setLoadingSaved(true);
+      const response = await authenticatedFetch('/api/marketplace/my-vendors');
+      const data = await response.json();
+
+      if (response.ok) {
+        setSavedVendors({
+          bookmarks: data.bookmarks || [],
+          requests: data.requests || []
+        });
+      }
+    } catch (error) {
+      console.error('Error loading saved vendors:', error);
+    } finally {
+      setLoadingSaved(false);
     }
   };
 
@@ -287,8 +318,45 @@ export default function MarketplacePage() {
               <p className="text-slate-400">Find qualified contractors for your property violations</p>
             </div>
           </div>
+
+          {/* Tabs */}
+          <div className="flex items-center space-x-2 border-b border-slate-700">
+            <button
+              onClick={() => setActiveTab('search')}
+              className={cn(
+                'px-4 py-2 font-medium transition-colors relative',
+                activeTab === 'search'
+                  ? 'text-corporate-400'
+                  : 'text-slate-400 hover:text-slate-300'
+              )}
+            >
+              <Search className="w-4 h-4 inline mr-2" />
+              Search Contractors
+              {activeTab === 'search' && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-corporate-400"></div>
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab('saved')}
+              className={cn(
+                'px-4 py-2 font-medium transition-colors relative',
+                activeTab === 'saved'
+                  ? 'text-corporate-400'
+                  : 'text-slate-400 hover:text-slate-300'
+              )}
+            >
+              <Bookmark className="w-4 h-4 inline mr-2" />
+              Saved Vendors ({savedVendors.bookmarks.length + savedVendors.requests.length})
+              {activeTab === 'saved' && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-corporate-400"></div>
+              )}
+            </button>
+          </div>
         </div>
 
+        {/* Search Tab */}
+        {activeTab === 'search' && (
+          <>
         {/* Search Form */}
         <div className="card mb-8">
           <form onSubmit={handleSearch} className="space-y-4">
@@ -460,6 +528,130 @@ export default function MarketplacePage() {
             <p className="text-slate-400 mb-6">
               Search by property or address to find qualified contractors
             </p>
+          </div>
+        )}
+        </>
+        )}
+
+        {/* Saved Vendors Tab */}
+        {activeTab === 'saved' && (
+          <div className="space-y-6">
+            {loadingSaved ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 text-corporate-400 animate-spin" />
+              </div>
+            ) : (
+              <>
+                {/* Bookmarks Section */}
+                {savedVendors.bookmarks.length > 0 && (
+                  <div>
+                    <h2 className="text-xl font-bold text-white mb-4 flex items-center space-x-2">
+                      <Bookmark className="w-5 h-5 text-corporate-400" />
+                      <span>Bookmarked Vendors ({savedVendors.bookmarks.length})</span>
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {savedVendors.bookmarks.map((bookmark) => (
+                        <div key={bookmark.id} className="card">
+                          <div className="flex items-start justify-between mb-3">
+                            <h3 className="text-lg font-bold text-white">{bookmark.vendor_name}</h3>
+                            <Bookmark className="w-5 h-5 text-corporate-400 fill-corporate-400" />
+                          </div>
+                          {bookmark.vendor_rating && (
+                            <div className="flex items-center space-x-2 mb-3">
+                              <Star className="w-4 h-4 fill-gold-400 text-gold-400" />
+                              <span className="text-sm font-semibold text-white">{bookmark.vendor_rating.toFixed(1)}</span>
+                            </div>
+                          )}
+                          {bookmark.vendor_address && (
+                            <p className="text-sm text-slate-400 mb-3">{bookmark.vendor_address}</p>
+                          )}
+                          {bookmark.vendor_phone && (
+                            <p className="text-sm text-slate-300 mb-3">{bookmark.vendor_phone}</p>
+                          )}
+                          <p className="text-xs text-slate-500 mb-4">
+                            Saved {new Date(bookmark.created_at).toLocaleDateString()}
+                          </p>
+                          <Link
+                            href={`/marketplace/${bookmark.vendor_place_id}`}
+                            className="btn-secondary w-full text-sm"
+                          >
+                            View Details
+                          </Link>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Quote Requests Section */}
+                {savedVendors.requests.length > 0 && (
+                  <div>
+                    <h2 className="text-xl font-bold text-white mb-4 flex items-center space-x-2">
+                      <ShoppingBag className="w-5 h-5 text-corporate-400" />
+                      <span>Quote Requests ({savedVendors.requests.length})</span>
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {savedVendors.requests.map((request) => (
+                        <div key={request.id} className="card">
+                          <div className="flex items-start justify-between mb-3">
+                            <h3 className="text-lg font-bold text-white">{request.vendor_name}</h3>
+                            <span className={cn(
+                              'px-2 py-1 rounded text-xs font-medium',
+                              request.status === 'pending' && 'bg-slate-500/20 text-slate-400',
+                              request.status === 'contacted' && 'bg-blue-500/20 text-blue-400',
+                              request.status === 'hired' && 'bg-emerald-500/20 text-emerald-400',
+                              request.status === 'completed' && 'bg-corporate-500/20 text-corporate-400',
+                              request.status === 'rejected' && 'bg-ruby-500/20 text-ruby-400'
+                            )}>
+                              {request.status}
+                            </span>
+                          </div>
+                          {request.properties?.address && (
+                            <p className="text-sm text-slate-400 mb-3">
+                              Property: {request.properties.address}
+                            </p>
+                          )}
+                          {request.vendor_phone && (
+                            <p className="text-sm text-slate-300 mb-3">{request.vendor_phone}</p>
+                          )}
+                          {request.notes && (
+                            <p className="text-sm text-slate-400 mb-3 italic">"{request.notes}"</p>
+                          )}
+                          <p className="text-xs text-slate-500 mb-4">
+                            Requested {new Date(request.created_at).toLocaleDateString()}
+                          </p>
+                          <Link
+                            href={`/marketplace/${request.vendor_place_id}`}
+                            className="btn-secondary w-full text-sm"
+                          >
+                            View Details
+                          </Link>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Empty State */}
+                {savedVendors.bookmarks.length === 0 && savedVendors.requests.length === 0 && (
+                  <div className="text-center py-12">
+                    <Bookmark className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-white mb-2">
+                      No Saved Vendors Yet
+                    </h3>
+                    <p className="text-slate-400 mb-6">
+                      Bookmark vendors or request quotes to see them here
+                    </p>
+                    <button
+                      onClick={() => setActiveTab('search')}
+                      className="btn-primary"
+                    >
+                      Search for Contractors
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         )}
       </div>
