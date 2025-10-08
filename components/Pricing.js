@@ -105,10 +105,16 @@ export default function Pricing() {
       }
       
       console.log('[Pricing] Calling Stripe checkout API...');
+      
+      // Get the access token from the session
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const accessToken = currentSession?.access_token;
+      
       const response = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(accessToken && { 'Authorization': `Bearer ${accessToken}` }),
         },
         body: JSON.stringify({ planId, promoCode: promoCode.trim() }),
       });
