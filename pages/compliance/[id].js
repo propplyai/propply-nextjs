@@ -279,39 +279,57 @@ export default function ComplianceReportPage() {
 
         {/* Compact Property Header */}
         <div className="card mb-6 bg-gradient-to-br from-slate-800/80 to-slate-900/80 border-corporate-500/20">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold text-white mb-2">{report.address}</h1>
-              <div className="flex items-center space-x-4 text-sm text-slate-400">
-                <span>BIN: {report.bin}</span>
-                <span>BBL: {report.bbl}</span>
-                <span>Data Updated: {formatDate(report.generated_at)}</span>
+          {/* Top Section: Address and Stats */}
+          <div className="flex items-start justify-between gap-6 mb-6">
+            {/* Left: Property Info */}
+            <div className="flex-1 min-w-0">
+              <h1 className="text-3xl font-bold text-white mb-3">{report.address}</h1>
+              <div className="flex items-center gap-4 text-sm text-slate-400">
+                <span className="flex items-center gap-1">
+                  <span className="text-slate-500">BIN:</span>
+                  <span className="text-slate-300 font-medium">{report.bin}</span>
+                </span>
+                <span className="text-slate-600">•</span>
+                <span className="flex items-center gap-1">
+                  <span className="text-slate-500">BBL:</span>
+                  <span className="text-slate-300 font-medium">{report.bbl}</span>
+                </span>
+                <span className="text-slate-600">•</span>
+                <span className="flex items-center gap-1">
+                  <span className="text-slate-500">Updated:</span>
+                  <span className="text-slate-300">{formatDate(report.generated_at)}</span>
+                </span>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
-              {/* Violation Summary Stats */}
-              <div className="flex items-center space-x-3">
-                <div className="text-center px-4 py-3 bg-slate-700/30 rounded-xl border border-slate-600/30">
-                  <div className="text-2xl font-bold text-white mb-1">{report.hpd_violations_total + report.dob_violations_total}</div>
-                  <div className="text-xs text-slate-400">Total Violations</div>
-                </div>
-                <div className="text-center px-4 py-3 bg-ruby-500/10 rounded-xl border border-ruby-500/30">
-                  <div className="text-2xl font-bold text-ruby-400 mb-1">{report.hpd_violations_active + report.dob_violations_active}</div>
-                  <div className="text-xs text-slate-400">Active Violations</div>
-                </div>
+            
+            {/* Right: Stats Grid */}
+            <div className="flex items-center gap-3 flex-shrink-0">
+              {/* Total Violations */}
+              <div className="text-center px-5 py-3 bg-slate-700/40 rounded-xl border border-slate-600/40 min-w-[110px]">
+                <div className="text-3xl font-bold text-white mb-0.5">{report.hpd_violations_total + report.dob_violations_total}</div>
+                <div className="text-xs text-slate-400 font-medium">Total Violations</div>
               </div>
+              
+              {/* Active Violations */}
+              <div className="text-center px-5 py-3 bg-ruby-500/15 rounded-xl border border-ruby-500/40 min-w-[110px]">
+                <div className="text-3xl font-bold text-ruby-400 mb-0.5">{report.hpd_violations_active + report.dob_violations_active}</div>
+                <div className="text-xs text-slate-400 font-medium">Active Violations</div>
+              </div>
+              
               {/* Compliance Score */}
-              <div className="text-center px-6 py-3 bg-corporate-500/10 rounded-xl border border-corporate-500/30">
-                <div className="text-3xl font-bold text-white mb-1">{report.overall_score}%</div>
-                <div className="text-xs text-slate-400">Compliance Score</div>
+              <div className="text-center px-6 py-3 bg-corporate-500/15 rounded-xl border border-corporate-500/40 min-w-[120px]">
+                <div className="text-4xl font-bold text-corporate-400 mb-0.5">{report.overall_score}%</div>
+                <div className="text-xs text-slate-400 font-medium">Compliance Score</div>
               </div>
             </div>
           </div>
-          <div className="mt-4 pt-4 border-t border-slate-700/50">
-            <div className="flex items-center space-x-2">
+          
+          {/* Bottom Section: Records Header */}
+          <div className="pt-5 border-t border-slate-700/50">
+            <div className="flex items-center gap-2">
               <Building2 className="w-5 h-5 text-corporate-400" />
-              <h2 className="text-base font-semibold text-white">Detailed Property Records</h2>
-              <span className="text-sm text-slate-400">· Click any category to expand</span>
+              <h2 className="text-lg font-semibold text-white">Detailed Property Records</h2>
+              <span className="text-sm text-slate-500 ml-1">Click any category to expand</span>
             </div>
           </div>
         </div>
