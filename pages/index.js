@@ -8,16 +8,22 @@ export default function LandingPage() {
   const router = useRouter();
 
   useEffect(() => {
+    // Only run when router is ready
+    if (!router.isReady) return;
+    
     // Check if user is already logged in
     const checkAuth = async () => {
       const { supabase } = await import('@/lib/supabase');
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        router.push('/dashboard');
+        // Don't redirect if there's an autoCheckout parameter (user is going through pricing flow)
+        if (!router.query.autoCheckout) {
+          router.push('/dashboard');
+        }
       }
     };
     checkAuth();
-  }, [router]);
+  }, [router.isReady, router.query]);
 
   const features = [
     {
