@@ -44,22 +44,30 @@ export default function AuthCallback() {
           
           // Check for stored redirect info from OAuth flow
           const storedRedirect = localStorage.getItem('auth_redirect');
+          console.log('[Auth Callback] Stored redirect data:', storedRedirect);
+          
           if (storedRedirect) {
             try {
               const { redirectUrl, planId } = JSON.parse(storedRedirect);
+              console.log('[Auth Callback] Parsed redirect:', { redirectUrl, planId });
               localStorage.removeItem('auth_redirect');
               
               if (planId && redirectUrl) {
                 // Redirect with auto-checkout
-                router.push(`${redirectUrl}${redirectUrl.includes('?') ? '&' : '?'}autoCheckout=${planId}`);
+                const finalUrl = `${redirectUrl}${redirectUrl.includes('?') ? '&' : '?'}autoCheckout=${planId}`;
+                console.log('[Auth Callback] Redirecting to:', finalUrl);
+                router.push(finalUrl);
                 return;
               } else if (redirectUrl) {
+                console.log('[Auth Callback] Redirecting to:', redirectUrl);
                 router.push(redirectUrl);
                 return;
               }
             } catch (e) {
               console.error('[Auth Callback] Error parsing stored redirect:', e);
             }
+          } else {
+            console.log('[Auth Callback] No stored redirect found, going to dashboard');
           }
           
           router.push('/dashboard');
