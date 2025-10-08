@@ -35,7 +35,9 @@ export default function LoginPage() {
     const checkAuth = async () => {
       const { user } = await authHelpers.getUser();
       if (user) {
-        router.push('/dashboard');
+        // Redirect to the specified URL or dashboard
+        const redirectUrl = router.query.redirect || '/dashboard';
+        router.push(redirectUrl);
       }
     };
     checkAuth();
@@ -48,15 +50,26 @@ export default function LoginPage() {
     setMessage('');
 
     try {
+      const redirectUrl = router.query.redirect || '/dashboard';
+      const planId = router.query.plan;
+      
       if (isSignUp) {
         const { data, error } = await authHelpers.signUp(email, password);
         if (error) throw error;
         setMessage('Check your email to confirm your account!');
-        setTimeout(() => router.push('/dashboard'), 2000);
+        setTimeout(() => router.push(redirectUrl), 2000);
       } else {
         const { data, error } = await authHelpers.signIn(email, password);
         if (error) throw error;
-        router.push('/dashboard');
+        
+        // If there's a plan ID, trigger checkout immediately
+        if (planId) {
+          // Redirect back to pricing with plan parameter
+          // The pricing component will handle the checkout
+          router.push(`${redirectUrl}${redirectUrl.includes('?') ? '&' : '?'}autoCheckout=${planId}`);
+        } else {
+          router.push(redirectUrl);
+        }
       }
     } catch (err) {
       setError(err.message || 'Authentication failed');

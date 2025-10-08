@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { Check, Sparkles } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -9,6 +9,17 @@ export default function Pricing() {
   const [promoCode, setPromoCode] = useState('');
   const [promoApplied, setPromoApplied] = useState(false);
   const [promoError, setPromoError] = useState('');
+
+  // Handle auto-checkout after login
+  useEffect(() => {
+    const autoCheckout = router.query.autoCheckout;
+    if (autoCheckout) {
+      // Remove the query param and trigger checkout
+      const { autoCheckout: _, ...restQuery } = router.query;
+      router.replace({ query: restQuery }, undefined, { shallow: true });
+      handleCheckout(autoCheckout);
+    }
+  }, [router.query.autoCheckout]);
 
   const plans = [
     {
