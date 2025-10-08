@@ -113,14 +113,58 @@ export default async function handler(req, res) {
 
     console.log(`[API /marketplace/search] Searching for ${searchCategories.join(', ')} near ${searchAddress}`);
 
-    // Search for vendors
-    const result = violationData
-      ? await vendorMatcher.getVendorsForProperty(searchAddress, violationData, parseInt(radius))
-      : await vendorMatcher.vendorService.findContractorsForViolations(
-          searchAddress,
-          searchCategories,
-          parseInt(radius)
-        );
+    // Check cache first
+    const cacheKey = searchCategories.sort().join(',');
+    const { data: cachedResult } = await supabase
+      .from('vendor_search_cache')
+      .select('*')
+      .eq('search_address', searchAddress.toLowerCase().trim())
+      .eq('search_categories', searchCategories.sort())
+      .gt('expires_at', new Date().toISOString())
+      .single();
+
+    let result;
+    let fromCache = false;
+
+    if (cachedResult) {
+      console.log(`[API /marketplace/search] Cache HIT for ${searchAddress}`);
+      result = { vendors: cachedResult.vendors_data };
+      fromCache = true;
+
+      // Update access tracking
+      await supabase
+        .from('vendor_search_cache')
+        .update({
+          last_accessed_at: new Date().toISOString(),
+          access_count: (cachedResult.access_count || 0) + 1
+        })
+        .eq('id', cachedResult.id);
+    } else {
+      console.log(`[API /marketplace/search] Cache MISS - calling Google Places API`);
+
+      // Search for vendors via Google Places API
+      result = violationData
+        ? await vendorMatcher.getVendorsForProperty(searchAddress, violationData, parseInt(radius))
+        : await vendorMatcher.vendorService.findContractorsForViolations(
+            searchAddress,
+            searchCategories,
+            parseInt(radius)
+          );
+
+      // Save to cache
+      const allVendorsForCache = Object.values(result.vendors || result).flat();
+      await supabase
+        .from('vendor_search_cache')
+        .insert({
+          search_address: searchAddress.toLowerCase().trim(),
+          search_categories: searchCategories.sort(),
+          search_radius: parseInt(radius),
+          vendors_data: result.vendors || result,
+          total_vendors: allVendorsForCache.length
+        });
+
+      console.log(`[API /marketplace/search] Cached ${allVendorsForCache.length} vendors for future use`);
+    }
 
     // Check which vendors are bookmarked by this user
     const allVendors = Object.values(result.vendors || result).flat();
@@ -150,7 +194,8 @@ export default async function handler(req, res) {
       radius_meters: parseInt(radius),
       vendors: enhancedResult,
       total_vendors: allVendors.length,
-      violation_data: violationData
+      violation_data: violationData,
+      from_cache: fromCache
     });
 
   } catch (error) {
