@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import Image from 'next/image';
 import { Home, Building2, FileCheck, ShoppingBag, BarChart3, LogOut, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -28,8 +29,8 @@ export default function Layout({ children, user, onLogout }) {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link href="/dashboard" className="flex items-center space-x-3 group">
-              <div className="w-10 h-10 bg-gradient-to-r from-corporate-500 to-corporate-600 rounded-xl flex items-center justify-center shadow-enterprise group-hover:scale-105 transition-transform">
-                <Building2 className="w-6 h-6 text-white" />
+              <div className="w-10 h-10 flex items-center justify-center group-hover:scale-105 transition-transform">
+                <Image src="/logo.svg" alt="Propply AI" width={40} height={40} className="w-10 h-10" />
               </div>
               <span className="text-xl font-bold gradient-text">Propply AI</span>
             </Link>
