@@ -69,7 +69,7 @@ export default async function handler(req, res) {
     }
 
     // Get authenticated user
-    const supabase = createServerSupabaseClient();
+    const supabase = createServerSupabaseClient({ req, res });
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
