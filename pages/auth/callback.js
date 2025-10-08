@@ -42,34 +42,24 @@ export default function AuthCallback() {
           
           console.log('[Auth Callback] Session established successfully');
           
-          // Check for stored redirect info from OAuth flow
-          const storedRedirect = localStorage.getItem('auth_redirect');
-          console.log('[Auth Callback] Stored redirect data:', storedRedirect);
+          // Check for redirect info from URL params
+          const redirectUrl = searchParams.get('redirect');
+          const planId = searchParams.get('plan');
+          console.log('[Auth Callback] URL params:', { redirectUrl, planId });
           
-          if (storedRedirect) {
-            try {
-              const { redirectUrl, planId } = JSON.parse(storedRedirect);
-              console.log('[Auth Callback] Parsed redirect:', { redirectUrl, planId });
-              localStorage.removeItem('auth_redirect');
-              
-              if (planId && redirectUrl) {
-                // Redirect with auto-checkout
-                const finalUrl = `${redirectUrl}${redirectUrl.includes('?') ? '&' : '?'}autoCheckout=${planId}`;
-                console.log('[Auth Callback] Redirecting to:', finalUrl);
-                router.push(finalUrl);
-                return;
-              } else if (redirectUrl) {
-                console.log('[Auth Callback] Redirecting to:', redirectUrl);
-                router.push(redirectUrl);
-                return;
-              }
-            } catch (e) {
-              console.error('[Auth Callback] Error parsing stored redirect:', e);
-            }
-          } else {
-            console.log('[Auth Callback] No stored redirect found, going to dashboard');
+          if (planId && redirectUrl) {
+            // Redirect with auto-checkout
+            const finalUrl = `${redirectUrl}${redirectUrl.includes('?') ? '&' : '?'}autoCheckout=${planId}`;
+            console.log('[Auth Callback] Redirecting to:', finalUrl);
+            router.push(finalUrl);
+            return;
+          } else if (redirectUrl) {
+            console.log('[Auth Callback] Redirecting to:', redirectUrl);
+            router.push(redirectUrl);
+            return;
           }
           
+          console.log('[Auth Callback] No redirect params, going to dashboard');
           router.push('/dashboard');
         } else {
           // No code found, check if we already have a valid session
@@ -78,23 +68,17 @@ export default function AuthCallback() {
           if (session) {
             console.log('[Auth Callback] Existing session found');
             
-            // Check for stored redirect info
-            const storedRedirect = localStorage.getItem('auth_redirect');
-            if (storedRedirect) {
-              try {
-                const { redirectUrl, planId } = JSON.parse(storedRedirect);
-                localStorage.removeItem('auth_redirect');
-                
-                if (planId && redirectUrl) {
-                  router.push(`${redirectUrl}${redirectUrl.includes('?') ? '&' : '?'}autoCheckout=${planId}`);
-                  return;
-                } else if (redirectUrl) {
-                  router.push(redirectUrl);
-                  return;
-                }
-              } catch (e) {
-                console.error('[Auth Callback] Error parsing stored redirect:', e);
-              }
+            // Check for redirect info from URL params
+            const redirectUrl = searchParams.get('redirect');
+            const planId = searchParams.get('plan');
+            console.log('[Auth Callback] URL params:', { redirectUrl, planId });
+            
+            if (planId && redirectUrl) {
+              router.push(`${redirectUrl}${redirectUrl.includes('?') ? '&' : '?'}autoCheckout=${planId}`);
+              return;
+            } else if (redirectUrl) {
+              router.push(redirectUrl);
+              return;
             }
             
             router.push('/dashboard');

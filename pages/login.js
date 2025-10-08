@@ -82,21 +82,13 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
     try {
-      // Store redirect info in localStorage for OAuth callback
+      // Get redirect info from URL params
       const redirectUrl = router.query.redirect;
       const planId = router.query.plan;
       console.log('[Login] Redirect params:', { redirectUrl, planId });
       
-      if (redirectUrl || planId) {
-        const redirectData = { redirectUrl, planId };
-        console.log('[Login] Storing redirect data:', redirectData);
-        localStorage.setItem('auth_redirect', JSON.stringify(redirectData));
-        console.log('[Login] Stored in localStorage:', localStorage.getItem('auth_redirect'));
-      } else {
-        console.log('[Login] No redirect params to store');
-      }
-      
-      const { error } = await authHelpers.signInWithGoogle();
+      // Pass redirect info directly to Google OAuth
+      const { error } = await authHelpers.signInWithGoogle(redirectUrl, planId);
       if (error) throw error;
     } catch (err) {
       setError(err.message || 'Google sign-in failed');
