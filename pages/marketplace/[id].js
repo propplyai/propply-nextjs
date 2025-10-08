@@ -11,7 +11,7 @@ import {
   ArrowLeft, Star, MapPin, Phone, Globe, Clock, ExternalLink,
   Bookmark, BookmarkCheck, Loader2, AlertCircle
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, authenticatedFetch } from '@/lib/utils';
 
 export default function VendorDetailPage() {
   const router = useRouter();
@@ -52,7 +52,7 @@ export default function VendorDetailPage() {
       setLoading(true);
       setError('');
 
-      const response = await fetch(`/api/marketplace/details?place_id=${placeId}`);
+      const response = await authenticatedFetch(`/api/marketplace/details?place_id=${placeId}`);
       const data = await response.json();
 
       if (!response.ok) {
@@ -73,9 +73,8 @@ export default function VendorDetailPage() {
     setBookmarking(true);
     try {
       if (!isBookmarked) {
-        const response = await fetch('/api/marketplace/save', {
+        const response = await authenticatedFetch('/api/marketplace/save', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             action: 'bookmark',
             vendor_place_id: vendor.place_id,
