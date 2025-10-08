@@ -50,8 +50,10 @@ export default function LoginPage() {
     setMessage('');
 
     try {
+      // Get redirect parameters from URL
       const redirectUrl = router.query.redirect || '/dashboard';
       const planId = router.query.plan;
+      console.log('[Login] Starting email auth with redirect:', { redirectUrl, planId });
       
       if (isSignUp) {
         const { data, error } = await authHelpers.signUp(email, password);
