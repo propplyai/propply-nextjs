@@ -12,6 +12,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [isNavigating, setIsNavigating] = useState(false);
 
   useEffect(() => {
     // Check if signup query param is present
@@ -34,10 +35,16 @@ export default function LoginPage() {
     // Check if user is already logged in
     const checkAuth = async () => {
       const { user } = await authHelpers.getUser();
-      if (user) {
+      if (user && !isNavigating) {
         // Redirect to the specified URL or dashboard
         const redirectUrl = router.query.redirect || '/dashboard';
-        router.push(redirectUrl);
+        const planId = router.query.plan;
+        
+        if (planId) {
+          router.push(`${redirectUrl}${redirectUrl.includes('?') ? '&' : '?'}autoCheckout=${planId}`);
+        } else {
+          router.push(redirectUrl);
+        }
       }
     };
     checkAuth();
@@ -45,6 +52,7 @@ export default function LoginPage() {
 
   const handleEmailAuth = async (e) => {
     e.preventDefault();
+    setIsNavigating(true);
     setLoading(true);
     setError('');
     setMessage('');
