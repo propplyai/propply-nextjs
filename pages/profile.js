@@ -236,7 +236,7 @@ export default function ProfilePage() {
                   ) : (
                     // Upgrade Button - Show for everyone else (free, null, or no customer_id)
                     <button
-                      onClick={() => router.push('/#pricing')}
+                      onClick={() => router.push('/pricing')}
                       className="w-full mt-4 btn-primary inline-flex items-center justify-center"
                     >
                       <Sparkles className="w-4 h-4 mr-2" />
@@ -314,7 +314,7 @@ export default function ProfilePage() {
                   Go to Dashboard
                 </button>
                 <button
-                  onClick={() => router.push('/#pricing')}
+                  onClick={() => router.push('/pricing')}
                   className="w-full p-3 bg-slate-800/50 rounded-lg border border-slate-700 hover:border-corporate-500 transition-all text-left text-white text-sm"
                 >
                   View Pricing

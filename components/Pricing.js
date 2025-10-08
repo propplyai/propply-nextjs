@@ -100,7 +100,7 @@ export default function Pricing() {
       if (!session) {
         console.log('[Pricing] No session, redirecting to login');
         // Redirect to login with return URL
-        router.push(`/login?redirect=${encodeURIComponent('/#pricing')}&plan=${planId}`);
+        router.push(`/login?redirect=${encodeURIComponent('/pricing')}&plan=${planId}`);
         return;
       }
       
@@ -119,7 +119,7 @@ export default function Pricing() {
       if (error) {
         if (error.includes('Unauthorized')) {
           // Session expired, redirect to login
-          router.push(`/login?redirect=${encodeURIComponent('/#pricing')}&plan=${planId}`);
+          router.push(`/login?redirect=${encodeURIComponent('/pricing')}&plan=${planId}`);
           return;
         }
         throw new Error(error);
