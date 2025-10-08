@@ -212,8 +212,9 @@ export default function ProfilePage() {
                     </span>
                   </div>
 
-                  {/* Manage Subscription Button - Show for active subscriptions */}
-                  {profile?.subscription_status === 'active' && profile?.customer_id && (
+                  {/* Action Buttons */}
+                  {profile?.subscription_status === 'active' && profile?.customer_id ? (
+                    // Manage Subscription Button - Show for active paid subscriptions
                     <button
                       onClick={handleManageSubscription}
                       disabled={managingSubscription}
@@ -232,10 +233,8 @@ export default function ProfilePage() {
                         </>
                       )}
                     </button>
-                  )}
-
-                  {/* Upgrade Button - Show for free users */}
-                  {(!profile?.subscription_status || profile?.subscription_status === 'free') && (
+                  ) : (
+                    // Upgrade Button - Show for everyone else (free, null, or no customer_id)
                     <button
                       onClick={() => router.push('/#pricing')}
                       className="w-full mt-4 btn-primary inline-flex items-center justify-center"
