@@ -5,7 +5,7 @@ import Layout from '@/components/Layout';
 import { authHelpers, supabase } from '@/lib/supabase';
 import {
   Building2, ArrowLeft, AlertTriangle, CheckCircle, ChevronDown, ChevronRight,
-  Flame, Zap, TrendingUp
+  Flame, Zap, TrendingUp, ShoppingBag
 } from 'lucide-react';
 import { cn, formatDate } from '@/lib/utils';
 
@@ -549,6 +549,14 @@ export default function ComplianceReportPage() {
                 </div>
               </div>
               <div className="flex items-center space-x-4">
+                <Link
+                  href={`/marketplace?report_id=${report.id}&category=hpd`}
+                  className="btn-sm btn-secondary flex items-center space-x-2"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <ShoppingBag className="w-4 h-4" />
+                  <span>Find Contractors</span>
+                </Link>
                 <span className="text-slate-400 text-sm">Housing Preservation & Development violations</span>
                 {expandedSection === 'hpd' ? (
                   <ChevronDown className="w-5 h-5 text-slate-400" />
@@ -657,6 +665,14 @@ export default function ComplianceReportPage() {
                 </div>
               </div>
               <div className="flex items-center space-x-4">
+                <Link
+                  href={`/marketplace?report_id=${report.id}&category=dob`}
+                  className="btn-sm btn-secondary flex items-center space-x-2"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <ShoppingBag className="w-4 h-4" />
+                  <span>Find Contractors</span>
+                </Link>
                 <span className="text-slate-400 text-sm">Department of Buildings violations</span>
                 {expandedSection === 'dob' ? (
                   <ChevronDown className="w-5 h-5 text-slate-400" />

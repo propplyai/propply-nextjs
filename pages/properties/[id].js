@@ -7,7 +7,7 @@ import { authHelpers, supabase } from '@/lib/supabase';
 import {
   Building2, MapPin, Calendar, Users, Ruler, AlertTriangle,
   CheckCircle, FileText, Edit, Trash2, ArrowLeft, RefreshCw,
-  ChevronDown, ChevronUp
+  ChevronDown, ChevronUp, ShoppingBag
 } from 'lucide-react';
 import { cn, getComplianceScoreBadge, formatDate } from '@/lib/utils';
 
@@ -486,24 +486,33 @@ export default function PropertyDetailPage() {
                       {property.active_violations !== 1 ? 's' : ''} for this property.
                     </p>
                   </div>
-                  {latestReport ? (
-                    <Link
-                      href={`/compliance/${latestReport.id}`}
-                      className="btn-primary w-full flex items-center justify-center"
-                    >
-                      <FileText className="w-5 h-5 mr-2" />
-                      View All Property Data
-                    </Link>
-                  ) : (
-                    <button
-                      onClick={handleGenerateReport}
-                      disabled={generating}
-                      className="btn-primary w-full flex items-center justify-center"
-                    >
-                      <RefreshCw className={`w-5 h-5 mr-2 ${generating ? 'animate-spin' : ''}`} />
-                      Fetch Property Data
+                  <div className="space-y-3">
+                    {latestReport ? (
+                      <Link
+                        href={`/compliance/${latestReport.id}`}
+                        className="btn-primary w-full flex items-center justify-center"
+                      >
+                        <FileText className="w-5 h-5 mr-2" />
+                        View All Property Data
+                      </Link>
+                    ) : (
+                      <button
+                        onClick={handleGenerateReport}
+                        disabled={generating}
+                        className="btn-primary w-full flex items-center justify-center"
+                      >
+                        <RefreshCw className={`w-5 h-5 mr-2 ${generating ? 'animate-spin' : ''}`} />
+                        Fetch Property Data
                     </button>
                   )}
+                    <Link
+                      href={`/marketplace?property_id=${property.id}`}
+                      className="btn-secondary w-full flex items-center justify-center"
+                    >
+                      <ShoppingBag className="w-5 h-5 mr-2" />
+                      Find Contractors for These Violations
+                    </Link>
+                  </div>
                 </div>
               ) : (
                 <div className="p-6 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-center">
