@@ -11,7 +11,7 @@ import VendorDetailsModal from '@/components/marketplace/VendorDetailsModal';
 import { authHelpers, supabase } from '@/lib/supabase';
 import {
   Search, MapPin, Filter, AlertCircle, Loader2,
-  ShoppingBag, Bookmark, FileText
+  ShoppingBag, Bookmark, FileText, Star
 } from 'lucide-react';
 import { cn, authenticatedFetch } from '@/lib/utils';
 
