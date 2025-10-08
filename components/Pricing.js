@@ -13,11 +13,20 @@ export default function Pricing() {
   // Handle auto-checkout after login
   useEffect(() => {
     const autoCheckout = router.query.autoCheckout;
+    console.log('[Pricing] Auto-checkout check:', { autoCheckout, allQuery: router.query });
+    
     if (autoCheckout) {
-      // Remove the query param and trigger checkout
-      const { autoCheckout: _, ...restQuery } = router.query;
-      router.replace({ query: restQuery }, undefined, { shallow: true });
-      handleCheckout(autoCheckout);
+      console.log('[Pricing] Triggering auto-checkout for plan:', autoCheckout);
+      // Small delay to ensure component is fully mounted
+      setTimeout(() => {
+        handleCheckout(autoCheckout);
+      }, 500);
+      
+      // Remove the query param after triggering
+      setTimeout(() => {
+        const { autoCheckout: _, ...restQuery } = router.query;
+        router.replace({ query: restQuery }, undefined, { shallow: true });
+      }, 1000);
     }
   }, [router.query.autoCheckout]);
 
@@ -77,18 +86,22 @@ export default function Pricing() {
   ];
 
   const handleCheckout = async (planId) => {
+    console.log('[Pricing] handleCheckout called with planId:', planId);
     try {
       setLoading(planId);
       
       // Check if user is authenticated
       const { data: { session } } = await supabase.auth.getSession();
+      console.log('[Pricing] Session check:', { hasSession: !!session, userId: session?.user?.id });
       
       if (!session) {
+        console.log('[Pricing] No session, redirecting to login');
         // Redirect to login with return URL
         router.push(`/login?redirect=${encodeURIComponent('/#pricing')}&plan=${planId}`);
         return;
       }
       
+      console.log('[Pricing] Calling Stripe checkout API...');
       const response = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: {
@@ -98,6 +111,7 @@ export default function Pricing() {
       });
 
       const { url, error } = await response.json();
+      console.log('[Pricing] Stripe API response:', { url, error });
 
       if (error) {
         if (error.includes('Unauthorized')) {
@@ -109,10 +123,13 @@ export default function Pricing() {
       }
 
       if (url) {
+        console.log('[Pricing] Redirecting to Stripe checkout:', url);
         window.location.href = url;
+      } else {
+        console.error('[Pricing] No checkout URL received');
       }
     } catch (error) {
-      console.error('Checkout error:', error);
+      console.error('[Pricing] Checkout error:', error);
       alert('There was an error starting checkout. Please try again.');
     } finally {
       setLoading(null);
