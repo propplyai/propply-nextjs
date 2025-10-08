@@ -29,8 +29,8 @@ export default function Layout({ children, user, onLogout }) {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link href="/dashboard" className="flex items-center space-x-3 group">
-              <div className="w-10 h-10 flex items-center justify-center group-hover:scale-105 transition-transform">
-                <Image src="/logo.svg" alt="Propply AI" width={40} height={40} className="w-10 h-10" />
+              <div className="flex items-center justify-center group-hover:scale-105 transition-transform">
+                <Image src="/logo.svg" alt="Propply AI" width={48} height={48} className="w-12 h-12" />
               </div>
               <span className="text-xl font-bold gradient-text">Propply AI</span>
             </Link>

@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Building2, Shield, BarChart3, Zap, CheckCircle, ArrowRight } from 'lucide-react';
 import Pricing from '@/components/Pricing';
 
@@ -71,9 +72,7 @@ export default function LandingPage() {
         <div className="container-modern">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-corporate-500 to-corporate-600 rounded-xl flex items-center justify-center shadow-enterprise">
-                <Building2 className="w-6 h-6 text-white" />
-              </div>
+              <Image src="/logo.svg" alt="Propply AI" width={48} height={48} className="w-12 h-12" />
               <span className="text-xl font-bold gradient-text">Propply AI</span>
             </div>
             <div className="flex items-center space-x-4">
@@ -205,9 +204,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center space-x-3 mb-4">
-                <div className="w-8 h-8 bg-gradient-to-r from-corporate-500 to-corporate-600 rounded-lg flex items-center justify-center">
-                  <Building2 className="w-5 h-5 text-white" />
-                </div>
+                <Image src="/logo.svg" alt="Propply AI" width={32} height={32} className="w-8 h-8" />
                 <span className="text-lg font-bold gradient-text">Propply AI</span>
               </div>
               <p className="text-slate-400 text-sm">
