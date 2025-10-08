@@ -52,7 +52,16 @@ export default function AuthCallback() {
           
           if (planId && redirectUrl) {
             // Redirect with auto-checkout
-            const finalUrl = `${redirectUrl}${redirectUrl.includes('?') ? '&' : '?'}autoCheckout=${planId}`;
+            // Handle hash fragments correctly (e.g., /#pricing -> /?autoCheckout=planId#pricing)
+            let finalUrl;
+            if (redirectUrl.includes('#')) {
+              const [path, hash] = redirectUrl.split('#');
+              const separator = path.includes('?') ? '&' : '?';
+              finalUrl = `${path}${separator}autoCheckout=${planId}#${hash}`;
+            } else {
+              const separator = redirectUrl.includes('?') ? '&' : '?';
+              finalUrl = `${redirectUrl}${separator}autoCheckout=${planId}`;
+            }
             console.log('[Auth Callback] Redirecting to:', finalUrl);
             router.push(finalUrl);
             return;
@@ -77,7 +86,17 @@ export default function AuthCallback() {
             console.log('[Auth Callback] URL params:', { redirectUrl, planId });
             
             if (planId && redirectUrl) {
-              router.push(`${redirectUrl}${redirectUrl.includes('?') ? '&' : '?'}autoCheckout=${planId}`);
+              // Handle hash fragments correctly (e.g., /#pricing -> /?autoCheckout=planId#pricing)
+              let finalUrl;
+              if (redirectUrl.includes('#')) {
+                const [path, hash] = redirectUrl.split('#');
+                const separator = path.includes('?') ? '&' : '?';
+                finalUrl = `${path}${separator}autoCheckout=${planId}#${hash}`;
+              } else {
+                const separator = redirectUrl.includes('?') ? '&' : '?';
+                finalUrl = `${redirectUrl}${separator}autoCheckout=${planId}`;
+              }
+              router.push(finalUrl);
               return;
             } else if (redirectUrl) {
               router.push(redirectUrl);
