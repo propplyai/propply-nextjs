@@ -23,6 +23,8 @@ export default function PropertyDetailPage() {
   const [reportError, setReportError] = useState('');
   const [latestReport, setLatestReport] = useState(null);
   const [propertyInfoExpanded, setPropertyInfoExpanded] = useState(true);
+  const [vendorSearch, setVendorSearch] = useState(null);
+  const [loadingVendors, setLoadingVendors] = useState(false);
 
   useEffect(() => {
     console.log('[Property Detail] useEffect triggered. ID from router.query:', id, 'Router is ready:', router.isReady, 'Pathname:', router.pathname);
@@ -162,6 +164,18 @@ export default function PropertyDetailPage() {
         setLatestReport(reports[0]);
       } else {
         console.log('[Property Detail] No compliance reports found for this property');
+      }
+
+      // Load vendor search if it exists
+      const { data: vendorSearchData } = await supabase
+        .from('property_vendor_searches')
+        .select('*')
+        .eq('property_id', propertyId)
+        .single();
+
+      if (vendorSearchData) {
+        console.log('[Property Detail] Vendor search found:', vendorSearchData);
+        setVendorSearch(vendorSearchData);
       }
     } catch (error) {
       console.error('[Property Detail] Error loading property:', error);
@@ -542,6 +556,52 @@ export default function PropertyDetailPage() {
                 </div>
               )}
             </div>
+
+            {/* Vendor List Section */}
+            {vendorSearch && (
+              <div className="card mt-8">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h2 className="text-2xl font-bold text-white mb-2">Contractor List</h2>
+                    <p className="text-sm text-slate-400">
+                      Last updated: {new Date(vendorSearch.updated_at).toLocaleString()}
+                    </p>
+                  </div>
+                  <Link
+                    href={`/marketplace?property_id=${property.id}`}
+                    className="btn-secondary flex items-center space-x-2"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    <span>Re-run Search</span>
+                  </Link>
+                </div>
+
+                <div className="p-4 bg-corporate-500/10 border border-corporate-500/30 rounded-lg mb-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-2xl font-bold text-white">{vendorSearch.total_vendors}</div>
+                      <div className="text-sm text-slate-400">Contractors found</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-slate-300">
+                        {vendorSearch.search_categories?.length} categories
+                      </div>
+                      <div className="text-xs text-slate-500">
+                        {vendorSearch.search_categories?.join(', ')}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <Link
+                  href={`/marketplace?property_id=${property.id}`}
+                  className="btn-primary w-full flex items-center justify-center"
+                >
+                  <ShoppingBag className="w-5 h-5 mr-2" />
+                  View All Contractors
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* Sidebar */}

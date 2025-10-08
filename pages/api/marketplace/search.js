@@ -187,6 +187,51 @@ export default async function handler(req, res) {
       }));
     }
 
+    // If property_id is provided, save/update the search results to the property
+    if (property_id) {
+      console.log(`[API /marketplace/search] Saving vendor search to property ${property_id}`);
+
+      // Check if search already exists for this property
+      const { data: existingSearch } = await supabase
+        .from('property_vendor_searches')
+        .select('id')
+        .eq('property_id', property_id)
+        .single();
+
+      if (existingSearch) {
+        // Update existing search
+        await supabase
+          .from('property_vendor_searches')
+          .update({
+            search_address: searchAddress,
+            search_categories: searchCategories,
+            search_radius: parseInt(radius),
+            vendors_data: enhancedResult,
+            total_vendors: allVendors.length,
+            report_id: report_id || null
+          })
+          .eq('id', existingSearch.id);
+
+        console.log(`[API /marketplace/search] Updated vendor search for property ${property_id}`);
+      } else {
+        // Create new search record
+        await supabase
+          .from('property_vendor_searches')
+          .insert({
+            property_id: property_id,
+            user_id: user.id,
+            report_id: report_id || null,
+            search_address: searchAddress,
+            search_categories: searchCategories,
+            search_radius: parseInt(radius),
+            vendors_data: enhancedResult,
+            total_vendors: allVendors.length
+          });
+
+        console.log(`[API /marketplace/search] Saved new vendor search for property ${property_id}`);
+      }
+    }
+
     return res.status(200).json({
       success: true,
       address: searchAddress,
@@ -195,7 +240,8 @@ export default async function handler(req, res) {
       vendors: enhancedResult,
       total_vendors: allVendors.length,
       violation_data: violationData,
-      from_cache: fromCache
+      from_cache: fromCache,
+      saved_to_property: !!property_id
     });
 
   } catch (error) {
