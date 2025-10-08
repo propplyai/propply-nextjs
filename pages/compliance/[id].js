@@ -49,14 +49,18 @@ export default function ComplianceReportPage() {
         authError: authError?.message
       });
       
-      // If there's an auth error or no user, redirect to login
+      // If there's an auth error or no user, redirect to login with return URL
       if (authError || !currentUser) {
         console.log('[Compliance Page] Auth failed or no user found, redirecting to login');
         console.log('[Compliance Page] Error details:', authError);
         
+        // Preserve the current URL to return after login
+        const returnUrl = router.asPath;
+        console.log('[Compliance Page] Saving return URL:', returnUrl);
+        
         // Give a moment for any cleanup, then redirect
         setTimeout(() => {
-          router.push('/login');
+          router.push(`/login?redirect=${encodeURIComponent(returnUrl)}`);
         }, 100);
         return;
       }
@@ -67,9 +71,10 @@ export default function ComplianceReportPage() {
     } catch (error) {
       console.error('[Compliance Page] Unexpected error during auth check:', error);
       setLoading(false);
-      // On unexpected error, also redirect to login
+      // On unexpected error, also redirect to login with return URL
+      const returnUrl = router.asPath;
       setTimeout(() => {
-        router.push('/login');
+        router.push(`/login?redirect=${encodeURIComponent(returnUrl)}`);
       }, 100);
     }
   };
