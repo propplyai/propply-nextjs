@@ -288,7 +288,19 @@ export default function ComplianceReportPage() {
                 <span>Data Updated: {formatDate(report.generated_at)}</span>
               </div>
             </div>
-            <div className="flex items-center space-x-6">
+            <div className="flex items-center space-x-4">
+              {/* Violation Summary Stats */}
+              <div className="flex items-center space-x-3">
+                <div className="text-center px-4 py-3 bg-slate-700/30 rounded-xl border border-slate-600/30">
+                  <div className="text-2xl font-bold text-white mb-1">{report.hpd_violations_total + report.dob_violations_total}</div>
+                  <div className="text-xs text-slate-400">Total Violations</div>
+                </div>
+                <div className="text-center px-4 py-3 bg-ruby-500/10 rounded-xl border border-ruby-500/30">
+                  <div className="text-2xl font-bold text-ruby-400 mb-1">{report.hpd_violations_active + report.dob_violations_active}</div>
+                  <div className="text-xs text-slate-400">Active Violations</div>
+                </div>
+              </div>
+              {/* Compliance Score */}
               <div className="text-center px-6 py-3 bg-corporate-500/10 rounded-xl border border-corporate-500/30">
                 <div className="text-3xl font-bold text-white mb-1">{report.overall_score}%</div>
                 <div className="text-xs text-slate-400">Compliance Score</div>
@@ -738,21 +750,6 @@ export default function ComplianceReportPage() {
                 )}
               </div>
             )}
-          </div>
-        </div>
-
-        {/* Violation Summary */}
-        <div className="card bg-slate-800/50">
-          <h3 className="text-lg font-bold text-white mb-4">Violation Summary</h3>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between py-2 border-b border-slate-700">
-              <span className="text-slate-300">TOTAL VIOLATIONS:</span>
-              <span className="text-white font-bold">{report.hpd_violations_total + report.dob_violations_total}</span>
-            </div>
-            <div className="flex items-center justify-between py-2">
-              <span className="text-slate-300">ACTIVE VIOLATIONS:</span>
-              <span className="text-ruby-400 font-bold">{report.hpd_violations_active + report.dob_violations_active}</span>
-            </div>
           </div>
         </div>
       </div>
