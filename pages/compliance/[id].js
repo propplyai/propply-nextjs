@@ -277,10 +277,10 @@ export default function ComplianceReportPage() {
           Back to Compliance
         </Link>
 
-        {/* Property Header */}
-        <div className="card mb-8">
-          <div className="flex items-start justify-between mb-4">
-            <div>
+        {/* Compact Property Header */}
+        <div className="card mb-6 bg-gradient-to-br from-slate-800/80 to-slate-900/80 border-corporate-500/20">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
               <h1 className="text-2xl font-bold text-white mb-2">{report.address}</h1>
               <div className="flex items-center space-x-4 text-sm text-slate-400">
                 <span>BIN: {report.bin}</span>
@@ -288,17 +288,20 @@ export default function ComplianceReportPage() {
                 <span>Data Updated: {formatDate(report.generated_at)}</span>
               </div>
             </div>
-            <div className="text-right">
-              <div className="text-4xl font-bold text-white mb-1">{report.overall_score}%</div>
-              <div className="text-sm text-slate-400">Compliance Score</div>
+            <div className="flex items-center space-x-6">
+              <div className="text-center px-6 py-3 bg-corporate-500/10 rounded-xl border border-corporate-500/30">
+                <div className="text-3xl font-bold text-white mb-1">{report.overall_score}%</div>
+                <div className="text-xs text-slate-400">Compliance Score</div>
+              </div>
             </div>
           </div>
-        </div>
-
-        {/* Detailed Property Records Header */}
-        <div className="card bg-gradient-to-r from-corporate-500/20 to-emerald-500/20 border-corporate-500/30 mb-6">
-          <h2 className="text-xl font-bold text-white mb-2">📊 Detailed Property Records</h2>
-          <p className="text-slate-300">Click on any category to view detailed information</p>
+          <div className="mt-4 pt-4 border-t border-slate-700/50">
+            <div className="flex items-center space-x-2">
+              <Building2 className="w-5 h-5 text-corporate-400" />
+              <h2 className="text-base font-semibold text-white">Detailed Property Records</h2>
+              <span className="text-sm text-slate-400">· Click any category to expand</span>
+            </div>
+          </div>
         </div>
 
         {/* Equipment & Systems */}
