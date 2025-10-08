@@ -3,12 +3,10 @@ services:
     name: propply-nextjs
     env: node
     buildCommand: |
-      # Install Node dependencies
+      # Force clean install and build
+      rm -rf node_modules .next
       npm install
-      # Install Python dependencies
       pip install -r requirements.txt
-      # Clear Next.js cache and build fresh
-      rm -rf .next
       npm run build
     startCommand: npm start
     envVars:
