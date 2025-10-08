@@ -114,14 +114,22 @@ export default async function handler(req, res) {
     console.log(`[API /marketplace/search] Searching for ${searchCategories.join(', ')} near ${searchAddress}`);
 
     // Check cache first
-    const cacheKey = searchCategories.sort().join(',');
-    const { data: cachedResult } = await supabase
+    // Note: We need to fetch all matching addresses and filter by categories in JS
+    // because PostgreSQL array equality doesn't work well with Supabase .eq()
+    const normalizedAddress = searchAddress.toLowerCase().trim();
+    const sortedCategories = [...searchCategories].sort();
+
+    const { data: cacheResults } = await supabase
       .from('vendor_search_cache')
       .select('*')
-      .eq('search_address', searchAddress.toLowerCase().trim())
-      .eq('search_categories', searchCategories.sort())
-      .gt('expires_at', new Date().toISOString())
-      .single();
+      .eq('search_address', normalizedAddress)
+      .gt('expires_at', new Date().toISOString());
+
+    // Find cache entry with matching categories
+    const cachedResult = cacheResults?.find(cache => {
+      const cachedCats = [...(cache.search_categories || [])].sort();
+      return JSON.stringify(cachedCats) === JSON.stringify(sortedCategories);
+    });
 
     let result;
     let fromCache = false;
@@ -156,8 +164,8 @@ export default async function handler(req, res) {
       await supabase
         .from('vendor_search_cache')
         .insert({
-          search_address: searchAddress.toLowerCase().trim(),
-          search_categories: searchCategories.sort(),
+          search_address: normalizedAddress,
+          search_categories: sortedCategories,
           search_radius: parseInt(radius),
           vendors_data: result.vendors || result,
           total_vendors: allVendorsForCache.length

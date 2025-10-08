@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Building2, ArrowLeft } from 'lucide-react';
 import Pricing from '@/components/Pricing';
 import { authHelpers } from '@/lib/supabase';
@@ -22,10 +23,7 @@ export default function PricingPage() {
         <div className="container-modern">
           <div className="flex items-center justify-between h-16">
             <Link href="/" className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-corporate-500 to-corporate-600 rounded-xl flex items-center justify-center shadow-enterprise">
-                <Building2 className="w-6 h-6 text-white" />
-              </div>
-              <span className="text-xl font-bold gradient-text">Propply AI</span>
+              <Image src="/logo.svg" alt="Propply AI" width={64} height={64} className="w-16 h-16" />
             </Link>
             <Link href="/dashboard" className="btn-secondary text-sm inline-flex items-center">
               <ArrowLeft className="w-4 h-4 mr-2" />

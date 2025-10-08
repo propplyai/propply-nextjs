@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Building2, Mail, Lock, Chrome, AlertCircle, Loader2 } from 'lucide-react';
 import { authHelpers } from '@/lib/supabase';
 
@@ -120,10 +121,7 @@ export default function LoginPage() {
       <div className="relative z-10 w-full max-w-md">
         {/* Logo */}
         <Link href="/" className="flex items-center justify-center space-x-3 mb-8">
-          <div className="w-12 h-12 bg-gradient-to-r from-corporate-500 to-corporate-600 rounded-xl flex items-center justify-center shadow-enterprise">
-            <Building2 className="w-7 h-7 text-white" />
-          </div>
-          <span className="text-2xl font-bold gradient-text">Propply AI</span>
+          <Image src="/logo.svg" alt="Propply AI" width={80} height={80} className="w-20 h-20" />
         </Link>
 
         {/* Auth Card */}

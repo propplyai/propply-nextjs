@@ -28,11 +28,10 @@ export default function Layout({ children, user, onLogout }) {
         <div className="container-modern">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <Link href="/dashboard" className="flex items-center space-x-2 group">
+            <Link href="/dashboard" className="flex items-center space-x-3 group">
               <div className="flex items-center justify-center group-hover:scale-105 transition-transform">
-                <Image src="/logo.svg" alt="Propply AI" width={56} height={56} className="w-14 h-14" />
+                <Image src="/logo.svg" alt="Propply AI" width={80} height={80} className="w-20 h-20" />
               </div>
-              <span className="text-2xl font-bold gradient-text">Propply AI</span>
             </Link>
 
             {/* Navigation Links */}
