@@ -12,15 +12,24 @@ export default function LandingPage() {
     if (!router.isReady) return;
     
     // Check if user is already logged in
+    // Note: We don't auto-redirect logged-in users anymore because:
+    // 1. They might want to view pricing
+    // 2. They might be going through the subscription flow
+    // 3. Auto-redirecting interferes with the pricing component's checkout flow
+    
+    // If you want to redirect logged-in users, do it only on initial load
+    // and only if they're not in the middle of a pricing flow
     const checkAuth = async () => {
       const { supabase } = await import('@/lib/supabase');
       const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        // Don't redirect if there's an autoCheckout parameter (user is going through pricing flow)
-        if (!router.query.autoCheckout) {
-          router.push('/dashboard');
-        }
+      if (session && router.query.autoCheckout) {
+        // User is going through pricing flow after OAuth, don't redirect
+        return;
       }
+      // Optionally: Uncomment below to redirect logged-in users to dashboard
+      // if (session) {
+      //   router.push('/dashboard');
+      // }
     };
     checkAuth();
   }, [router.isReady, router.query]);
