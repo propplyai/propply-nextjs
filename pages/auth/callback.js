@@ -41,13 +41,54 @@ export default function AuthCallback() {
           }
           
           console.log('[Auth Callback] Session established successfully');
+          
+          // Check for stored redirect info from OAuth flow
+          const storedRedirect = localStorage.getItem('auth_redirect');
+          if (storedRedirect) {
+            try {
+              const { redirectUrl, planId } = JSON.parse(storedRedirect);
+              localStorage.removeItem('auth_redirect');
+              
+              if (planId && redirectUrl) {
+                // Redirect with auto-checkout
+                router.push(`${redirectUrl}${redirectUrl.includes('?') ? '&' : '?'}autoCheckout=${planId}`);
+                return;
+              } else if (redirectUrl) {
+                router.push(redirectUrl);
+                return;
+              }
+            } catch (e) {
+              console.error('[Auth Callback] Error parsing stored redirect:', e);
+            }
+          }
+          
           router.push('/dashboard');
         } else {
           // No code found, check if we already have a valid session
           const { data: { session } } = await supabase.auth.getSession();
           
           if (session) {
-            console.log('[Auth Callback] Existing session found, redirecting to dashboard');
+            console.log('[Auth Callback] Existing session found');
+            
+            // Check for stored redirect info
+            const storedRedirect = localStorage.getItem('auth_redirect');
+            if (storedRedirect) {
+              try {
+                const { redirectUrl, planId } = JSON.parse(storedRedirect);
+                localStorage.removeItem('auth_redirect');
+                
+                if (planId && redirectUrl) {
+                  router.push(`${redirectUrl}${redirectUrl.includes('?') ? '&' : '?'}autoCheckout=${planId}`);
+                  return;
+                } else if (redirectUrl) {
+                  router.push(redirectUrl);
+                  return;
+                }
+              } catch (e) {
+                console.error('[Auth Callback] Error parsing stored redirect:', e);
+              }
+            }
+            
             router.push('/dashboard');
           } else {
             console.log('[Auth Callback] No session found, redirecting to login');

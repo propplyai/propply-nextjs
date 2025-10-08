@@ -82,6 +82,13 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
     try {
+      // Store redirect info in localStorage for OAuth callback
+      const redirectUrl = router.query.redirect;
+      const planId = router.query.plan;
+      if (redirectUrl || planId) {
+        localStorage.setItem('auth_redirect', JSON.stringify({ redirectUrl, planId }));
+      }
+      
       const { error } = await authHelpers.signInWithGoogle();
       if (error) throw error;
     } catch (err) {
