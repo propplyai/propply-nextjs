@@ -453,68 +453,6 @@ export default function PropertyDetailPage() {
           </div>
         </div>
 
-        {/* Property Details Card (Collapsible) */}
-        <div className="card mb-8 cursor-pointer" onClick={() => setPropertyInfoExpanded(!propertyInfoExpanded)}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 bg-gradient-to-r from-corporate-500 to-corporate-600 rounded-xl flex items-center justify-center flex-shrink-0">
-                <Building2 className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-white">
-                  {property.address?.split(',')[0]?.toUpperCase() || property.address}
-                </h3>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              {propertyInfoExpanded ? (
-                <ChevronUp className="w-5 h-5 text-slate-400" />
-              ) : (
-                <ChevronDown className="w-5 h-5 text-slate-400" />
-              )}
-            </div>
-          </div>
-          
-          {propertyInfoExpanded && (
-            <div className="mt-6 pt-6 border-t border-slate-700">
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                {property.bin_number && (
-                  <div>
-                    <div className="text-xs text-slate-500 mb-1">BIN:</div>
-                    <div className="text-white font-semibold">{property.bin_number}</div>
-                  </div>
-                )}
-                {latestReport?.report_data?.property?.bbl && (
-                  <div>
-                    <div className="text-xs text-slate-500 mb-1">BBL:</div>
-                    <div className="text-white font-semibold">{latestReport.report_data.property.bbl}</div>
-                  </div>
-                )}
-                {latestReport?.report_data?.property?.borough && (
-                  <div>
-                    <div className="text-xs text-slate-500 mb-1">BOROUGH:</div>
-                    <div className="text-white font-semibold">{latestReport.report_data.property.borough}</div>
-                  </div>
-                )}
-                {latestReport?.report_data?.property?.block && latestReport?.report_data?.property?.lot && (
-                  <div>
-                    <div className="text-xs text-slate-500 mb-1">BLOCK/LOT:</div>
-                    <div className="text-white font-semibold">
-                      {latestReport.report_data.property.block}/{latestReport.report_data.property.lot}
-                    </div>
-                  </div>
-                )}
-                {property.zip_code && (
-                  <div>
-                    <div className="text-xs text-slate-500 mb-1">ZIP CODE:</div>
-                    <div className="text-white font-semibold">{property.zip_code}</div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
