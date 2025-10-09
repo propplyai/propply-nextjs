@@ -42,7 +42,7 @@ export default function Success() {
         <div className="container-modern">
           <div className="flex items-center justify-between h-16">
             <Link href="/" className="flex items-center space-x-3">
-              <Image src="/logo.svg" alt="Propply AI" width={80} height={80} className="w-20 h-20" />
+              <Image src="/logo.svg" alt="Propply AI" width={112} height={112} className="w-28 h-28" />
             </Link>
           </div>
         </div>
