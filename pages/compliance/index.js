@@ -33,7 +33,7 @@ export default function ComplianceIndexPage() {
   const loadReports = async (userId) => {
     try {
       const { data, error } = await supabase
-        .from('nyc_compliance_reports')
+        .from('compliance_reports')
         .select('*')
         .eq('user_id', userId)
         .order('generated_at', { ascending: false });

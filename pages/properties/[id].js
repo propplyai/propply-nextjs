@@ -153,7 +153,7 @@ export default function PropertyDetailPage() {
       
       // Load the latest compliance report for this property
       const { data: reports } = await supabase
-        .from('nyc_compliance_reports')
+        .from('compliance_reports')
         .select('id, generated_at')
         .eq('property_id', propertyId)
         .order('generated_at', { ascending: false })
