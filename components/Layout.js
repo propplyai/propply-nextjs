@@ -30,7 +30,7 @@ export default function Layout({ children, user, onLogout }) {
             {/* Logo */}
             <Link href="/dashboard" className="flex items-center space-x-3 group">
               <div className="flex items-center justify-center group-hover:scale-105 transition-transform">
-                <Image src="/logo.svg" alt="Propply AI" width={80} height={80} className="w-20 h-20" />
+                <Image src="/logo.svg" alt="Propply AI" width={96} height={96} className="w-24 h-24" />
               </div>
             </Link>
 
