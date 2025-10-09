@@ -231,13 +231,13 @@ export default function EditCompliancePage() {
 
               {/* Entry Type */}
               <div className="mb-6">
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-semibold text-white mb-2">
                   Entry Type *
                 </label>
                 <select
                   value={newEntry.type}
                   onChange={(e) => setNewEntry({ ...newEntry, type: e.target.value, category: '' })}
-                  className="input w-full"
+                  className="w-full px-4 py-3 bg-slate-700 border-2 border-slate-600 rounded-xl text-white placeholder-slate-400 focus:border-corporate-500 focus:ring-2 focus:ring-corporate-500/20 transition-all"
                   required
                 >
                   <option value="permit">Permit</option>
@@ -249,16 +249,16 @@ export default function EditCompliancePage() {
 
               {/* Category */}
               <div className="mb-6">
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-semibold text-white mb-2">
                   Category *
                 </label>
                 <select
                   value={newEntry.category}
                   onChange={(e) => setNewEntry({ ...newEntry, category: e.target.value })}
-                  className="input w-full"
+                  className="w-full px-4 py-3 bg-slate-700 border-2 border-slate-600 rounded-xl text-white placeholder-slate-400 focus:border-corporate-500 focus:ring-2 focus:ring-corporate-500/20 transition-all"
                   required
                 >
-                  <option value="">Select category...</option>
+                  <option value="" className="text-slate-400">Select category...</option>
                   {categories[newEntry.type].map(cat => (
                     <option key={cat} value={cat}>{cat}</option>
                   ))}
@@ -267,7 +267,7 @@ export default function EditCompliancePage() {
 
               {/* Title */}
               <div className="mb-6">
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-semibold text-white mb-2">
                   Title *
                 </label>
                 <input
@@ -275,14 +275,14 @@ export default function EditCompliancePage() {
                   value={newEntry.title}
                   onChange={(e) => setNewEntry({ ...newEntry, title: e.target.value })}
                   placeholder="e.g., Annual Boiler Inspection"
-                  className="input w-full"
+                  className="w-full px-4 py-3 bg-slate-700 border-2 border-slate-600 rounded-xl text-white placeholder-slate-400 focus:border-corporate-500 focus:ring-2 focus:ring-corporate-500/20 transition-all"
                   required
                 />
               </div>
 
               {/* Description */}
               <div className="mb-6">
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-semibold text-white mb-2">
                   Description
                 </label>
                 <textarea
@@ -290,46 +290,46 @@ export default function EditCompliancePage() {
                   onChange={(e) => setNewEntry({ ...newEntry, description: e.target.value })}
                   placeholder="Additional details..."
                   rows={3}
-                  className="input w-full"
+                  className="w-full px-4 py-3 bg-slate-700 border-2 border-slate-600 rounded-xl text-white placeholder-slate-400 focus:border-corporate-500 focus:ring-2 focus:ring-corporate-500/20 transition-all resize-none"
                 />
               </div>
 
               {/* Dates */}
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                  <label className="block text-sm font-semibold text-white mb-2">
                     Date *
                   </label>
                   <input
                     type="date"
                     value={newEntry.date}
                     onChange={(e) => setNewEntry({ ...newEntry, date: e.target.value })}
-                    className="input w-full"
+                    className="w-full px-4 py-3 bg-slate-700 border-2 border-slate-600 rounded-xl text-white focus:border-corporate-500 focus:ring-2 focus:ring-corporate-500/20 transition-all"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                  <label className="block text-sm font-semibold text-white mb-2">
                     Expiration Date
                   </label>
                   <input
                     type="date"
                     value={newEntry.expiration_date}
                     onChange={(e) => setNewEntry({ ...newEntry, expiration_date: e.target.value })}
-                    className="input w-full"
+                    className="w-full px-4 py-3 bg-slate-700 border-2 border-slate-600 rounded-xl text-white focus:border-corporate-500 focus:ring-2 focus:ring-corporate-500/20 transition-all"
                   />
                 </div>
               </div>
 
               {/* Status */}
               <div className="mb-6">
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-semibold text-white mb-2">
                   Status
                 </label>
                 <select
                   value={newEntry.status}
                   onChange={(e) => setNewEntry({ ...newEntry, status: e.target.value })}
-                  className="input w-full"
+                  className="w-full px-4 py-3 bg-slate-700 border-2 border-slate-600 rounded-xl text-white focus:border-corporate-500 focus:ring-2 focus:ring-corporate-500/20 transition-all"
                 >
                   <option value="active">Active</option>
                   <option value="expired">Expired</option>
@@ -340,7 +340,7 @@ export default function EditCompliancePage() {
 
               {/* Notes */}
               <div className="mb-6">
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-semibold text-white mb-2">
                   Notes
                 </label>
                 <textarea
@@ -348,7 +348,7 @@ export default function EditCompliancePage() {
                   onChange={(e) => setNewEntry({ ...newEntry, notes: e.target.value })}
                   placeholder="Internal notes (not visible to others)..."
                   rows={2}
-                  className="input w-full"
+                  className="w-full px-4 py-3 bg-slate-700 border-2 border-slate-600 rounded-xl text-white placeholder-slate-400 focus:border-corporate-500 focus:ring-2 focus:ring-corporate-500/20 transition-all resize-none"
                 />
               </div>
 
@@ -372,37 +372,51 @@ export default function EditCompliancePage() {
               </h3>
 
               {entries.length === 0 ? (
-                <p className="text-slate-400 text-sm text-center py-8">
-                  No manual entries yet.
-                  <br />Add your first entry using the form.
-                </p>
+                <div className="text-center py-12 px-4">
+                  <FileText className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+                  <p className="text-slate-400 text-sm">
+                    No manual entries yet.
+                  </p>
+                  <p className="text-slate-500 text-xs mt-1">
+                    Add your first entry using the form
+                  </p>
+                </div>
               ) : (
-                <div className="space-y-3 max-h-[600px] overflow-y-auto">
+                <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
                   {entries.map(entry => (
-                    <div key={entry.id} className="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+                    <div key={entry.id} className="p-4 bg-slate-700/50 rounded-lg border-2 border-slate-600 hover:border-corporate-500/50 transition-all">
                       <div className="flex justify-between items-start mb-2">
-                        <h4 className="font-medium text-white text-sm">{entry.title}</h4>
+                        <h4 className="font-semibold text-white text-sm leading-tight">{entry.title}</h4>
                         <button
                           onClick={() => handleDelete(entry.id)}
-                          className="text-slate-400 hover:text-ruby-400 transition-colors"
+                          className="text-slate-400 hover:text-ruby-400 transition-colors ml-2 flex-shrink-0"
+                          title="Delete entry"
                         >
                           <X className="w-4 h-4" />
                         </button>
                       </div>
-                      <div className="space-y-1">
-                        <p className="text-xs text-slate-400">
-                          <span className="badge badge-sm mr-2">{entry.type}</span>
-                          {entry.category}
-                        </p>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex items-center px-2 py-1 rounded-md bg-corporate-500/20 text-corporate-300 text-xs font-medium">
+                            {entry.type}
+                          </span>
+                          <span className="text-xs text-slate-300 font-medium">
+                            {entry.category}
+                          </span>
+                        </div>
                         {entry.description && (
-                          <p className="text-xs text-slate-500">{entry.description}</p>
+                          <p className="text-xs text-slate-400 leading-relaxed">{entry.description}</p>
                         )}
-                        <p className="text-xs text-slate-500">
-                          Date: {new Date(entry.date).toLocaleDateString()}
+                        <div className="text-xs text-slate-400 space-y-1">
+                          <div>
+                            <span className="text-slate-500">Date:</span> {new Date(entry.date).toLocaleDateString()}
+                          </div>
                           {entry.expiration_date && (
-                            <> • Expires: {new Date(entry.expiration_date).toLocaleDateString()}</>
+                            <div>
+                              <span className="text-slate-500">Expires:</span> {new Date(entry.expiration_date).toLocaleDateString()}
+                            </div>
                           )}
-                        </p>
+                        </div>
                       </div>
                     </div>
                   ))}
