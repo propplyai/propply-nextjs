@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Layout from '@/components/Layout';
+import ComplianceDisplay from '@/components/ComplianceDisplay';
 import { authHelpers, supabase } from '@/lib/supabase';
 import {
   Building2, ArrowLeft, AlertTriangle, CheckCircle, ChevronDown, ChevronRight,
@@ -117,7 +118,7 @@ export default function ComplianceReportPage() {
       // First, try to get the report with explicit user filtering
       // This works around potential RLS issues
       const { data, error } = await supabase
-        .from('nyc_compliance_reports')
+        .from('compliance_reports')
         .select('*')
         .eq('id', reportId)
         .eq('user_id', userId)
@@ -339,8 +340,11 @@ export default function ComplianceReportPage() {
           </div>
         </div>
 
-        {/* Equipment & Systems */}
-        <div className="space-y-4 mb-8">
+        {/* City-Aware Compliance Display */}
+        <ComplianceDisplay report={report} city={report.city} />
+
+        {/* DEPRECATED: Old equipment & systems sections below */}
+        <div className="space-y-4 mb-8 hidden">
           {/* Elevator Equipment */}
           <div className="card cursor-pointer" onClick={() => toggleSection('elevators')}>
             <div className="flex items-center justify-between">

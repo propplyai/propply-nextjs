@@ -221,7 +221,7 @@ export default function PropertyDetailPage() {
   const handleGenerateReport = async () => {
     setGenerating(true);
     setReportError('');
-    
+
     try {
       const response = await fetch('/api/properties/generate-compliance', {
         method: 'POST',
@@ -230,7 +230,8 @@ export default function PropertyDetailPage() {
         },
         body: JSON.stringify({
           address: `${property.address}, ${property.city}`,
-          propertyId: property.id
+          propertyId: property.id,
+          city: property.city // Pass city explicitly
         }),
       });
 
@@ -242,56 +243,88 @@ export default function PropertyDetailPage() {
 
       // The result IS the compliance data (has success, scores, data, property, etc.)
       const complianceData = result;
-      
-      // Save the full report to database
-      const { data: savedReport, error: saveError } = await supabase
-        .from('nyc_compliance_reports')
-        .insert([{
-          property_id: property.id,
-          user_id: user.id,
-          bin: complianceData.property.bin,
-          bbl: complianceData.property.bbl,
-          address: complianceData.property.address,
-          borough: complianceData.property.borough,
-          overall_score: complianceData.scores.overall_score,
-          hpd_score: complianceData.scores.hpd_score,
-          dob_score: complianceData.scores.dob_score,
-          hpd_violations_total: complianceData.scores.hpd_violations_active,
-          hpd_violations_active: complianceData.scores.hpd_violations_active,
-          dob_violations_total: complianceData.scores.dob_violations_active,
-          dob_violations_active: complianceData.scores.dob_violations_active,
+      const city = complianceData.city || property.city || 'NYC';
+
+      // Build city-specific insert data
+      let insertData = {
+        property_id: property.id,
+        user_id: user.id,
+        city: city,
+        overall_score: complianceData.scores.overall_score,
+        report_data: complianceData
+      };
+
+      // Add city-specific fields
+      if (city === 'Philadelphia') {
+        insertData = {
+          ...insertData,
+          opa_account: complianceData.property?.opa_account || null,
+          li_permits_total: complianceData.scores.li_permits_total || 0,
+          li_violations_active: complianceData.scores.li_violations_active || 0,
+          li_certifications_active: complianceData.scores.li_certifications_active || 0,
+          li_certifications_expired: complianceData.scores.li_certifications_expired || 0,
+          li_investigations_total: complianceData.scores.li_investigations_total || 0
+        };
+      } else {
+        // NYC
+        insertData = {
+          ...insertData,
+          bin: complianceData.property?.bin || null,
+          bbl: complianceData.property?.bbl || null,
+          hpd_violations_active: complianceData.scores.hpd_violations_active || 0,
+          dob_violations_active: complianceData.scores.dob_violations_active || 0,
           elevator_devices: complianceData.scores.elevator_devices || 0,
           boiler_devices: complianceData.scores.boiler_devices || 0,
-          electrical_permits: complianceData.scores.electrical_permits || 0,
-          report_data: complianceData
-        }])
+          electrical_permits: complianceData.scores.electrical_permits || 0
+        };
+      }
+
+      // Save the full report to database
+      const { data: savedReport, error: saveError } = await supabase
+        .from('compliance_reports')
+        .insert([insertData])
         .select()
         .single();
-      
+
       if (saveError) {
         console.error('Error saving report:', saveError);
+        throw new Error(`Failed to save report: ${saveError.message}`);
       }
-      
+
+      // Calculate total active violations (city-specific)
+      let activeViolations = 0;
+      if (city === 'Philadelphia') {
+        activeViolations = complianceData.scores.li_violations_active || 0;
+      } else {
+        activeViolations = (complianceData.scores.hpd_violations_active || 0) +
+                          (complianceData.scores.dob_violations_active || 0);
+      }
+
       // Update property summary
       await supabase
         .from('properties')
         .update({
           compliance_score: complianceData.scores.overall_score,
-          active_violations: complianceData.scores.hpd_violations_active + complianceData.scores.dob_violations_active
+          active_violations: activeViolations
         })
         .eq('id', property.id);
 
       // Reload property data
       await loadProperty(id, user.id);
-      
+
       // Redirect to detailed report page
       if (savedReport) {
         router.push(`/compliance/${savedReport.id}`);
         return;
       }
-      
+
+      // Show success message (city-specific)
       const scores = complianceData.scores;
-      alert(`✅ Property Data Retrieved Successfully!\n\n📊 Compliance Score: ${scores.overall_score}%\n\n🏗️ Violations Found:\n  • HPD: ${scores.hpd_violations_active}\n  • DOB: ${scores.dob_violations_active}\n\n🏢 Equipment Data:\n  • Elevators: ${scores.elevator_devices || 0}\n  • Boilers: ${scores.boiler_devices || 0}\n  • Electrical Permits: ${scores.electrical_permits || 0}`);
+      if (city === 'Philadelphia') {
+        alert(`✅ Property Data Retrieved Successfully!\n\n📊 Compliance Score: ${scores.overall_score}%\n\n🏗️ L&I Data Found:\n  • Active Violations: ${scores.li_violations_active}\n  • Total Permits: ${scores.li_permits_total}\n  • Active Certifications: ${scores.li_certifications_active}\n  • Investigations: ${scores.li_investigations_total}`);
+      } else {
+        alert(`✅ Property Data Retrieved Successfully!\n\n📊 Compliance Score: ${scores.overall_score}%\n\n🏗️ Violations Found:\n  • HPD: ${scores.hpd_violations_active}\n  • DOB: ${scores.dob_violations_active}\n\n🏢 Equipment Data:\n  • Elevators: ${scores.elevator_devices || 0}\n  • Boilers: ${scores.boiler_devices || 0}\n  • Electrical Permits: ${scores.electrical_permits || 0}`);
+      }
     } catch (error) {
       console.error('Error generating report:', error);
       const errorMsg = error.message || 'Unknown error occurred';
