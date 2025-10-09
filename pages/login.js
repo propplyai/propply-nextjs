@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import Image from 'next/image';
-import { Building2, Mail, Lock, Chrome, AlertCircle, Loader2 } from 'lucide-react';
+import { Mail, Lock, Chrome, AlertCircle, Loader2 } from 'lucide-react';
 import { authHelpers } from '@/lib/supabase';
+import AnimatedLogo from '@/components/AnimatedLogo';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -119,19 +119,11 @@ export default function LoginPage() {
       </div>
 
       <div className="relative z-10 w-full max-w-md">
-        {/* Logo */}
-        <Link href="/" className="flex items-center justify-center space-x-3 mb-8">
-          <Image src="/logo.svg" alt="Propply AI" width={128} height={128} className="w-32 h-32" />
-        </Link>
+        {/* Animated Logo */}
+        <AnimatedLogo isSignUp={isSignUp} />
 
         {/* Auth Card */}
         <div className="card">
-          <h1 className="text-3xl font-bold text-white mb-2 text-center">
-            {isSignUp ? 'Create Account' : 'Welcome Back'}
-          </h1>
-          <p className="text-slate-400 text-center mb-8">
-            {isSignUp ? 'Sign up to get started' : 'Sign in to your account'}
-          </p>
 
           {/* Error Message */}
           {error && (
