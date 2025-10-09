@@ -14,22 +14,37 @@ export default function Pricing() {
   useEffect(() => {
     // Only run when router is ready to avoid stale query params
     if (!router.isReady) return;
-    
+
     const autoCheckout = router.query.autoCheckout;
     console.log('[Pricing] Auto-checkout check:', { autoCheckout, allQuery: router.query, isReady: router.isReady });
-    
+
     if (autoCheckout) {
       console.log('[Pricing] Triggering auto-checkout for plan:', autoCheckout);
-      // Small delay to ensure component is fully mounted
-      setTimeout(() => {
-        handleCheckout(autoCheckout);
-      }, 500);
-      
+
+      // Wait for session to be fully established before triggering checkout
+      const triggerCheckout = async () => {
+        // Give the session a moment to be fully established after OAuth redirect
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Verify session exists before proceeding
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          console.log('[Pricing] Session confirmed, proceeding with checkout');
+          handleCheckout(autoCheckout);
+        } else {
+          console.error('[Pricing] No session found for auto-checkout');
+          // Redirect back to login if session is missing
+          router.push(`/login?redirect=${encodeURIComponent('/pricing')}&plan=${autoCheckout}`);
+        }
+      };
+
+      triggerCheckout();
+
       // Remove the query param after triggering
       setTimeout(() => {
         const { autoCheckout: _, ...restQuery } = router.query;
         router.replace({ query: restQuery }, undefined, { shallow: true });
-      }, 1000);
+      }, 1500);
     }
   }, [router.isReady, router.query.autoCheckout]);
 
@@ -92,24 +107,26 @@ export default function Pricing() {
     console.log('[Pricing] handleCheckout called with planId:', planId);
     try {
       setLoading(planId);
-      
+
       // Check if user is authenticated
       const { data: { session } } = await supabase.auth.getSession();
       console.log('[Pricing] Session check:', { hasSession: !!session, userId: session?.user?.id });
-      
+
       if (!session) {
         console.log('[Pricing] No session, redirecting to login');
-        // Redirect to login with return URL
-        router.push(`/login?redirect=${encodeURIComponent('/pricing')}&plan=${planId}`);
+        // Use current path for redirect, or /pricing if we're on the landing page
+        const currentPath = router.pathname === '/' ? '/pricing' : router.pathname;
+        const redirectUrl = currentPath + (router.asPath.includes('#') ? router.asPath.substring(router.asPath.indexOf('#')) : '');
+        router.push(`/login?redirect=${encodeURIComponent(redirectUrl)}&plan=${planId}`);
         return;
       }
-      
+
       console.log('[Pricing] Calling Stripe checkout API...');
-      
+
       // Get the access token from the session
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       const accessToken = currentSession?.access_token;
-      
+
       const response = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: {
@@ -125,7 +142,9 @@ export default function Pricing() {
       if (error) {
         if (error.includes('Unauthorized')) {
           // Session expired, redirect to login
-          router.push(`/login?redirect=${encodeURIComponent('/pricing')}&plan=${planId}`);
+          const currentPath = router.pathname === '/' ? '/pricing' : router.pathname;
+          const redirectUrl = currentPath + (router.asPath.includes('#') ? router.asPath.substring(router.asPath.indexOf('#')) : '');
+          router.push(`/login?redirect=${encodeURIComponent(redirectUrl)}&plan=${planId}`);
           return;
         }
         throw new Error(error);
