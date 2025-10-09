@@ -14,18 +14,22 @@ export default function AuthCallback() {
         // Check if we have a code in the URL (OAuth callback)
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const searchParams = new URLSearchParams(window.location.search);
-        
+
+        console.log('[Auth Callback] Full URL:', window.location.href);
+        console.log('[Auth Callback] Search params:', window.location.search);
+        console.log('[Auth Callback] Hash params:', window.location.hash);
+
         const code = searchParams.get('code');
         const error = searchParams.get('error');
         const error_description = searchParams.get('error_description');
-        
+
         // Handle OAuth errors
         if (error) {
           console.error('OAuth error:', error, error_description);
           router.push(`/login?error=${encodeURIComponent(error_description || error)}`);
           return;
         }
-        
+
         // If we have a code, the session should be automatically established
         // by Supabase's detectSessionInUrl option in the client config
         if (code) {
