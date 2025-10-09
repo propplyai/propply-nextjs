@@ -70,7 +70,7 @@ export default function AddPropertyPage() {
 
     try {
       // Insert property into database
-      const { data, error: insertError } = await supabase
+      const { data: property, error: insertError } = await supabase
         .from('properties')
         .insert([
           {
@@ -88,14 +88,119 @@ export default function AddPropertyPage() {
       if (insertError) throw insertError;
 
       setSuccess(true);
+
+      // Auto-fetch compliance data in background
+      console.log('[Add Property] Property created, auto-fetching compliance data...');
+
+      // Don't await - let it happen in background
+      fetchComplianceData(property).catch(err => {
+        console.error('[Add Property] Background compliance fetch failed:', err);
+        // Don't show error to user - they can manually fetch later
+      });
+
+      // Redirect to property page
       setTimeout(() => {
-        router.push(`/properties/${data.id}`);
+        router.push(`/properties/${property.id}`);
       }, 1500);
     } catch (err) {
       console.error('Error adding property:', err);
       setError(err.message || 'Failed to add property');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchComplianceData = async (property) => {
+    try {
+      console.log(`[Add Property] Fetching compliance data for ${property.city}...`);
+
+      const response = await fetch('/api/properties/generate-compliance', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          address: `${property.address}, ${property.city}`,
+          propertyId: property.id,
+          city: property.city
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch compliance data');
+      }
+
+      const complianceData = await response.json();
+      const city = complianceData.city || property.city || 'NYC';
+
+      console.log(`[Add Property] Compliance data received - Score: ${complianceData.scores?.overall_score}%`);
+
+      // Build city-specific insert data
+      let insertData = {
+        property_id: property.id,
+        user_id: user.id,
+        city: city,
+        overall_score: complianceData.scores.overall_score,
+        report_data: complianceData
+      };
+
+      // Add city-specific fields
+      if (city === 'Philadelphia') {
+        insertData = {
+          ...insertData,
+          opa_account: complianceData.property?.opa_account || null,
+          li_permits_total: complianceData.scores.li_permits_total || 0,
+          li_violations_active: complianceData.scores.li_violations_active || 0,
+          li_certifications_active: complianceData.scores.li_certifications_active || 0,
+          li_certifications_expired: complianceData.scores.li_certifications_expired || 0,
+          li_investigations_total: complianceData.scores.li_investigations_total || 0
+        };
+      } else {
+        // NYC
+        insertData = {
+          ...insertData,
+          bin: complianceData.property?.bin || null,
+          bbl: complianceData.property?.bbl || null,
+          hpd_violations_active: complianceData.scores.hpd_violations_active || 0,
+          dob_violations_active: complianceData.scores.dob_violations_active || 0,
+          elevator_devices: complianceData.scores.elevator_devices || 0,
+          boiler_devices: complianceData.scores.boiler_devices || 0,
+          electrical_permits: complianceData.scores.electrical_permits || 0
+        };
+      }
+
+      // Save compliance report
+      const { error: saveError } = await supabase
+        .from('compliance_reports')
+        .insert([insertData]);
+
+      if (saveError) {
+        console.error('[Add Property] Error saving compliance report:', saveError);
+        throw saveError;
+      }
+
+      // Calculate total active violations (city-specific)
+      let activeViolations = 0;
+      if (city === 'Philadelphia') {
+        activeViolations = complianceData.scores.li_violations_active || 0;
+      } else {
+        activeViolations = (complianceData.scores.hpd_violations_active || 0) +
+                          (complianceData.scores.dob_violations_active || 0);
+      }
+
+      // Update property with compliance data
+      await supabase
+        .from('properties')
+        .update({
+          compliance_score: complianceData.scores.overall_score,
+          active_violations: activeViolations
+        })
+        .eq('id', property.id);
+
+      console.log('[Add Property] Compliance data saved successfully');
+    } catch (error) {
+      console.error('[Add Property] Error in fetchComplianceData:', error);
+      throw error;
     }
   };
 

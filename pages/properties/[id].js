@@ -643,37 +643,35 @@ export default function PropertyDetailPage() {
             <div className="card">
               <h3 className="text-lg font-bold text-white mb-4">Actions</h3>
               <div className="space-y-3">
+                {latestReport && (
+                  <Link
+                    href={`/compliance/${latestReport.id}`}
+                    className="btn-primary w-full flex items-center justify-center"
+                  >
+                    <FileText className="w-5 h-5 mr-2" />
+                    View Compliance Data
+                  </Link>
+                )}
+                <Link
+                  href={`/properties/${property.id}/edit-compliance`}
+                  className="btn-secondary w-full flex items-center justify-center"
+                >
+                  <Edit className="w-5 h-5 mr-2" />
+                  Add Manual Entry
+                </Link>
                 <button
                   onClick={handleGenerateReport}
-                  disabled={generating || property.city !== 'NYC'}
-                  className="btn-primary w-full flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={generating}
+                  className="btn-secondary w-full flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <RefreshCw className={`w-5 h-5 mr-2 ${generating ? 'animate-spin' : ''}`} />
-                  {generating ? 'Fetching Data...' : 'Fetch NYC Property Data'}
+                  {generating ? 'Refreshing...' : 'Refresh Data'}
                 </button>
                 {reportError && (
                   <div className="text-sm text-ruby-400 bg-ruby-500/10 p-2 rounded border border-ruby-500/30">
                     {reportError}
                   </div>
                 )}
-                {property.city !== 'NYC' && (
-                  <div className="text-xs text-slate-400 text-center">
-                    NYC property data only available for NYC properties
-                  </div>
-                )}
-                {latestReport && (
-                  <Link
-                    href={`/compliance/${latestReport.id}`}
-                    className="btn-secondary w-full flex items-center justify-center"
-                  >
-                    <FileText className="w-5 h-5 mr-2" />
-                    View Property Data
-                  </Link>
-                )}
-                <button className="btn-secondary w-full flex items-center justify-center">
-                  <Edit className="w-5 h-5 mr-2" />
-                  Edit Property
-                </button>
                 <button
                   onClick={handleDelete}
                   disabled={deleting}
