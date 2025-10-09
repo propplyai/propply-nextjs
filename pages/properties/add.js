@@ -139,6 +139,7 @@ export default function AddPropertyPage() {
       let insertData = {
         property_id: property.id,
         user_id: user.id,
+        report_type: 'full_compliance', // Add required report_type field
         city: city,
         overall_score: complianceData.scores.overall_score,
         report_data: complianceData

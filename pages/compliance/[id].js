@@ -135,6 +135,22 @@ export default function ComplianceReportPage() {
         } : null 
       });
 
+      // If no data found, let's check if the report exists at all
+      if (!data && !error) {
+        console.log('[Compliance Page] No data returned, checking if report exists for any user...');
+        const { data: anyReport, error: anyError } = await supabase
+          .from('compliance_reports')
+          .select('id, user_id, created_at')
+          .eq('id', reportId)
+          .single();
+        
+        if (anyReport) {
+          console.log('[Compliance Page] Report exists but belongs to different user:', anyReport.user_id);
+        } else {
+          console.log('[Compliance Page] Report does not exist in database at all');
+        }
+      }
+
       if (error) {
         console.error('[Compliance Page] Database error:', error);
         console.error('[Compliance Page] Error code:', error.code);
