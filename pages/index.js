@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Building2, Shield, BarChart3, Zap, CheckCircle, ArrowRight } from 'lucide-react';
-import Pricing from '@/components/Pricing';
+import AnimatedCubeHero from '@/components/AnimatedCubeHero';
 
 export default function LandingPage() {
   const router = useRouter();
@@ -86,29 +86,10 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* Hero Section */}
+      {/* Hero Section with Animated Cubes */}
       <section className="relative z-10 pt-20 pb-32">
         <div className="container-modern">
-          <div className="text-center max-w-4xl mx-auto">
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 animate-fade-in">
-              <span className="gradient-text">Intelligent Property</span>
-              <br />
-              <span className="text-white">Compliance Management</span>
-            </h1>
-            <p className="text-xl text-slate-300 mb-8 leading-relaxed">
-              Streamline property compliance for NYC and Philadelphia with AI-powered insights,
-              automated reporting, and real-time monitoring.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-              <Link href="/login?signup=true" className="btn-primary text-lg group">
-                Start Free Trial
-                <ArrowRight className="w-5 h-5 ml-2 inline group-hover:translate-x-1 transition-transform" />
-              </Link>
-              <Link href="/demo" className="btn-outline text-lg">
-                View Demo
-              </Link>
-            </div>
-          </div>
+          <AnimatedCubeHero />
         </div>
       </section>
 
@@ -176,8 +157,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <Pricing />
+      {/* Pricing moved to dedicated /pricing page */}
 
       {/* CTA Section */}
       <section className="relative z-10 py-20">
