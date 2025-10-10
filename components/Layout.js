@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import Image from 'next/image';
-import { Home, Building2, FileCheck, ShoppingBag, BarChart3, LogOut, User } from 'lucide-react';
+import { Home, Building2, FileCheck, ShoppingBag, BarChart3, LogOut, User, CreditCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function Layout({ children, user, onLogout }) {
@@ -11,6 +11,7 @@ export default function Layout({ children, user, onLogout }) {
     { name: 'Dashboard', href: '/dashboard', icon: Home },
     { name: 'Compliance', href: '/compliance', icon: FileCheck },
     { name: 'Marketplace', href: '/marketplace', icon: ShoppingBag },
+    { name: 'Pricing', href: '/pricing', icon: CreditCard },
   ];
 
   const isActive = (href) => router.pathname === href || router.pathname.startsWith(href + '/');
