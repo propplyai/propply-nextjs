@@ -18,11 +18,11 @@ import { cn, authenticatedFetch } from '@/lib/utils';
 const CATEGORY_INFO = {
   hpd: {
     name: 'General Contractors & Property Maintenance',
-    description: 'For HPD violations and general property repairs'
+    description: 'For code violations and general property repairs'
   },
   dob: {
     name: 'Structural Engineers & Building Code',
-    description: 'For DOB violations and structural issues'
+    description: 'For structural violations and building code issues'
   },
   elevator: {
     name: 'Elevator Services',

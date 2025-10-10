@@ -58,13 +58,36 @@ export default async function handler(req, res) {
         .single();
 
       if (report && !reportError) {
-        violationData = {
-          hpd_violations_active: report.hpd_violations_active || 0,
-          dob_violations_active: report.dob_violations_active || 0,
-          elevator_devices: report.elevator_devices || 0,
-          boiler_devices: report.boiler_devices || 0,
-          electrical_permits: report.electrical_permits || 0
-        };
+        // Extract violation data based on city
+        const reportCity = report.city || 'NYC'; // Default to NYC for backward compatibility
+
+        if (reportCity === 'Philadelphia' || reportCity === 'Philly') {
+          // Philadelphia L&I data structure
+          const reportData = report.report_data || {};
+          const scores = reportData.scores || {};
+
+          violationData = {
+            // Philadelphia L&I fields
+            li_violations_active: scores.li_violations_active || report.li_violations_active || 0,
+            li_violations_total: scores.li_violations_total || report.li_violations_total || 0,
+            li_permits_total: scores.li_permits_total || report.li_permits_total || 0,
+            li_permits_recent: scores.li_permits_recent || report.li_permits_recent || 0,
+            li_investigations_total: scores.li_investigations_total || report.li_investigations_total || 0,
+            li_appeals_total: scores.li_appeals_total || report.li_appeals_total || 0,
+            li_certifications_expired: scores.li_certifications_expired || report.li_certifications_expired || 0,
+            city: reportCity
+          };
+        } else {
+          // NYC data structure
+          violationData = {
+            hpd_violations_active: report.hpd_violations_active || 0,
+            dob_violations_active: report.dob_violations_active || 0,
+            elevator_devices: report.elevator_devices || 0,
+            boiler_devices: report.boiler_devices || 0,
+            electrical_permits: report.electrical_permits || 0,
+            city: reportCity
+          };
+        }
       }
     }
 
@@ -82,13 +105,37 @@ export default async function handler(req, res) {
       }
 
       searchAddress = report.properties.address;
-      violationData = {
-        hpd_violations_active: report.hpd_violations_active || 0,
-        dob_violations_active: report.dob_violations_active || 0,
-        elevator_devices: report.elevator_devices || 0,
-        boiler_devices: report.boiler_devices || 0,
-        electrical_permits: report.electrical_permits || 0
-      };
+
+      // Extract violation data based on city
+      const reportCity = report.city || 'NYC'; // Default to NYC for backward compatibility
+
+      if (reportCity === 'Philadelphia' || reportCity === 'Philly') {
+        // Philadelphia L&I data structure
+        const reportData = report.report_data || {};
+        const scores = reportData.scores || {};
+
+        violationData = {
+          // Philadelphia L&I fields
+          li_violations_active: scores.li_violations_active || report.li_violations_active || 0,
+          li_violations_total: scores.li_violations_total || report.li_violations_total || 0,
+          li_permits_total: scores.li_permits_total || report.li_permits_total || 0,
+          li_permits_recent: scores.li_permits_recent || report.li_permits_recent || 0,
+          li_investigations_total: scores.li_investigations_total || report.li_investigations_total || 0,
+          li_appeals_total: scores.li_appeals_total || report.li_appeals_total || 0,
+          li_certifications_expired: scores.li_certifications_expired || report.li_certifications_expired || 0,
+          city: reportCity
+        };
+      } else {
+        // NYC data structure
+        violationData = {
+          hpd_violations_active: report.hpd_violations_active || 0,
+          dob_violations_active: report.dob_violations_active || 0,
+          elevator_devices: report.elevator_devices || 0,
+          boiler_devices: report.boiler_devices || 0,
+          electrical_permits: report.electrical_permits || 0,
+          city: reportCity
+        };
+      }
     }
 
     // Validate we have an address to search
@@ -111,7 +158,12 @@ export default async function handler(req, res) {
       searchCategories = ['hpd', 'dob', 'elevator', 'boiler', 'electrical', 'fire_safety'];
     }
 
+    const detectedCity = violationData?.city || 'Unknown';
+    console.log(`[API /marketplace/search] City: ${detectedCity}`);
     console.log(`[API /marketplace/search] Searching for ${searchCategories.join(', ')} near ${searchAddress}`);
+    if (violationData) {
+      console.log(`[API /marketplace/search] Violation data:`, JSON.stringify(violationData, null, 2));
+    }
 
     // Check cache first
     // Note: We need to fetch all matching addresses and filter by categories in JS
