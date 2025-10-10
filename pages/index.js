@@ -180,40 +180,38 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="relative z-10 border-t border-slate-700/50 bg-slate-900/80 backdrop-blur-xl">
         <div className="container-modern py-12">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center space-x-3 mb-4">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+            {/* Logo and Tagline */}
+            <div className="flex flex-col items-center md:items-start">
+              <div className="flex items-center space-x-3 mb-3">
                 <Image src="/logo.svg" alt="Propply AI" width={112} height={112} className="w-28 h-28" />
               </div>
-              <p className="text-slate-400 text-sm">
+              <p className="text-slate-400 text-sm text-center md:text-left max-w-xs">
                 Intelligent property compliance management for modern property managers.
               </p>
             </div>
-            <div>
-              <h4 className="text-white font-semibold mb-4">Product</h4>
-              <ul className="space-y-2">
-                <li><Link href="/features" className="text-slate-400 hover:text-white text-sm transition-colors">Features</Link></li>
-                <li><Link href="/pricing" className="text-slate-400 hover:text-white text-sm transition-colors">Pricing</Link></li>
-                <li><Link href="/demo" className="text-slate-400 hover:text-white text-sm transition-colors">Demo</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-white font-semibold mb-4">Company</h4>
-              <ul className="space-y-2">
-                <li><Link href="/about" className="text-slate-400 hover:text-white text-sm transition-colors">About</Link></li>
-                <li><Link href="/blog" className="text-slate-400 hover:text-white text-sm transition-colors">Blog</Link></li>
-                <li><Link href="/careers" className="text-slate-400 hover:text-white text-sm transition-colors">Careers</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-white font-semibold mb-4">Support</h4>
-              <ul className="space-y-2">
-                <li><Link href="/help" className="text-slate-400 hover:text-white text-sm transition-colors">Help Center</Link></li>
-                <li><Link href="/contact" className="text-slate-400 hover:text-white text-sm transition-colors">Contact</Link></li>
-                <li><Link href="/status" className="text-slate-400 hover:text-white text-sm transition-colors">Status</Link></li>
-              </ul>
+
+            {/* Footer Links */}
+            <div className="flex flex-wrap items-center justify-center gap-6">
+              <Link href="/features" className="text-slate-400 hover:text-white text-sm transition-colors">
+                Features
+              </Link>
+              <Link href="/pricing" className="text-slate-400 hover:text-white text-sm transition-colors">
+                Pricing
+              </Link>
+              <Link href="/terms" className="text-slate-400 hover:text-white text-sm transition-colors">
+                Terms of Service
+              </Link>
+              <Link href="/privacy" className="text-slate-400 hover:text-white text-sm transition-colors">
+                Privacy
+              </Link>
+              <Link href="/contact" className="text-slate-400 hover:text-white text-sm transition-colors">
+                Contact
+              </Link>
             </div>
           </div>
+
+          {/* Copyright */}
           <div className="border-t border-slate-700/50 mt-8 pt-8 text-center">
             <p className="text-slate-400 text-sm">
               © {new Date().getFullYear()} Propply AI. All rights reserved.
