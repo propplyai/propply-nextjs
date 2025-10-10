@@ -104,43 +104,50 @@ class PhillyEnhancedDataClient:
             logger.error(f"Error executing ArcGIS query: {e}")
             return []
     
-    def get_li_building_permits(self, address: str = None, 
+    def get_li_building_permits(self, address: str = None,
                                start_date: str = None, end_date: str = None,
-                               permit_type: str = None) -> List[Dict]:
+                               permit_type: str = None,
+                               years_back: int = 3) -> List[Dict]:
         """
-        Get L&I Building & Zoning Permits (2007–Present)
-        
+        Get L&I Building & Zoning Permits (Recent Records Only)
+
         This dataset includes comprehensive permit records for construction and related activities
         issued by the Department of Licenses & Inspections (L&I). Includes building permits
         (structural work, equipment installations) and zoning permits (land use approvals).
-        
+
         Args:
             address: Filter by address (partial match)
             start_date: Filter permits from this date (YYYY-MM-DD)
             end_date: Filter permits to this date (YYYY-MM-DD)
             permit_type: Filter by permit type (e.g., 'Residential Building Permit', 'Mechanical')
-            
+            years_back: Number of years of history to retrieve (default: 3)
+
         Returns:
-            List of building permit records
+            List of building permit records from the last 'years_back' years
         """
         try:
             # Build SQL query for Carto API
             where_conditions = []
-            
+
             if address:
                 # Extract just the street address part (before comma)
                 street_address = address.split(',')[0].strip()
                 where_conditions.append(f"address ILIKE '%{street_address}%'")
-            
+
+            # Default to recent data only (last 'years_back' years) unless explicit dates provided
             if start_date:
                 where_conditions.append(f"permitissuedate >= '{start_date}'")
-            
+            else:
+                # Calculate cutoff date for recent data
+                cutoff_date = (datetime.now() - timedelta(days=years_back*365)).strftime('%Y-%m-%d')
+                where_conditions.append(f"permitissuedate >= '{cutoff_date}'")
+
             if end_date:
                 where_conditions.append(f"permitissuedate <= '{end_date}'")
-            
+
             if permit_type:
                 where_conditions.append(f"permittype ILIKE '%{permit_type}%'")
-            
+
             where_clause = " AND ".join(where_conditions) if where_conditions else "1=1"
             
             sql_query = f"""
@@ -167,42 +174,49 @@ class PhillyEnhancedDataClient:
             logger.error(f"Error getting L&I building permits: {e}")
             return []
     
-    def get_li_code_violations(self, address: str = None, 
-                              status: str = None, 
+    def get_li_code_violations(self, address: str = None,
+                              status: str = None,
                               violation_type: str = None,
-                              start_date: str = None) -> List[Dict]:
+                              start_date: str = None,
+                              years_back: int = 3) -> List[Dict]:
         """
-        Get L&I Code Violations (Property Violations)
-        
+        Get L&I Code Violations (Recent Records Only)
+
         All code enforcement violations issued by L&I for building safety, property maintenance,
         and other code non-compliance. Covers violations of Philadelphia's Building Construction
         and Occupancy Code.
-        
+
         Args:
             address: Filter by address (partial match)
             status: Filter by violation status (e.g., 'open', 'corrected', 'complied')
             violation_type: Filter by violation type/category
             start_date: Filter violations from this date (YYYY-MM-DD)
-            
+            years_back: Number of years of history to retrieve (default: 3)
+
         Returns:
-            List of code violation records
+            List of code violation records from the last 'years_back' years
         """
         try:
             where_conditions = []
-            
+
             if address:
                 # Extract just the street address part (before comma)
                 street_address = address.split(',')[0].strip()
                 where_conditions.append(f"address ILIKE '%{street_address}%'")
-            
+
             if status:
                 where_conditions.append(f"violationstatus = '{status}'")
-            
+
             if violation_type:
                 where_conditions.append(f"violationcodetitle ILIKE '%{violation_type}%'")
-            
+
+            # Default to recent data only (last 'years_back' years) unless explicit date provided
             if start_date:
                 where_conditions.append(f"violationdate >= '{start_date}'")
+            else:
+                # Calculate cutoff date for recent data
+                cutoff_date = (datetime.now() - timedelta(days=years_back*365)).strftime('%Y-%m-%d')
+                where_conditions.append(f"violationdate >= '{cutoff_date}'")
             
             where_clause = " AND ".join(where_conditions) if where_conditions else "1=1"
             
@@ -307,37 +321,44 @@ class PhillyEnhancedDataClient:
             logger.error(f"Error getting L&I building certification summary: {e}")
             return []
     
-    def get_li_case_investigations(self, address: str = None, 
+    def get_li_case_investigations(self, address: str = None,
                                  investigation_type: str = None,
-                                 start_date: str = None) -> List[Dict]:
+                                 start_date: str = None,
+                                 years_back: int = 3) -> List[Dict]:
         """
-        Get L&I Case Investigations (Inspection History)
-        
+        Get L&I Case Investigations (Recent Inspection History)
+
         Records of inspections/investigations that L&I inspectors conduct, usually in response
         to code complaints or property maintenance issues. Logs each time an inspector went
         to a property to investigate potential violations.
-        
+
         Args:
             address: Filter by address (partial match)
             investigation_type: Filter by investigation type (e.g., 'Property Maintenance Inspection', 'Fire Code Inspection')
             start_date: Filter investigations from this date (YYYY-MM-DD)
-            
+            years_back: Number of years of history to retrieve (default: 3)
+
         Returns:
-            List of case investigation records
+            List of case investigation records from the last 'years_back' years
         """
         try:
             where_conditions = []
-            
+
             if address:
                 # Extract just the street address part (before comma)
                 street_address = address.split(',')[0].strip()
                 where_conditions.append(f"address ILIKE '%{street_address}%'")
-            
+
             if investigation_type:
                 where_conditions.append(f"casetype ILIKE '%{investigation_type}%'")
-            
+
+            # Default to recent data only (last 'years_back' years) unless explicit date provided
             if start_date:
                 where_conditions.append(f"investigationcompleted >= '{start_date}'")
+            else:
+                # Calculate cutoff date for recent data
+                cutoff_date = (datetime.now() - timedelta(days=years_back*365)).strftime('%Y-%m-%d')
+                where_conditions.append(f"investigationcompleted >= '{cutoff_date}'")
             
             where_clause = " AND ".join(where_conditions) if where_conditions else "1=1"
             
@@ -400,13 +421,13 @@ class PhillyEnhancedDataClient:
     def get_imminently_dangerous_buildings(self, address: str = None) -> List[Dict]:
         """
         Get Imminently Dangerous Buildings data
-        
+
         Subset of violations data highlighting structures in imminent danger of collapse.
         Available as separate dataset with ArcGIS REST API.
-        
+
         Args:
             address: Filter by address (partial match)
-            
+
         Returns:
             List of imminently dangerous building records
         """
@@ -414,18 +435,89 @@ class PhillyEnhancedDataClient:
             # This would use a separate ArcGIS endpoint for imminently dangerous buildings
             # The exact URL would need to be determined from the research
             params = {}
-            
+
             if address:
                 # Extract just the street address part (before comma)
                 street_address = address.split(',')[0].strip()
                 params['where'] = f"address ILIKE '%{street_address}%'"
-            
+
             # Placeholder - would need actual imminently dangerous buildings endpoint
             logger.warning("Imminently dangerous buildings endpoint not yet implemented")
             return []
-            
+
         except Exception as e:
             logger.error(f"Error getting imminently dangerous buildings: {e}")
+            return []
+
+    def get_li_appeals(self, address: str = None,
+                      appeal_status: str = None,
+                      start_date: str = None,
+                      years_back: int = 3) -> List[Dict]:
+        """
+        Get L&I Appeals (Zoning Board Appeals and Property History)
+
+        Records of appeals filed with the Zoning Board of Adjustment and other L&I appeals.
+        Part of comprehensive property history showing challenges to L&I decisions.
+
+        Args:
+            address: Filter by address (partial match)
+            appeal_status: Filter by status (e.g., 'OPEN', 'CLOSED', 'GRANTED')
+            start_date: Filter appeals from this date (YYYY-MM-DD)
+            years_back: Number of years of history to retrieve (default: 3)
+
+        Returns:
+            List of appeal records from the last 'years_back' years
+        """
+        try:
+            where_conditions = []
+
+            if address:
+                # Extract just the street address part (before comma)
+                street_address = address.split(',')[0].strip()
+                where_conditions.append(f"address ILIKE '%{street_address}%'")
+
+            if appeal_status:
+                where_conditions.append(f"appealstatus = '{appeal_status}'")
+
+            # Default to recent data only (last 'years_back' years) unless explicit date provided
+            if start_date:
+                where_conditions.append(f"createddate >= '{start_date}'")
+            else:
+                # Calculate cutoff date for recent data
+                cutoff_date = (datetime.now() - timedelta(days=years_back*365)).strftime('%Y-%m-%d')
+                where_conditions.append(f"createddate >= '{cutoff_date}'")
+
+            where_clause = " AND ".join(where_conditions) if where_conditions else "1=1"
+
+            sql_query = f"""
+                SELECT
+                    appealnumber,
+                    createddate,
+                    completeddate,
+                    appealstatus as status,
+                    appealtype,
+                    decision,
+                    decisiondate,
+                    address,
+                    parcel_id_num as bin,
+                    opa_account_num as opa_account,
+                    primaryappellant as appellant,
+                    appellanttype,
+                    applicationtype,
+                    agendadescription,
+                    scheduleddate,
+                    meetingresult,
+                    proviso
+                FROM appeals
+                WHERE {where_clause}
+                ORDER BY createddate DESC
+                LIMIT 1000
+            """
+
+            return self._make_carto_query(sql_query)
+
+        except Exception as e:
+            logger.error(f"Error getting L&I appeals: {e}")
             return []
     
     def parse_boiler_device_info(self, permit_data: Dict) -> Dict[str, Any]:
@@ -747,25 +839,27 @@ class PhillyEnhancedDataClient:
                 'data_retrieved_at': datetime.now().isoformat()
             }
 
-    def get_comprehensive_property_data(self, address: str) -> Dict[str, Any]:
+    def get_comprehensive_property_data(self, address: str, years_back: int = 3) -> Dict[str, Any]:
         """
-        Get comprehensive property data from all available Philadelphia datasets
-        
+        Get comprehensive property data from all available Philadelphia datasets (recent data only)
+
         Args:
             address: Property address to query
-            
+            years_back: Number of years of history to retrieve (default: 3)
+
         Returns:
-            Dictionary containing all available data for the property
+            Dictionary containing all available data for the property from the last 'years_back' years
         """
         try:
-            logger.info(f"Getting comprehensive data for: {address}")
-            
-            # Get data from all available sources
-            permits = self.get_li_building_permits(address)
-            violations = self.get_li_code_violations(address)
-            certifications = self.get_li_building_certifications(address)
+            logger.info(f"Getting comprehensive data for: {address} (last {years_back} years)")
+
+            # Get data from all available sources - all with date filtering
+            permits = self.get_li_building_permits(address, years_back=years_back)
+            violations = self.get_li_code_violations(address, years_back=years_back)
+            certifications = self.get_li_building_certifications(address)  # Already filtered by status
             certification_summary = self.get_li_building_certification_summary(address)
-            investigations = self.get_li_case_investigations(address)
+            investigations = self.get_li_case_investigations(address, years_back=years_back)
+            appeals = self.get_li_appeals(address, years_back=years_back)
             
             # Calculate compliance metrics
             open_violations = [v for v in violations if v.get('status') and v.get('status').upper() in ['OPEN', 'ACTIVE']]
@@ -798,6 +892,7 @@ class PhillyEnhancedDataClient:
             return {
                 'address': address,
                 'data_retrieved_at': datetime.now().isoformat(),
+                'data_period': f'Last {years_back} years',
                 'permits': {
                     'total': len(permits),
                     'recent': recent_permit_count,
@@ -820,11 +915,16 @@ class PhillyEnhancedDataClient:
                     'total': len(investigations),
                     'records': investigations
                 },
+                'appeals': {
+                    'total': len(appeals),
+                    'records': appeals
+                },
                 'compliance_summary': {
                     'compliance_score': compliance_score,
                     'total_violations': total_violations,
                     'open_violations': open_violation_count,
                     'recent_permits': recent_permit_count,
+                    'appeals_total': len(appeals),
                     'last_updated': datetime.now().isoformat()
                 }
             }

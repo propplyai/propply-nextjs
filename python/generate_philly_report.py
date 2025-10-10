@@ -43,8 +43,10 @@ def get_philly_compliance_data(address: str) -> Dict:
             'li_certifications': property_data.get('certifications', {}).get('records', []),
             'certification_summary': property_data.get('certification_summary', {}).get('records', []),
             'li_investigations': property_data.get('investigations', {}).get('records', []),
+            'li_appeals': property_data.get('appeals', {}).get('records', []),
             'compliance_summary': property_data.get('compliance_summary', {}),
-            'data_retrieved_at': property_data.get('data_retrieved_at')
+            'data_retrieved_at': property_data.get('data_retrieved_at'),
+            'data_period': property_data.get('data_period', 'Last 3 years')
         }
     except Exception as e:
         print(f"Error getting Philadelphia compliance data: {e}", file=sys.stderr)
@@ -54,8 +56,10 @@ def get_philly_compliance_data(address: str) -> Dict:
             'li_certifications': [],
             'certification_summary': [],
             'li_investigations': [],
+            'li_appeals': [],
             'compliance_summary': {},
-            'data_retrieved_at': datetime.now().isoformat()
+            'data_retrieved_at': datetime.now().isoformat(),
+            'data_period': 'Last 3 years'
         }
 
 def calculate_philly_scores(compliance_data: Dict) -> Dict:
@@ -67,6 +71,7 @@ def calculate_philly_scores(compliance_data: Dict) -> Dict:
     certifications = compliance_data.get('li_certifications', [])
     cert_summary = compliance_data.get('certification_summary', [])
     investigations = compliance_data.get('li_investigations', [])
+    appeals = compliance_data.get('li_appeals', [])
 
     # Count active violations (open/active status)
     active_violations = len([
@@ -117,6 +122,7 @@ def calculate_philly_scores(compliance_data: Dict) -> Dict:
         'li_certifications_active': active_certs,
         'li_certifications_expired': expired_certs,
         'li_investigations_total': len(investigations),
+        'li_appeals_total': len(appeals),
         'compliance_score': overall_score
     }
 
@@ -142,9 +148,11 @@ def generate_philly_report(address: str) -> Dict:
     scores = calculate_philly_scores(compliance_data)
 
     print(f"[Philly API] Report complete - Score: {scores['overall_score']}%", file=sys.stderr)
+    print(f"[Philly API] - Period: {compliance_data.get('data_period', 'Last 3 years')}", file=sys.stderr)
     print(f"[Philly API] - Violations: {scores['li_violations_active']} active / {scores['li_violations_total']} total", file=sys.stderr)
     print(f"[Philly API] - Permits: {scores['li_permits_recent']} recent / {scores['li_permits_total']} total", file=sys.stderr)
     print(f"[Philly API] - Certifications: {scores['li_certifications_active']} active, {scores['li_certifications_expired']} expired", file=sys.stderr)
+    print(f"[Philly API] - Appeals: {scores['li_appeals_total']} total", file=sys.stderr)
 
     # Build response
     report = {
@@ -157,9 +165,11 @@ def generate_philly_report(address: str) -> Dict:
             'li_violations': compliance_data['li_violations'][:50],
             'li_certifications': compliance_data['li_certifications'][:50],
             'certification_summary': compliance_data['certification_summary'][:50],
-            'li_investigations': compliance_data['li_investigations'][:50]
+            'li_investigations': compliance_data['li_investigations'][:50],
+            'li_appeals': compliance_data['li_appeals'][:50]
         },
-        'generated_at': compliance_data.get('data_retrieved_at', datetime.now().isoformat())
+        'generated_at': compliance_data.get('data_retrieved_at', datetime.now().isoformat()),
+        'data_period': compliance_data.get('data_period', 'Last 3 years')
     }
 
     return report
