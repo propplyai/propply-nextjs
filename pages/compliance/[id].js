@@ -286,6 +286,19 @@ export default function ComplianceReportPage() {
   const scores = reportData.scores || {};
   const data = reportData.data || {};
 
+  // Detect city - support multiple formats
+  const isPhilly = report.city === 'Philadelphia' || report.city === 'Philly';
+  const isNYC = !isPhilly; // Default to NYC for backward compatibility
+
+  // Calculate violations based on city
+  const totalViolations = isPhilly
+    ? (scores.li_violations_total || report.li_violations_total || 0)
+    : ((report.hpd_violations_total || 0) + (report.dob_violations_total || 0));
+
+  const activeViolations = isPhilly
+    ? (scores.li_violations_active || report.li_violations_active || 0)
+    : ((report.hpd_violations_active || 0) + (report.dob_violations_active || 0));
+
   return (
     <Layout user={user} onLogout={handleLogout}>
       <div className="container-modern py-8">
@@ -298,7 +311,7 @@ export default function ComplianceReportPage() {
           Back to Compliance
         </Link>
 
-        {/* Compact Property Header */}
+        {/* Compact Property Header - Morphs based on city */}
         <div className="card mb-6 bg-gradient-to-br from-slate-800/80 to-slate-900/80 border-corporate-500/20">
           {/* Top Section: Address and Stats */}
           <div className="flex items-start justify-between gap-6 mb-6">
@@ -306,15 +319,49 @@ export default function ComplianceReportPage() {
             <div className="flex-1 min-w-0">
               <h1 className="text-3xl font-bold text-white mb-3">{report.address}</h1>
               <div className="flex items-center gap-4 text-sm text-slate-400">
-                <span className="flex items-center gap-1">
-                  <span className="text-slate-500">BIN:</span>
-                  <span className="text-slate-300 font-medium">{report.bin}</span>
-                </span>
-                <span className="text-slate-600">•</span>
-                <span className="flex items-center gap-1">
-                  <span className="text-slate-500">BBL:</span>
-                  <span className="text-slate-300 font-medium">{report.bbl}</span>
-                </span>
+                {/* NYC Property Identifiers */}
+                {isNYC && (
+                  <>
+                    <span className="flex items-center gap-1">
+                      <span className="text-slate-500">BIN:</span>
+                      <span className="text-slate-300 font-medium">{report.bin}</span>
+                    </span>
+                    <span className="text-slate-600">•</span>
+                    <span className="flex items-center gap-1">
+                      <span className="text-slate-500">BBL:</span>
+                      <span className="text-slate-300 font-medium">{report.bbl}</span>
+                    </span>
+                  </>
+                )}
+
+                {/* Philadelphia Property Identifiers */}
+                {isPhilly && (
+                  <>
+                    <span className="flex items-center gap-1">
+                      <span className="text-slate-500">City:</span>
+                      <span className="text-slate-300 font-medium">Philadelphia</span>
+                    </span>
+                    {report.opa_account && (
+                      <>
+                        <span className="text-slate-600">•</span>
+                        <span className="flex items-center gap-1">
+                          <span className="text-slate-500">OPA:</span>
+                          <span className="text-slate-300 font-medium">{report.opa_account}</span>
+                        </span>
+                      </>
+                    )}
+                    {report.parcel_id && (
+                      <>
+                        <span className="text-slate-600">•</span>
+                        <span className="flex items-center gap-1">
+                          <span className="text-slate-500">Parcel:</span>
+                          <span className="text-slate-300 font-medium">{report.parcel_id}</span>
+                        </span>
+                      </>
+                    )}
+                  </>
+                )}
+
                 <span className="text-slate-600">•</span>
                 <span className="flex items-center gap-1">
                   <span className="text-slate-500">Updated:</span>
@@ -322,21 +369,21 @@ export default function ComplianceReportPage() {
                 </span>
               </div>
             </div>
-            
-            {/* Right: Stats Grid */}
+
+            {/* Right: Stats Grid - Morphs based on city */}
             <div className="flex items-center gap-3 flex-shrink-0">
               {/* Total Violations */}
               <div className="text-center px-5 py-3 bg-slate-700/40 rounded-xl border border-slate-600/40 min-w-[110px]">
-                <div className="text-3xl font-bold text-white mb-0.5">{report.hpd_violations_total + report.dob_violations_total}</div>
+                <div className="text-3xl font-bold text-white mb-0.5">{totalViolations}</div>
                 <div className="text-xs text-slate-400 font-medium">Total Violations</div>
               </div>
-              
+
               {/* Active Violations */}
               <div className="text-center px-5 py-3 bg-ruby-500/15 rounded-xl border border-ruby-500/40 min-w-[110px]">
-                <div className="text-3xl font-bold text-ruby-400 mb-0.5">{report.hpd_violations_active + report.dob_violations_active}</div>
+                <div className="text-3xl font-bold text-ruby-400 mb-0.5">{activeViolations}</div>
                 <div className="text-xs text-slate-400 font-medium">Active Violations</div>
               </div>
-              
+
               {/* Compliance Score */}
               <div className="text-center px-6 py-3 bg-corporate-500/15 rounded-xl border border-corporate-500/40 min-w-[120px]">
                 <div className="text-4xl font-bold text-corporate-400 mb-0.5">{report.overall_score}%</div>
@@ -344,12 +391,14 @@ export default function ComplianceReportPage() {
               </div>
             </div>
           </div>
-          
+
           {/* Bottom Section: Records Header */}
           <div className="pt-5 border-t border-slate-700/50">
             <div className="flex items-center gap-2">
               <Building2 className="w-5 h-5 text-corporate-400" />
-              <h2 className="text-lg font-semibold text-white">Detailed Property Records</h2>
+              <h2 className="text-lg font-semibold text-white">
+                {isPhilly ? 'Philadelphia L&I Records' : 'Detailed Property Records'}
+              </h2>
               <span className="text-sm text-slate-500 ml-1">Click any category to expand</span>
             </div>
           </div>
@@ -889,36 +938,260 @@ export default function ComplianceReportPage() {
         </div>
         )}
 
-        {/* Philadelphia Compliance Display - Use ComplianceDisplay component */}
+        {/* Philadelphia Compliance Display */}
         {(report.city === 'Philadelphia' || report.city === 'Philly') && (
           <div className="space-y-4 mb-8">
-            <div className="card bg-gradient-to-br from-slate-800/80 to-slate-900/80 border-corporate-500/20">
-              <div className="p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-corporate-500/10 rounded-lg flex items-center justify-center">
-                    <Building2 className="w-5 h-5 text-corporate-400" />
+            {/* L&I Permits */}
+            <div className="card cursor-pointer" onClick={() => toggleSection('li_permits')}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-corporate-500/10 rounded-xl flex items-center justify-center">
+                    <CheckCircle className="w-6 h-6 text-corporate-400" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-white">Philadelphia L&I Compliance Data</h2>
-                    <p className="text-sm text-slate-400">Licenses & Inspections Department records</p>
+                    <h3 className="text-lg font-semibold text-white">L&I Building Permits</h3>
+                    <p className="text-sm text-slate-400">
+                      {scores.li_permits_total || 0} total permits, {scores.li_permits_recent || 0} recent
+                    </p>
                   </div>
                 </div>
-                <p className="text-slate-300 text-sm">
-                  This property is located in Philadelphia. The compliance data is displayed using the city-specific format.
-                </p>
+                <div className="flex items-center space-x-4">
+                  <span className="text-slate-400 text-sm">Building and zoning permits</span>
+                  {expandedSection === 'li_permits' ? (
+                    <ChevronDown className="w-5 h-5 text-slate-400" />
+                  ) : (
+                    <ChevronRight className="w-5 h-5 text-slate-400" />
+                  )}
+                </div>
               </div>
+
+              {expandedSection === 'li_permits' && data.li_permits && data.li_permits.length > 0 && (
+                <div className="mt-6 pt-6 border-t border-slate-700">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-slate-700">
+                          <th className="text-left py-3 px-4 text-slate-400 font-medium">Permit Number</th>
+                          <th className="text-left py-3 px-4 text-slate-400 font-medium">Type</th>
+                          <th className="text-left py-3 px-4 text-slate-400 font-medium">Issue Date</th>
+                          <th className="text-left py-3 px-4 text-slate-400 font-medium">Status</th>
+                          <th className="text-left py-3 px-4 text-slate-400 font-medium">Contractor</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {data.li_permits.slice(0, 10).map((permit, index) => (
+                          <tr key={index} className="border-b border-slate-800 hover:bg-slate-800/50">
+                            <td className="py-3 px-4 text-white font-mono text-xs">{permit.permitnumber}</td>
+                            <td className="py-3 px-4 text-slate-300">{permit.permittype || 'N/A'}</td>
+                            <td className="py-3 px-4 text-slate-300">{formatDate(permit.permitissuedate)}</td>
+                            <td className="py-3 px-4">
+                              <span className="px-2 py-1 rounded text-xs font-semibold bg-corporate-500/10 text-corporate-400">
+                                {permit.status || 'N/A'}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-slate-300 text-xs">{permit.contractor || 'N/A'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </div>
-            {/* Note: ComplianceDisplay component would be imported and used here if needed */}
-            <div className="card text-center py-12">
-              <div className="text-slate-400">
-                <Building2 className="w-12 h-12 mx-auto mb-4 text-slate-500" />
-                <p className="text-lg font-medium text-white mb-2">Philadelphia Compliance Data</p>
-                <p className="text-sm text-slate-400">
-                  This property uses Philadelphia L&I data format. 
-                  The ComplianceDisplay component would show the appropriate Philadelphia sections here.
-                </p>
+
+            {/* L&I Violations */}
+            <div className="card cursor-pointer bg-ruby-500/5" onClick={() => toggleSection('li_violations')}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-ruby-500/10 rounded-xl flex items-center justify-center">
+                    <AlertTriangle className="w-6 h-6 text-ruby-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-white">L&I Code Violations</h3>
+                    <p className="text-sm text-slate-400">
+                      {scores.li_violations_total || 0} total, {scores.li_violations_active || 0} active
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <Link
+                    href={`/marketplace?report_id=${report.id}&category=li_violations`}
+                    className="btn-sm btn-secondary flex items-center space-x-2"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <ShoppingBag className="w-4 h-4" />
+                    <span>Find Contractors</span>
+                  </Link>
+                  <span className="text-slate-400 text-sm">Licenses & Inspections violations</span>
+                  {expandedSection === 'li_violations' ? (
+                    <ChevronDown className="w-5 h-5 text-slate-400" />
+                  ) : (
+                    <ChevronRight className="w-5 h-5 text-slate-400" />
+                  )}
+                </div>
               </div>
+
+              {expandedSection === 'li_violations' && data.li_violations && data.li_violations.length > 0 && (
+                <div className="mt-6 pt-6 border-t border-slate-700">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-slate-700">
+                          <th className="text-left py-3 px-4 text-slate-400 font-medium">Violation ID</th>
+                          <th className="text-left py-3 px-4 text-slate-400 font-medium">Type</th>
+                          <th className="text-left py-3 px-4 text-slate-400 font-medium">Code</th>
+                          <th className="text-left py-3 px-4 text-slate-400 font-medium">Status</th>
+                          <th className="text-left py-3 px-4 text-slate-400 font-medium">Date</th>
+                          <th className="text-left py-3 px-4 text-slate-400 font-medium">Inspector</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {data.li_violations.slice(0, 10).map((violation, index) => (
+                          <tr key={index} className="border-b border-slate-800 hover:bg-slate-800/50">
+                            <td className="py-3 px-4 text-white font-mono text-xs">{violation.violationid}</td>
+                            <td className="py-3 px-4 text-slate-300">{violation.violationtype || 'N/A'}</td>
+                            <td className="py-3 px-4 text-slate-300 text-xs">{violation.violationdescription || 'N/A'}</td>
+                            <td className="py-3 px-4">
+                              <span className={cn(
+                                'px-2 py-1 rounded text-xs font-semibold',
+                                violation.status && violation.status.toUpperCase() === 'COMPLIED'
+                                  ? 'bg-emerald-500/10 text-emerald-400'
+                                  : 'bg-ruby-500/10 text-ruby-400'
+                              )}>
+                                {violation.status || 'N/A'}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-slate-300">{formatDate(violation.violationdate)}</td>
+                            <td className="py-3 px-4 text-slate-300 text-xs">{violation.inspector || 'N/A'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </div>
+
+            {/* L&I Investigations */}
+            <div className="card cursor-pointer" onClick={() => toggleSection('li_investigations')}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-gold-500/10 rounded-xl flex items-center justify-center">
+                    <Building2 className="w-6 h-6 text-gold-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-white">L&I Case Investigations</h3>
+                    <p className="text-sm text-slate-400">
+                      {scores.li_investigations_total || 0} inspection records
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <span className="text-slate-400 text-sm">Property inspection history</span>
+                  {expandedSection === 'li_investigations' ? (
+                    <ChevronDown className="w-5 h-5 text-slate-400" />
+                  ) : (
+                    <ChevronRight className="w-5 h-5 text-slate-400" />
+                  )}
+                </div>
+              </div>
+
+              {expandedSection === 'li_investigations' && data.li_investigations && data.li_investigations.length > 0 && (
+                <div className="mt-6 pt-6 border-t border-slate-700">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-slate-700">
+                          <th className="text-left py-3 px-4 text-slate-400 font-medium">Case ID</th>
+                          <th className="text-left py-3 px-4 text-slate-400 font-medium">Type</th>
+                          <th className="text-left py-3 px-4 text-slate-400 font-medium">Outcome</th>
+                          <th className="text-left py-3 px-4 text-slate-400 font-medium">Completed</th>
+                          <th className="text-left py-3 px-4 text-slate-400 font-medium">Inspector</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {data.li_investigations.slice(0, 10).map((investigation, index) => (
+                          <tr key={index} className="border-b border-slate-800 hover:bg-slate-800/50">
+                            <td className="py-3 px-4 text-white font-mono text-xs">{investigation.caseid}</td>
+                            <td className="py-3 px-4 text-slate-300">{investigation.investigationtype || 'N/A'}</td>
+                            <td className="py-3 px-4">
+                              <span className="px-2 py-1 rounded text-xs font-semibold bg-slate-500/10 text-slate-400">
+                                {investigation.outcome || 'N/A'}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-slate-300">{formatDate(investigation.investigationcompleted)}</td>
+                            <td className="py-3 px-4 text-slate-300 text-xs">{investigation.inspector || 'N/A'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* L&I Certifications (if available) */}
+            {data.li_certifications && data.li_certifications.length > 0 && (
+              <div className="card cursor-pointer" onClick={() => toggleSection('li_certifications')}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center">
+                      <CheckCircle className="w-6 h-6 text-emerald-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-white">L&I Building Certifications</h3>
+                      <p className="text-sm text-slate-400">
+                        {scores.li_certifications_active || 0} active, {scores.li_certifications_expired || 0} expired
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <span className="text-slate-400 text-sm">Required safety certifications</span>
+                    {expandedSection === 'li_certifications' ? (
+                      <ChevronDown className="w-5 h-5 text-slate-400" />
+                    ) : (
+                      <ChevronRight className="w-5 h-5 text-slate-400" />
+                    )}
+                  </div>
+                </div>
+
+                {expandedSection === 'li_certifications' && (
+                  <div className="mt-6 pt-6 border-t border-slate-700">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-slate-700">
+                            <th className="text-left py-3 px-4 text-slate-400 font-medium">Certification Type</th>
+                            <th className="text-left py-3 px-4 text-slate-400 font-medium">Status</th>
+                            <th className="text-left py-3 px-4 text-slate-400 font-medium">Issue Date</th>
+                            <th className="text-left py-3 px-4 text-slate-400 font-medium">Expiration</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {data.li_certifications.slice(0, 10).map((cert, index) => (
+                            <tr key={index} className="border-b border-slate-800 hover:bg-slate-800/50">
+                              <td className="py-3 px-4 text-slate-300">{cert.cert_type || cert.certification_type || 'N/A'}</td>
+                              <td className="py-3 px-4">
+                                <span className={cn(
+                                  'px-2 py-1 rounded text-xs font-semibold',
+                                  cert.status && cert.status.toUpperCase() === 'ACTIVE'
+                                    ? 'bg-emerald-500/10 text-emerald-400'
+                                    : 'bg-ruby-500/10 text-ruby-400'
+                                )}>
+                                  {cert.status || 'N/A'}
+                                </span>
+                              </td>
+                              <td className="py-3 px-4 text-slate-300">{formatDate(cert.issue_date)}</td>
+                              <td className="py-3 px-4 text-slate-300">{formatDate(cert.expiration_date)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
