@@ -117,6 +117,8 @@ export default function AIAnalysisPage() {
     setError('');
 
     try {
+      console.log('Triggering analysis for property:', propertyId);
+
       const response = await authenticatedFetch('/api/ai-analysis/trigger', {
         method: 'POST',
         body: JSON.stringify({
@@ -124,7 +126,9 @@ export default function AIAnalysisPage() {
         })
       });
 
+      console.log('Response status:', response.status);
       const data = await response.json();
+      console.log('Response data:', data);
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to trigger analysis');
@@ -135,6 +139,7 @@ export default function AIAnalysisPage() {
     } catch (err) {
       console.error('Analysis error:', err);
       setError(err.message);
+      alert(`Error: ${err.message}`);
     } finally {
       setAnalyzing(false);
     }
@@ -235,6 +240,19 @@ export default function AIAnalysisPage() {
             )}
           </div>
         </div>
+
+        {/* Error Display */}
+        {error && (
+          <div className="card mb-6">
+            <div className="flex items-start space-x-3">
+              <AlertCircle className="w-6 h-6 text-ruby-400 flex-shrink-0 mt-1" />
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-2">Error</h3>
+                <p className="text-ruby-300">{error}</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Analysis Content */}
         {!analysis && !analyzing && (
