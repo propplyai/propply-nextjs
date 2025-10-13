@@ -88,7 +88,7 @@ export default function DashboardPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-white mb-2">Dashboard</h1>
+            <h1 className="text-4xl font-bold gradient-text mb-2">Dashboard</h1>
             <p className="text-slate-400">Welcome back! Here's your property overview.</p>
           </div>
           <Link href="/properties/add" className="btn-primary">
@@ -145,7 +145,7 @@ export default function DashboardPage() {
         {/* Properties Section */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-white">Your Properties</h2>
+            <h2 className="text-2xl font-bold gradient-text">Your Properties</h2>
             <Link href="/properties" className="text-corporate-400 hover:text-corporate-300 font-medium flex items-center">
               View All
               <ArrowRight className="w-4 h-4 ml-1" />
@@ -204,7 +204,7 @@ export default function DashboardPage() {
 
         {/* Quick Actions */}
         <div className="card bg-gradient-to-r from-corporate-500/10 to-emerald-500/10 border-corporate-500/30">
-          <h2 className="text-2xl font-bold text-white mb-6">Quick Actions</h2>
+          <h2 className="text-2xl font-bold gradient-text mb-6">Quick Actions</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Link
               href="/properties/add"

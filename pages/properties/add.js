@@ -220,7 +220,7 @@ export default function AddPropertyPage() {
       <div className="container-modern py-8 max-w-3xl">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">Add Property</h1>
+          <h1 className="text-4xl font-bold gradient-text mb-2">Add Property</h1>
           <p className="text-slate-400">Add a new property to your portfolio</p>
         </div>
 
@@ -248,7 +248,7 @@ export default function AddPropertyPage() {
         <form onSubmit={handleSubmit} className="card">
           {/* Property Information */}
           <div className="mb-8">
-            <h2 className="text-xl font-bold text-white mb-6 flex items-center">
+            <h2 className="text-xl font-bold gradient-text mb-6 flex items-center">
               <Building2 className="w-6 h-6 mr-2 text-corporate-400" />
               Property Information
             </h2>

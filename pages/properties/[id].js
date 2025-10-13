@@ -384,7 +384,7 @@ export default function PropertyDetailPage() {
 
         {/* Property Data Overview */}
         <div className="card mb-8 bg-gradient-to-br from-slate-800/50 to-slate-900/50">
-          <h2 className="text-xl font-bold text-white mb-6">Property Data Overview</h2>
+          <h2 className="text-xl font-bold gradient-text mb-6">Property Data Overview</h2>
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Compliance Score Card */}
@@ -459,7 +459,7 @@ export default function PropertyDetailPage() {
           <div className="lg:col-span-2 space-y-8">
             {/* Property Data & Compliance */}
             <div className="card">
-              <h2 className="text-2xl font-bold text-white mb-6">Property Data & Compliance</h2>
+              <h2 className="text-2xl font-bold gradient-text mb-6">Property Data & Compliance</h2>
               {property.active_violations > 0 ? (
                 <div className="space-y-4">
                   <div className="p-4 bg-ruby-500/10 border border-ruby-500/30 rounded-lg">
@@ -531,10 +531,10 @@ export default function PropertyDetailPage() {
 
             {/* Vendor List Section */}
             {vendorSearch && (
-              <div className="card mt-8">
+                <div className="card mt-8">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h2 className="text-2xl font-bold text-white mb-2">Contractor List</h2>
+                    <h2 className="text-2xl font-bold gradient-text mb-2">Contractor List</h2>
                     <p className="text-sm text-slate-400">
                       Last updated: {new Date(vendorSearch.updated_at).toLocaleString()}
                     </p>

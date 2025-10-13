@@ -220,7 +220,7 @@ export default function AIAnalysisPage() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold gradient-text mb-2">
-                  🤖 AI Property Analysis
+                  AI Property Analysis
                 </h1>
                 <p className="text-lg text-white">{property?.address}</p>
                 <p className="text-sm text-slate-400 mt-1">

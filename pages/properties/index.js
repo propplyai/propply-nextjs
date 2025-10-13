@@ -92,7 +92,7 @@ export default function PropertiesPage() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-white mb-2">Properties</h1>
+            <h1 className="text-4xl font-bold gradient-text mb-2">Properties</h1>
             <p className="text-slate-400">Manage your property portfolio</p>
           </div>
           <Link href="/properties/add" className="btn-primary mt-4 md:mt-0">
