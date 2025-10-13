@@ -144,9 +144,9 @@ export default function ComplianceIndexPage() {
                           </h3>
                         </Link>
                         <div className="flex flex-wrap gap-4 text-sm text-slate-400 mb-3">
-                          <span>{report.borough}</span>
-                          <span>BIN: {report.bin}</span>
-                          <span>BBL: {report.bbl}</span>
+                          {report.borough && <span>{report.borough}</span>}
+                          {report.bin && <span>BIN: {report.bin}</span>}
+                          {report.bbl && <span>BBL: {report.bbl}</span>}
                         </div>
                         
                         {/* Quick Stats */}
@@ -218,7 +218,7 @@ export default function ComplianceIndexPage() {
                             </div>
                             <div>
                               <h4 className="text-lg font-semibold text-white group-hover:text-purple-400 transition-colors">
-                                🤖 AI Property Analysis
+                                AI Property Analysis
                               </h4>
                               <p className="text-sm text-slate-400">
                                 AI-powered insights & recommendations
