@@ -86,7 +86,7 @@ export default function ComplianceIndexPage() {
       <div className="container-modern py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Property Compliance & Data</h1>
+          <h1 className="text-3xl font-bold gradient-text mb-2">Property Compliance & Data</h1>
           <p className="text-slate-400">View aggregated property data and compliance insights for your portfolio</p>
         </div>
 
