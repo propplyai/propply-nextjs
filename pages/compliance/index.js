@@ -206,27 +206,28 @@ export default function ComplianceIndexPage() {
                         </div>
                       </Link>
 
-                      {/* AI Analysis Section - Coming Soon */}
-                      <div className="p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/30 rounded-lg">
+                      {/* AI Analysis Section */}
+                      <Link
+                        href={`/ai-analysis/${report.property_id}`}
+                        className="block p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/30 rounded-lg hover:border-purple-500 transition-all group"
+                      >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
                               <Sparkles className="w-5 h-5 text-purple-400" />
                             </div>
                             <div>
-                              <h4 className="text-lg font-semibold text-white">
+                              <h4 className="text-lg font-semibold text-white group-hover:text-purple-400 transition-colors">
                                 🤖 AI Property Analysis
                               </h4>
                               <p className="text-sm text-slate-400">
-                                Coming soon: AI-powered insights & recommendations
+                                AI-powered insights & recommendations
                               </p>
                             </div>
                           </div>
-                          <div className="px-3 py-1 bg-purple-500/20 text-purple-400 text-xs font-semibold rounded-full">
-                            COMING SOON
-                          </div>
+                          <ExternalLink className="w-5 h-5 text-slate-500 group-hover:text-purple-400 transition-colors" />
                         </div>
-                      </div>
+                      </Link>
                     </div>
                   )}
                 </div>
