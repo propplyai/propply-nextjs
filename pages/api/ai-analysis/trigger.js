@@ -1,6 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 
 export default async function handler(req, res) {
+  console.log('🔵 AI Analysis Trigger - START');
+  console.log('Method:', req.method);
+  console.log('Body:', req.body);
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -8,28 +12,53 @@ export default async function handler(req, res) {
   const { property_id } = req.body;
 
   if (!property_id) {
+    console.log('❌ Missing property_id');
     return res.status(400).json({ error: 'property_id is required' });
   }
 
   try {
+    // Check environment variables
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      console.error('❌ NEXT_PUBLIC_SUPABASE_URL not set');
+      return res.status(500).json({ error: 'Server configuration error: Missing SUPABASE_URL' });
+    }
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      console.error('❌ SUPABASE_SERVICE_ROLE_KEY not set');
+      return res.status(500).json({ error: 'Server configuration error: Missing SERVICE_ROLE_KEY' });
+    }
+
+    console.log('✅ Environment variables present');
+
     // Create Supabase client with service role (bypasses RLS)
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
       process.env.SUPABASE_SERVICE_ROLE_KEY
     );
 
+    console.log('✅ Supabase client created');
+
     // Verify property exists and get details
+    console.log('🔍 Fetching property:', property_id);
     const { data: property, error: propertyError } = await supabase
       .from('properties')
       .select('id, user_id, address, city, bin_number, opa_account')
       .eq('id', property_id)
       .single();
 
-    if (propertyError || !property) {
+    if (propertyError) {
+      console.error('❌ Property fetch error:', propertyError);
+      return res.status(404).json({ error: `Property not found: ${propertyError.message}` });
+    }
+
+    if (!property) {
+      console.error('❌ Property not found');
       return res.status(404).json({ error: 'Property not found' });
     }
 
+    console.log('✅ Property found:', property.address);
+
     // Check if there's already a processing analysis
+    console.log('🔍 Checking for existing processing analysis...');
     const { data: existingAnalysis } = await supabase
       .from('ai_property_analyses')
       .select('id, status')
@@ -38,14 +67,18 @@ export default async function handler(req, res) {
       .single();
 
     if (existingAnalysis) {
-      return res.status(409).json({ 
+      console.log('⚠️  Analysis already in progress:', existingAnalysis.id);
+      return res.status(409).json({
         error: 'Analysis already in progress',
         analysis_id: existingAnalysis.id,
         status: 'processing'
       });
     }
 
+    console.log('✅ No existing processing analysis');
+
     // Create placeholder analysis record with "processing" status
+    console.log('📝 Creating analysis record...');
     const { data: analysis, error: insertError } = await supabase
       .from('ai_property_analyses')
       .insert({
@@ -60,9 +93,14 @@ export default async function handler(req, res) {
       .single();
 
     if (insertError) {
-      console.error('Error creating analysis record:', insertError);
-      return res.status(500).json({ error: 'Failed to create analysis record' });
+      console.error('❌ Error creating analysis record:', insertError);
+      return res.status(500).json({
+        error: 'Failed to create analysis record',
+        details: insertError.message
+      });
     }
+
+    console.log('✅ Analysis record created:', analysis.id);
 
     console.log('Created analysis record:', analysis.id);
 
