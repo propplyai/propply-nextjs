@@ -13,7 +13,8 @@ export default function Layout({ children, user, onLogout }) {
     { name: 'Dashboard', href: '/dashboard', icon: Home },
     { name: 'Compliance', href: '/compliance', icon: FileCheck },
     { name: 'Marketplace', href: '/marketplace', icon: ShoppingBag },
-    { name: 'Pricing', href: '/pricing', icon: CreditCard },
+    // Pricing is only shown on landing page, not for logged-in users
+    ...(user ? [] : [{ name: 'Pricing', href: '/pricing', icon: CreditCard }]),
   ];
 
   const isActive = (href) => router.pathname === href || router.pathname.startsWith(href + '/');

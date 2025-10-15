@@ -314,8 +314,8 @@ export default function MarketplacePage() {
               <ShoppingBag className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold gradient-text">Contractor Marketplace</h1>
-              <p className="text-slate-400">Find qualified contractors for your property violations</p>
+              <h1 className="text-3xl font-bold gradient-text">Compliance Marketplace</h1>
+              <p className="text-slate-400">Find quality contractors for your property violations and ongoing compliance</p>
             </div>
           </div>
 
