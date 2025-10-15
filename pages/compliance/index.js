@@ -151,11 +151,9 @@ export default function ComplianceIndexPage() {
 
                       {/* Property Info */}
                       <div className="flex-1">
-                        <Link href={`/properties/${report.property_id}`}>
-                          <h3 className="text-xl font-bold text-white mb-2 hover:text-corporate-400 transition-colors">
-                            {report.address || 'No Address Available'}
-                          </h3>
-                        </Link>
+                        <h3 className="text-xl font-bold text-white mb-2 hover:text-corporate-400 transition-colors cursor-pointer">
+                          {report.address || 'No Address Available'}
+                        </h3>
                         {!report.address && (
                           <p className="text-sm text-slate-500 italic mb-2">Property ID: {report.property_id}</p>
                         )}
