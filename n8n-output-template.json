@@ -1,0 +1,119 @@
+{
+  "analysis_id": "{{ $json.body.analysis_id }}",
+  "property_id": "{{ $json.body.property_id }}",
+  "user_id": "{{ $json.body.user_id }}",
+  "status": "completed",
+  "model_used": "gpt-4-turbo",
+  "processing_time_ms": 4200,
+  "risk_level": "{{ $json.body.overall_assessment.risk_level }}",
+  "insight_count": "{{ $json.body.insights.length }}",
+  "recommendation_count": "{{ $json.body.recommendations.length }}",
+  "estimated_total_cost": "calculating...",
+  "analysis_data": {
+    "city": "NYC",
+    "status": "completed",
+    "address": "{{ $json.body.address }}",
+    "user_id": "{{ $json.body.user_id }}",
+    "insights": [
+      {
+        "id": "insight-1",
+        "title": "{{ $json.body.insights[0].title }}",
+        "category": "{{ $json.body.insights[0].category }}",
+        "severity": "{{ $json.body.insights[0].severity }}",
+        "timeline": "30 days",
+        "cost_status": "pending_quotes",
+        "description": "{{ $json.body.insights[0].note }}",
+        "regulations": [
+          {
+            "code": "§27-2005",
+            "title": "NYC Admin Code - Door Security Requirements",
+            "summary": "Requires proper mechanical locking devices for egress"
+          }
+        ],
+        "cost_estimate": "calculating..."
+      }
+    ],
+    "model_used": "gpt-4-turbo",
+    "next_steps": [
+      "1. Prioritize rent-impairing violations - immediate action",
+      "2. Contact licensed elevator contractor for ACC1 violation corrections",
+      "3. File energy benchmarking and EER reports online"
+    ],
+    "analysis_id": "{{ $json.body.analysis_id }}",
+    "analyzed_at": "{{ $now }}",
+    "property_id": "{{ $json.body.property_id }}",
+    "data_sources": [
+      "NYC Open Data - HPD",
+      "NYC Open Data - DOB", 
+      "Elevator Device Registry",
+      "Boiler Inspection Database"
+    ],
+    "recommendations": [
+      {
+        "id": "rec-1",
+        "cost": "calculating...",
+        "action": "{{ $json.body.recommendations[0].action }}",
+        "reason": "Priority {{ $json.body.recommendations[0].priority }} recommendation based on compliance analysis. Critical violations require immediate attention to avoid escalating penalties.",
+        "deadline": "{{ $json.body.recommendations[0].deadline }}",
+        "priority": "{{ $json.body.recommendations[0].priority }}",
+        "cost_status": "pending_quotes",
+        "equipment_ids": ["elevator_1"],
+        "vendor_quote_id": null,
+        "contractor_categories": ["elevator", "general_contractor"]
+      }
+    ],
+    "compliance_status": {
+      "status": "{{ $json.body.compliance_status.status }}",
+      "dob_violations": "{{ $json.body.compliance_status.dob_violations }}",
+      "hpd_violations": "{{ $json.body.compliance_status.hpd_violations }}",
+      "total_violations": "{{ $json.body.compliance_status.dob_violations + $json.body.compliance_status.hpd_violations }}",
+      "critical_deadlines": 3,
+      "rent_impairing_violations": 0
+    },
+    "equipment_summary": {
+      "boilers": {
+        "total": 1,
+        "issues": ["Recent defects corrected; late filing fees assessed"],
+        "action_needed": false
+      },
+      "elevators": {
+        "total": 1,
+        "active": 1,
+        "issues": ["Outstanding defects from 2014-2016 CAT-1 inspections"],
+        "action_needed": true
+      },
+      "electrical": {
+        "issues": [],
+        "action_needed": false,
+        "active_permits": 3
+      },
+      "doors_locks": {
+        "issues": ["Electromagnetic locks need replacement", "Self-closing door repairs needed"],
+        "action_needed": true
+      }
+    },
+    "financial_summary": {
+      "notes": "Actual costs will be calculated based on vendor quotes from marketplace. Priority items have higher financial exposure due to rent-impairing status and escalating penalties.",
+      "breakdown": {
+        "dob_violations": "calculating... ({{ $json.body.compliance_status.dob_violations }} violations)",
+        "hpd_violations": "calculating... ({{ $json.body.compliance_status.hpd_violations }} violations)",
+        "energy_reporting": "calculating...",
+        "elevator_compliance": "calculating...",
+        "door_lock_replacement": "calculating..."
+      },
+      "cost_status": "pending_quotes",
+      "potential_penalties": "$15,000 - $35,000 if violations remain unresolved",
+      "total_risk_exposure": "calculating...",
+      "immediate_action_cost": "calculating..."
+    },
+    "overall_assessment": {
+      "trend": "declining",
+      "summary": "{{ $json.body.overall_assessment.summary }}",
+      "risk_level": "{{ $json.body.overall_assessment.risk_level }}",
+      "compliance_score": "{{ $json.body.overall_assessment.compliance_score }}"
+    },
+    "processing_time_ms": 4200,
+    "cost_calculation_status": "pending",
+    "vendor_search_triggered": true
+  }
+}
