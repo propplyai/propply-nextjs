@@ -200,7 +200,7 @@ export default function AIAnalysisPage() {
         [insightId]: feedbackType
       }));
 
-      // Save to database
+      // Save to database using upsert with proper conflict resolution
       const { error } = await supabase
         .from('insight_feedback')
         .upsert({
@@ -208,7 +208,9 @@ export default function AIAnalysisPage() {
           property_id: propertyId,
           user_id: user.id,
           feedback_type: feedbackType,
-          created_at: new Date().toISOString()
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'insight_id,property_id,user_id'
         });
 
       if (error) {

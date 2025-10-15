@@ -7,7 +7,7 @@ import { authHelpers, supabase } from '@/lib/supabase';
 import {
   Building2, MapPin, Calendar, Users, Ruler, AlertTriangle,
   CheckCircle, FileText, Edit, Trash2, ArrowLeft, RefreshCw,
-  ChevronDown, ChevronUp, ShoppingBag
+  ChevronDown, ChevronUp, ShoppingBag, Sparkles
 } from 'lucide-react';
 import { cn, getComplianceScoreBadge, formatDate } from '@/lib/utils';
 
@@ -25,6 +25,7 @@ export default function PropertyDetailPage() {
   const [propertyInfoExpanded, setPropertyInfoExpanded] = useState(true);
   const [vendorSearch, setVendorSearch] = useState(null);
   const [loadingVendors, setLoadingVendors] = useState(false);
+  const [hasAIAnalysis, setHasAIAnalysis] = useState(false);
 
   useEffect(() => {
     console.log('[Property Detail] useEffect triggered. ID from router.query:', id, 'Router is ready:', router.isReady, 'Pathname:', router.pathname);
@@ -53,7 +54,10 @@ export default function PropertyDetailPage() {
       // Ensure we're using the ID from the URL, not from any other source
       const propertyId = router.query.id;
       console.log('[Property Detail] About to load property with ID from router:', propertyId);
-      await loadProperty(propertyId, currentUser.id);
+      await Promise.all([
+        loadProperty(propertyId, currentUser.id),
+        checkAIAnalysis(propertyId)
+      ]);
     } catch (error) {
       console.error('[Property Detail] Unexpected error during auth:', error);
       setTimeout(() => {
@@ -196,6 +200,25 @@ export default function PropertyDetailPage() {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkAIAnalysis = async (propertyId) => {
+    try {
+      const { data, error } = await supabase
+        .from('ai_property_analyses')
+        .select('id')
+        .eq('property_id', propertyId)
+        .limit(1);
+
+      if (error) {
+        console.error('Error checking AI analysis:', error);
+        return;
+      }
+
+      setHasAIAnalysis(data && data.length > 0);
+    } catch (err) {
+      console.error('Error checking AI analysis:', err);
     }
   };
 
@@ -582,6 +605,15 @@ export default function PropertyDetailPage() {
             <div className="card">
               <h3 className="text-lg font-bold text-white mb-4">Actions</h3>
               <div className="space-y-3">
+                {hasAIAnalysis && (
+                  <Link
+                    href={`/ai-analysis/${property.id}`}
+                    className="btn-primary w-full flex items-center justify-center"
+                  >
+                    <Sparkles className="w-5 h-5 mr-2" />
+                    View AI Analysis
+                  </Link>
+                )}
                 {latestReport && (
                   <Link
                     href={`/compliance/${latestReport.id}`}
