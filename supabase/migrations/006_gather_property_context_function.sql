@@ -129,3 +129,4 @@ GRANT EXECUTE ON FUNCTION gather_property_context(UUID) TO service_role;
 -- Add comment
 COMMENT ON FUNCTION gather_property_context(UUID) IS 'Gathers all property data from multiple tables into a single consolidated JSONB object for AI analysis';
 
+

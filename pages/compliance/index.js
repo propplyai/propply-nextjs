@@ -32,9 +32,14 @@ export default function ComplianceIndexPage() {
 
   const loadReports = async (userId) => {
     try {
-      const { data, error } = await supabase
+      const { data, error} = await supabase
         .from('compliance_reports')
-        .select('*')
+        .select(`
+          *,
+          properties (
+            address
+          )
+        `)
         .eq('user_id', userId)
         .order('generated_at', { ascending: false });
 
@@ -43,7 +48,15 @@ export default function ComplianceIndexPage() {
         throw error;
       }
 
-      setReports(data || []);
+      // Flatten the address from the joined properties table, with fallback to report data
+      const reportsWithAddress = (data || []).map(report => ({
+        ...report,
+        address: report.properties?.address || 
+                 report.report_data?.property?.address || 
+                 null
+      }));
+
+      setReports(reportsWithAddress);
     } catch (error) {
       console.error('Failed to load reports:', error);
     } finally {

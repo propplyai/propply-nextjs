@@ -62,3 +62,4 @@ CREATE POLICY "Service role has full access"
 COMMENT ON TABLE property_analysis_context IS 'Consolidated property data context for AI analysis - all relevant data in one JSONB for easy agent access';
 COMMENT ON COLUMN property_analysis_context.context_data IS 'Complete property context including violations, equipment, compliance data, manual entries - everything AI needs in one JSON';
 
+

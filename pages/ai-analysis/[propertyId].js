@@ -6,7 +6,7 @@ import { authHelpers, supabase } from '@/lib/supabase';
 import {
   ArrowLeft, Sparkles, AlertTriangle, CheckCircle, TrendingUp,
   Loader2, Crown, Zap, Clock, DollarSign, ExternalLink, ThumbsUp,
-  FileText, Building2, AlertCircle, RefreshCw, ArrowRight
+  FileText, Building2, AlertCircle, RefreshCw
 } from 'lucide-react';
 import { cn, authenticatedFetch } from '@/lib/utils';
 
@@ -214,19 +214,14 @@ export default function AIAnalysisPage() {
         {/* Property Info Header */}
         <div className="card mb-6">
           <div className="flex items-start justify-between">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
-                <Building2 className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold gradient-text mb-2">
-                  AI Property Analysis
-                </h1>
-                <p className="text-lg text-white">{property?.address}</p>
-                <p className="text-sm text-slate-400 mt-1">
-                  {property?.city || 'NYC'} • {property?.property_type || 'Residential'}
-                </p>
-              </div>
+            <div>
+              <h1 className="text-2xl font-bold gradient-text mb-2">
+                🤖 AI Property Analysis
+              </h1>
+              <p className="text-lg text-white">{property?.address}</p>
+              <p className="text-sm text-slate-400 mt-1">
+                {property?.city || 'NYC'} • {property?.property_type || 'Residential'}
+              </p>
             </div>
             {analysis && (
               <button
@@ -317,7 +312,7 @@ export default function AIAnalysisPage() {
                 <h2 className="text-xl font-bold text-white">Overall Assessment</h2>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div className="p-4 bg-slate-900/50 rounded-lg">
                   <div className="text-sm text-slate-400 mb-1">Risk Level</div>
                   <div className={cn(
@@ -327,15 +322,6 @@ export default function AIAnalysisPage() {
                     {analysis.risk_level?.toUpperCase() || 'N/A'}
                   </div>
                 </div>
-
-                {analysis.analysis_data?.overall_assessment?.compliance_score !== undefined && (
-                  <div className="p-4 bg-slate-900/50 rounded-lg">
-                    <div className="text-sm text-slate-400 mb-1">Compliance Score</div>
-                    <div className="text-2xl font-bold text-white">
-                      {analysis.analysis_data.overall_assessment.compliance_score}%
-                    </div>
-                  </div>
-                )}
 
                 <div className="p-4 bg-slate-900/50 rounded-lg">
                   <div className="text-sm text-slate-400 mb-1">Insights Found</div>
@@ -379,13 +365,8 @@ export default function AIAnalysisPage() {
                             {insight.title}
                           </h3>
                           <p className="text-slate-300 mb-4">
-                            {insight.description || insight.note}
+                            {insight.description}
                           </p>
-                          {insight.category && (
-                            <div className="inline-block px-2 py-1 bg-slate-800/50 rounded text-xs text-slate-400 mb-3">
-                              {insight.category}
-                            </div>
-                          )}
 
                           {/* Metadata Grid */}
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
@@ -467,17 +448,10 @@ export default function AIAnalysisPage() {
                           </span>
                         )}
                       </div>
-                      {rec.reason && <p className="text-slate-300 mb-3 ml-8">{rec.reason}</p>}
+                      <p className="text-slate-300 mb-3 ml-8">{rec.reason}</p>
                       {rec.cost && (
-                        <div className="text-sm text-slate-400 ml-8 mb-3">
-                          {rec.cost === 'calculating...' ? (
-                            <div className="flex items-center gap-2">
-                              <Loader2 className="w-4 h-4 animate-spin text-corporate-400" />
-                              <span className="text-slate-400">Calculating cost from marketplace vendors...</span>
-                            </div>
-                          ) : (
-                            <span>Estimated cost: {rec.cost}</span>
-                          )}
+                        <div className="text-sm text-slate-400 ml-8">
+                          Estimated cost: {rec.cost}
                         </div>
                       )}
                       {rec.contractor_categories && rec.contractor_categories.length > 0 && (
@@ -489,120 +463,6 @@ export default function AIAnalysisPage() {
                           <ExternalLink className="w-4 h-4 ml-2" />
                         </Link>
                       )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Equipment Summary */}
-            {analysis.analysis_data?.equipment_summary && (
-              <div className="card">
-                <div className="flex items-center gap-3 mb-4">
-                  <Building2 className="w-6 h-6 text-corporate-400" />
-                  <h2 className="text-xl font-bold text-white">Equipment Status</h2>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {Object.entries(analysis.analysis_data.equipment_summary).map(([key, value]) => (
-                    <div key={key} className="p-4 bg-slate-900/50 rounded-lg border border-slate-700">
-                      <h3 className="text-sm font-semibold text-corporate-400 uppercase mb-2">
-                        {key.replace(/_/g, ' ')}
-                      </h3>
-                      {typeof value === 'object' && (
-                        <>
-                          {value.total !== undefined && (
-                            <div className="text-sm text-slate-400 mb-1">
-                              Total: <span className="text-white font-semibold">{value.total}</span>
-                            </div>
-                          )}
-                          {value.active !== undefined && (
-                            <div className="text-sm text-slate-400 mb-1">
-                              Active: <span className="text-white font-semibold">{value.active}</span>
-                            </div>
-                          )}
-                          {value.issues && value.issues.length > 0 && (
-                            <div className="mt-2">
-                              <div className="text-xs text-ruby-400 font-semibold mb-1">Issues:</div>
-                              {value.issues.map((issue, idx) => (
-                                <div key={idx} className="text-xs text-slate-300 mb-1">• {issue}</div>
-                              ))}
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Compliance Status */}
-            {analysis.analysis_data?.compliance_status && (
-              <div className="card">
-                <div className="flex items-center gap-3 mb-4">
-                  <FileText className="w-6 h-6 text-purple-400" />
-                  <h2 className="text-xl font-bold text-white">Compliance Status</h2>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {analysis.analysis_data.compliance_status.hpd_violations !== undefined && (
-                    <div className="p-4 bg-ruby-500/10 border border-ruby-500/30 rounded-lg text-center">
-                      <div className="text-3xl font-bold text-ruby-400">
-                        {analysis.analysis_data.compliance_status.hpd_violations}
-                      </div>
-                      <div className="text-xs text-slate-400 mt-1">HPD Violations</div>
-                    </div>
-                  )}
-                  {analysis.analysis_data.compliance_status.dob_violations !== undefined && (
-                    <div className="p-4 bg-ruby-500/10 border border-ruby-500/30 rounded-lg text-center">
-                      <div className="text-3xl font-bold text-ruby-400">
-                        {analysis.analysis_data.compliance_status.dob_violations}
-                      </div>
-                      <div className="text-xs text-slate-400 mt-1">DOB Violations</div>
-                    </div>
-                  )}
-                  {analysis.analysis_data.compliance_status.total_violations !== undefined && (
-                    <div className="p-4 bg-orange-500/10 border border-orange-500/30 rounded-lg text-center">
-                      <div className="text-3xl font-bold text-orange-400">
-                        {analysis.analysis_data.compliance_status.total_violations}
-                      </div>
-                      <div className="text-xs text-slate-400 mt-1">Total Violations</div>
-                    </div>
-                  )}
-                  {analysis.analysis_data.compliance_status.critical_deadlines !== undefined && (
-                    <div className="p-4 bg-gold-500/10 border border-gold-500/30 rounded-lg text-center">
-                      <div className="text-3xl font-bold text-gold-400">
-                        {analysis.analysis_data.compliance_status.critical_deadlines}
-                      </div>
-                      <div className="text-xs text-slate-400 mt-1">Critical Deadlines</div>
-                    </div>
-                  )}
-                </div>
-                {analysis.analysis_data.compliance_status.status && (
-                  <div className="mt-4 p-3 bg-slate-900/50 rounded-lg text-center">
-                    <span className={cn(
-                      "text-sm font-semibold uppercase",
-                      analysis.analysis_data.compliance_status.status.toLowerCase().includes('critical') && 'text-ruby-400',
-                      analysis.analysis_data.compliance_status.status.toLowerCase().includes('good') && 'text-emerald-400'
-                    )}>
-                      {analysis.analysis_data.compliance_status.status}
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Next Steps */}
-            {analysis.analysis_data?.next_steps && analysis.analysis_data.next_steps.length > 0 && (
-              <div className="card">
-                <div className="flex items-center gap-3 mb-4">
-                  <ArrowRight className="w-6 h-6 text-emerald-400" />
-                  <h2 className="text-xl font-bold text-white">Next Steps</h2>
-                </div>
-                <div className="space-y-2">
-                  {analysis.analysis_data.next_steps.map((step, idx) => (
-                    <div key={idx} className="flex items-start gap-3 p-3 bg-slate-900/50 rounded-lg">
-                      <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" />
-                      <p className="text-slate-300 text-sm">{step}</p>
                     </div>
                   ))}
                 </div>

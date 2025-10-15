@@ -5,7 +5,10 @@
       "Bash(git add:*)",
       "Bash(cp:*)",
       "Bash(git commit:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(git reset:*)",
+      "Bash(source:*)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": []
