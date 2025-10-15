@@ -799,17 +799,18 @@ export default function AIAnalysisPage() {
                               <ThumbsDown className="w-4 h-4" />
                               <span>Not Helpful</span>
                             </button>
+                            
+                            {/* Find Contractors Button */}
+                            {rec.contractor_categories && rec.contractor_categories.length > 0 && (
+                              <Link
+                                href={`/marketplace?property_id=${propertyId}`}
+                                className="flex items-center gap-1 px-3 py-1 rounded text-sm transition-colors text-corporate-400 hover:text-corporate-300 hover:bg-corporate-500/10"
+                              >
+                                <ExternalLink className="w-4 h-4" />
+                                <span>Find Contractors</span>
+                              </Link>
+                            )}
                           </div>
-
-                          {rec.contractor_categories && rec.contractor_categories.length > 0 && (
-                            <Link
-                              href={`/marketplace?property_id=${propertyId}`}
-                              className="btn-primary text-sm mt-3 ml-8 inline-flex items-center"
-                            >
-                              Find Contractors
-                              <ExternalLink className="w-4 h-4 ml-2" />
-                            </Link>
-                          )}
                         </div>
                       );
                     })}
