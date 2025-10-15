@@ -5,8 +5,8 @@ import Layout from '@/components/Layout';
 import { authHelpers, supabase } from '@/lib/supabase';
 import {
   ArrowLeft, Sparkles, AlertTriangle, CheckCircle, TrendingUp,
-  Loader2, Crown, Zap, Clock, DollarSign, ExternalLink, ThumbsUp,
-  FileText, Building2, AlertCircle, RefreshCw
+  Loader2, Crown, Zap, Clock, DollarSign, ExternalLink, ThumbsUp, ThumbsDown,
+  FileText, Building2, AlertCircle, RefreshCw, X
 } from 'lucide-react';
 import { cn, authenticatedFetch } from '@/lib/utils';
 
@@ -22,6 +22,10 @@ export default function AIAnalysisPage() {
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState('');
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [feedback, setFeedback] = useState({});
+  const [dismissedInsights, setDismissedInsights] = useState(new Set());
+  const [swipeStart, setSwipeStart] = useState(null);
+  const [swipeOffset, setSwipeOffset] = useState(0);
 
   useEffect(() => {
     if (propertyId && router.isReady) {
@@ -81,9 +85,47 @@ export default function AIAnalysisPage() {
       if (error) throw error;
       if (data && data.length > 0) {
         setAnalysis(data[0]);
+        
+        // Load existing feedback and dismissed insights
+        await loadUserFeedback();
       }
     } catch (err) {
       console.error('Error loading analysis:', err);
+    }
+  };
+
+  const loadUserFeedback = async () => {
+    if (!user) return;
+    
+    try {
+      // Load feedback
+      const { data: feedbackData, error: feedbackError } = await supabase
+        .from('insight_feedback')
+        .select('insight_id, feedback_type')
+        .eq('property_id', propertyId)
+        .eq('user_id', user.id);
+
+      if (!feedbackError && feedbackData) {
+        const feedbackMap = {};
+        feedbackData.forEach(item => {
+          feedbackMap[item.insight_id] = item.feedback_type;
+        });
+        setFeedback(feedbackMap);
+      }
+
+      // Load dismissed insights
+      const { data: dismissedData, error: dismissedError } = await supabase
+        .from('dismissed_insights')
+        .select('insight_id')
+        .eq('property_id', propertyId)
+        .eq('user_id', user.id);
+
+      if (!dismissedError && dismissedData) {
+        const dismissedSet = new Set(dismissedData.map(item => item.insight_id));
+        setDismissedInsights(dismissedSet);
+      }
+    } catch (err) {
+      console.error('Error loading user feedback:', err);
     }
   };
 
@@ -148,6 +190,91 @@ export default function AIAnalysisPage() {
   const handleLogout = async () => {
     await authHelpers.signOut();
     router.push('/');
+  };
+
+  const handleFeedback = async (insightId, feedbackType) => {
+    try {
+      // Update local state immediately for responsive UI
+      setFeedback(prev => ({
+        ...prev,
+        [insightId]: feedbackType
+      }));
+
+      // Save to database
+      const { error } = await supabase
+        .from('insight_feedback')
+        .upsert({
+          insight_id: insightId,
+          property_id: propertyId,
+          user_id: user.id,
+          feedback_type: feedbackType,
+          created_at: new Date().toISOString()
+        });
+
+      if (error) {
+        console.error('Error saving feedback:', error);
+        // Revert local state on error
+        setFeedback(prev => {
+          const newFeedback = { ...prev };
+          delete newFeedback[insightId];
+          return newFeedback;
+        });
+      }
+    } catch (err) {
+      console.error('Feedback error:', err);
+    }
+  };
+
+  const handleDismissInsight = (insightId) => {
+    setDismissedInsights(prev => new Set([...prev, insightId]));
+    
+    // Save dismissal to database
+    supabase
+      .from('dismissed_insights')
+      .upsert({
+        insight_id: insightId,
+        property_id: propertyId,
+        user_id: user.id,
+        dismissed_at: new Date().toISOString()
+      })
+      .catch(err => console.error('Error saving dismissal:', err));
+  };
+
+  const handleTouchStart = (e, insightId) => {
+    const touch = e.touches[0];
+    setSwipeStart({
+      x: touch.clientX,
+      y: touch.clientY,
+      insightId
+    });
+    setSwipeOffset(0);
+  };
+
+  const handleTouchMove = (e, insightId) => {
+    if (!swipeStart || swipeStart.insightId !== insightId) return;
+    
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - swipeStart.x;
+    
+    // Only allow left swipe (negative deltaX)
+    if (deltaX < 0) {
+      setSwipeOffset(Math.max(-150, deltaX));
+    }
+  };
+
+  const handleTouchEnd = (e, insightId) => {
+    if (!swipeStart || swipeStart.insightId !== insightId) return;
+    
+    const touch = e.changedTouches[0];
+    const deltaX = touch.clientX - swipeStart.x;
+    
+    // If swiped left far enough, dismiss the insight
+    if (deltaX < -100) {
+      handleDismissInsight(insightId);
+    }
+    
+    setSwipeStart(null);
+    setSwipeOffset(0);
   };
 
   const getRiskLevelStyle = (level) => {
@@ -353,69 +480,126 @@ export default function AIAnalysisPage() {
                 </div>
 
                 <div className="space-y-4">
-                  {analysis.analysis_data.insights.map((insight, index) => (
-                    <div
-                      key={insight.id || index}
-                      className="p-4 bg-slate-900/50 border border-slate-700 rounded-lg hover:border-slate-600 transition-colors"
-                    >
-                      <div className="flex items-start gap-3 mb-3">
-                        {getSeverityIcon(insight.severity)}
-                        <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-white mb-2">
-                            {insight.title}
-                          </h3>
-                          <p className="text-slate-300 mb-4">
-                            {insight.description}
-                          </p>
-
-                          {/* Metadata Grid */}
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                            {insight.cost_estimate && (
-                              <div className="flex items-center gap-2 text-sm text-slate-400">
-                                <DollarSign className="w-4 h-4" />
-                                <span>{insight.cost_estimate}</span>
-                              </div>
-                            )}
-                            {insight.timeline && (
-                              <div className="flex items-center gap-2 text-sm text-slate-400">
-                                <Clock className="w-4 h-4" />
-                                <span>{insight.timeline}</span>
-                              </div>
-                            )}
-                            {insight.severity && (
-                              <div className="flex items-center gap-2 text-sm">
-                                <span className={cn(
-                                  "px-2 py-1 rounded text-xs font-medium",
-                                  insight.severity === 'critical' && 'bg-ruby-500/20 text-ruby-400',
-                                  insight.severity === 'high' && 'bg-orange-500/20 text-orange-400',
-                                  insight.severity === 'medium' && 'bg-gold-500/20 text-gold-400'
-                                )}>
-                                  {insight.severity}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Regulations */}
-                          {insight.regulations && insight.regulations.length > 0 && (
-                            <div className="p-3 bg-slate-800/50 rounded border border-slate-700 mb-3">
-                              <div className="text-xs text-slate-500 mb-2">Relevant Regulations:</div>
-                              {insight.regulations.map((reg, idx) => (
-                                <div key={idx} className="text-sm text-slate-300 mb-1">
-                                  <span className="font-mono text-corporate-400">{reg.code}</span> - {reg.title}
-                                </div>
-                              ))}
+                  {analysis.analysis_data.insights
+                    .filter((insight, index) => !dismissedInsights.has(insight.id || index))
+                    .map((insight, index) => {
+                      const insightId = insight.id || index;
+                      const currentFeedback = feedback[insightId];
+                      
+                      return (
+                        <div
+                          key={insightId}
+                          className="p-4 bg-slate-900/50 border border-slate-700 rounded-lg hover:border-slate-600 transition-all duration-200 group relative overflow-hidden"
+                          onTouchStart={(e) => handleTouchStart(e, insightId)}
+                          onTouchMove={(e) => handleTouchMove(e, insightId)}
+                          onTouchEnd={(e) => handleTouchEnd(e, insightId)}
+                          style={{
+                            transform: swipeStart?.insightId === insightId 
+                              ? `translateX(${swipeOffset}px)` 
+                              : 'translateX(0)',
+                            opacity: swipeStart?.insightId === insightId 
+                              ? Math.max(0.3, 1 + swipeOffset / 200)
+                              : 1
+                          }}
+                        >
+                          {/* Swipe indicator */}
+                          {swipeStart?.insightId === insightId && swipeOffset < -50 && (
+                            <div className="absolute inset-0 bg-ruby-500/20 flex items-center justify-center text-ruby-400 font-semibold">
+                              <X className="w-6 h-6 mr-2" />
+                              Swipe to dismiss
                             </div>
                           )}
-
-                          <button className="btn-secondary text-sm">
-                            <ThumbsUp className="w-4 h-4 mr-2" />
-                            Mark as Helpful
+                          {/* Dismiss Button */}
+                          <button
+                            onClick={() => handleDismissInsight(insightId)}
+                            className="absolute top-3 right-3 p-1 text-slate-400 hover:text-slate-200 opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="Dismiss insight"
+                          >
+                            <X className="w-4 h-4" />
                           </button>
+
+                          <div className="flex items-start gap-3 mb-3">
+                            {getSeverityIcon(insight.severity)}
+                            <div className="flex-1">
+                              <h3 className="text-lg font-semibold text-white mb-2">
+                                {insight.title}
+                              </h3>
+                              <p className="text-slate-300 mb-4">
+                                {insight.description}
+                              </p>
+
+                              {/* Metadata Grid */}
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                                {insight.cost_estimate && (
+                                  <div className="flex items-center gap-2 text-sm text-slate-400">
+                                    <DollarSign className="w-4 h-4" />
+                                    <span>{insight.cost_estimate}</span>
+                                  </div>
+                                )}
+                                {insight.timeline && (
+                                  <div className="flex items-center gap-2 text-sm text-slate-400">
+                                    <Clock className="w-4 h-4" />
+                                    <span>{insight.timeline}</span>
+                                  </div>
+                                )}
+                                {insight.severity && (
+                                  <div className="flex items-center gap-2 text-sm">
+                                    <span className={cn(
+                                      "px-2 py-1 rounded text-xs font-medium",
+                                      insight.severity === 'critical' && 'bg-ruby-500/20 text-ruby-400',
+                                      insight.severity === 'high' && 'bg-orange-500/20 text-orange-400',
+                                      insight.severity === 'medium' && 'bg-gold-500/20 text-gold-400'
+                                    )}>
+                                      {insight.severity}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Regulations */}
+                              {insight.regulations && insight.regulations.length > 0 && (
+                                <div className="p-3 bg-slate-800/50 rounded border border-slate-700 mb-3">
+                                  <div className="text-xs text-slate-500 mb-2">Relevant Regulations:</div>
+                                  {insight.regulations.map((reg, idx) => (
+                                    <div key={idx} className="text-sm text-slate-300 mb-1">
+                                      <span className="font-mono text-corporate-400">{reg.code}</span> - {reg.title}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+
+                              {/* Feedback Buttons */}
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => handleFeedback(insightId, 'positive')}
+                                  className={cn(
+                                    "flex items-center gap-1 px-3 py-1 rounded text-sm transition-colors",
+                                    currentFeedback === 'positive'
+                                      ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                                      : "text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10"
+                                  )}
+                                >
+                                  <ThumbsUp className="w-4 h-4" />
+                                  <span>Helpful</span>
+                                </button>
+                                <button
+                                  onClick={() => handleFeedback(insightId, 'negative')}
+                                  className={cn(
+                                    "flex items-center gap-1 px-3 py-1 rounded text-sm transition-colors",
+                                    currentFeedback === 'negative'
+                                      ? "bg-ruby-500/20 text-ruby-400 border border-ruby-500/30"
+                                      : "text-slate-400 hover:text-ruby-400 hover:bg-ruby-500/10"
+                                  )}
+                                >
+                                  <ThumbsDown className="w-4 h-4" />
+                                  <span>Not Helpful</span>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  ))}
+                      );
+                    })}
                 </div>
               </div>
             )}
@@ -474,9 +658,6 @@ export default function AIAnalysisPage() {
               <p>
                 Analysis generated: {new Date(analysis.created_at).toLocaleString()}
               </p>
-              {analysis.model_used && (
-                <p className="mt-1">Model: {analysis.model_used}</p>
-              )}
             </div>
           </div>
         )}
