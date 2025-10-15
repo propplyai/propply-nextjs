@@ -239,6 +239,15 @@ export default function DismissedItemsPage() {
     return { ...item, recommendation };
   }).filter(item => item.recommendation);
 
+  // Debug logging
+  console.log('Dismissed page debug:', {
+    dismissedInsights,
+    dismissedRecommendations,
+    analysis: analysis?.analysis_data,
+    dismissedInsightsData,
+    dismissedRecommendationsData
+  });
+
   return (
     <Layout user={user} onLogout={handleLogout}>
       <div className="container-modern py-8">
