@@ -24,6 +24,8 @@ export default function AIAnalysisPage() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [feedback, setFeedback] = useState({});
   const [dismissedInsights, setDismissedInsights] = useState(new Set());
+  const [recommendationFeedback, setRecommendationFeedback] = useState({});
+  const [dismissedRecommendations, setDismissedRecommendations] = useState(new Set());
   const [swipeStart, setSwipeStart] = useState(null);
   const [swipeOffset, setSwipeOffset] = useState(0);
 
@@ -98,7 +100,7 @@ export default function AIAnalysisPage() {
     if (!user) return;
     
     try {
-      // Load feedback
+      // Load insight feedback
       const { data: feedbackData, error: feedbackError } = await supabase
         .from('insight_feedback')
         .select('insight_id, feedback_type')
@@ -123,6 +125,33 @@ export default function AIAnalysisPage() {
       if (!dismissedError && dismissedData) {
         const dismissedSet = new Set(dismissedData.map(item => item.insight_id));
         setDismissedInsights(dismissedSet);
+      }
+
+      // Load recommendation feedback
+      const { data: recFeedbackData, error: recFeedbackError } = await supabase
+        .from('recommendation_feedback')
+        .select('recommendation_id, feedback_type')
+        .eq('property_id', propertyId)
+        .eq('user_id', user.id);
+
+      if (!recFeedbackError && recFeedbackData) {
+        const recFeedbackMap = {};
+        recFeedbackData.forEach(item => {
+          recFeedbackMap[item.recommendation_id] = item.feedback_type;
+        });
+        setRecommendationFeedback(recFeedbackMap);
+      }
+
+      // Load dismissed recommendations
+      const { data: dismissedRecData, error: dismissedRecError } = await supabase
+        .from('dismissed_recommendations')
+        .select('recommendation_id')
+        .eq('property_id', propertyId)
+        .eq('user_id', user.id);
+
+      if (!dismissedRecError && dismissedRecData) {
+        const dismissedRecSet = new Set(dismissedRecData.map(item => item.recommendation_id));
+        setDismissedRecommendations(dismissedRecSet);
       }
     } catch (err) {
       console.error('Error loading user feedback:', err);
@@ -242,18 +271,69 @@ export default function AIAnalysisPage() {
       .catch(err => console.error('Error saving dismissal:', err));
   };
 
-  const handleTouchStart = (e, insightId) => {
+  const handleRecommendationFeedback = async (recommendationId, feedbackType) => {
+    try {
+      // Update local state immediately for responsive UI
+      setRecommendationFeedback(prev => ({
+        ...prev,
+        [recommendationId]: feedbackType
+      }));
+
+      // Save to database using upsert with proper conflict resolution
+      const { error } = await supabase
+        .from('recommendation_feedback')
+        .upsert({
+          recommendation_id: recommendationId,
+          property_id: propertyId,
+          user_id: user.id,
+          feedback_type: feedbackType,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'recommendation_id,property_id,user_id'
+        });
+
+      if (error) {
+        console.error('Error saving recommendation feedback:', error);
+        // Revert local state on error
+        setRecommendationFeedback(prev => {
+          const newFeedback = { ...prev };
+          delete newFeedback[recommendationId];
+          return newFeedback;
+        });
+      }
+    } catch (err) {
+      console.error('Recommendation feedback error:', err);
+    }
+  };
+
+  const handleDismissRecommendation = (recommendationId) => {
+    setDismissedRecommendations(prev => new Set([...prev, recommendationId]));
+    
+    // Save dismissal to database
+    supabase
+      .from('dismissed_recommendations')
+      .upsert({
+        recommendation_id: recommendationId,
+        property_id: propertyId,
+        user_id: user.id,
+        dismissed_at: new Date().toISOString()
+      })
+      .catch(err => console.error('Error saving recommendation dismissal:', err));
+  };
+
+  const handleTouchStart = (e, itemId, type = 'insight') => {
     const touch = e.touches[0];
     setSwipeStart({
       x: touch.clientX,
       y: touch.clientY,
-      insightId
+      itemId,
+      type
     });
     setSwipeOffset(0);
   };
 
-  const handleTouchMove = (e, insightId) => {
-    if (!swipeStart || swipeStart.insightId !== insightId) return;
+  const handleTouchMove = (e, itemId, type = 'insight') => {
+    if (!swipeStart || swipeStart.itemId !== itemId || swipeStart.type !== type) return;
     
     const touch = e.touches[0];
     const deltaX = touch.clientX - swipeStart.x;
@@ -264,15 +344,19 @@ export default function AIAnalysisPage() {
     }
   };
 
-  const handleTouchEnd = (e, insightId) => {
-    if (!swipeStart || swipeStart.insightId !== insightId) return;
+  const handleTouchEnd = (e, itemId, type = 'insight') => {
+    if (!swipeStart || swipeStart.itemId !== itemId || swipeStart.type !== type) return;
     
     const touch = e.changedTouches[0];
     const deltaX = touch.clientX - swipeStart.x;
     
-    // If swiped left far enough, dismiss the insight
+    // If swiped left far enough, dismiss the item
     if (deltaX < -100) {
-      handleDismissInsight(insightId);
+      if (type === 'insight') {
+        handleDismissInsight(itemId);
+      } else if (type === 'recommendation') {
+        handleDismissRecommendation(itemId);
+      }
     }
     
     setSwipeStart(null);
@@ -332,13 +416,26 @@ export default function AIAnalysisPage() {
     <Layout user={user} onLogout={handleLogout}>
       <div className="container-modern py-8">
         {/* Header */}
-        <Link
-          href="/compliance"
-          className="inline-flex items-center space-x-2 text-corporate-400 hover:text-corporate-300 mb-6"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          <span>Back to Compliance</span>
-        </Link>
+        <div className="flex items-center justify-between mb-6">
+          <Link
+            href="/compliance"
+            className="inline-flex items-center space-x-2 text-corporate-400 hover:text-corporate-300"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span>Back to Compliance</span>
+          </Link>
+          
+          {/* Dismissed Items Link */}
+          {(dismissedInsights.size > 0 || dismissedRecommendations.size > 0) && (
+            <Link
+              href={`/ai-analysis/${propertyId}/dismissed`}
+              className="inline-flex items-center space-x-2 text-slate-400 hover:text-slate-300"
+            >
+              <X className="w-4 h-4" />
+              <span>View Dismissed ({dismissedInsights.size + dismissedRecommendations.size})</span>
+            </Link>
+          )}
+        </div>
 
         {/* Property Info Header */}
         <div className="card mb-6">
@@ -492,20 +589,20 @@ export default function AIAnalysisPage() {
                         <div
                           key={insightId}
                           className="p-4 bg-slate-900/50 border border-slate-700 rounded-lg hover:border-slate-600 transition-all duration-200 group relative overflow-hidden"
-                          onTouchStart={(e) => handleTouchStart(e, insightId)}
-                          onTouchMove={(e) => handleTouchMove(e, insightId)}
-                          onTouchEnd={(e) => handleTouchEnd(e, insightId)}
+                          onTouchStart={(e) => handleTouchStart(e, insightId, 'insight')}
+                          onTouchMove={(e) => handleTouchMove(e, insightId, 'insight')}
+                          onTouchEnd={(e) => handleTouchEnd(e, insightId, 'insight')}
                           style={{
-                            transform: swipeStart?.insightId === insightId 
+                            transform: swipeStart?.itemId === insightId && swipeStart?.type === 'insight'
                               ? `translateX(${swipeOffset}px)` 
                               : 'translateX(0)',
-                            opacity: swipeStart?.insightId === insightId 
+                            opacity: swipeStart?.itemId === insightId && swipeStart?.type === 'insight'
                               ? Math.max(0.3, 1 + swipeOffset / 200)
                               : 1
                           }}
                         >
                           {/* Swipe indicator */}
-                          {swipeStart?.insightId === insightId && swipeOffset < -50 && (
+                          {swipeStart?.itemId === insightId && swipeStart?.type === 'insight' && swipeOffset < -50 && (
                             <div className="absolute inset-0 bg-ruby-500/20 flex items-center justify-center text-ruby-400 font-semibold">
                               <X className="w-6 h-6 mr-2" />
                               Swipe to dismiss
@@ -612,45 +709,110 @@ export default function AIAnalysisPage() {
                 <div className="flex items-center gap-3 mb-4">
                   <CheckCircle className="w-6 h-6 text-emerald-400" />
                   <h2 className="text-xl font-bold text-white">Recommendations</h2>
+                  <span className="badge badge-success">{analysis.analysis_data.recommendations.length}</span>
                 </div>
 
                 <div className="space-y-3">
-                  {analysis.analysis_data.recommendations.map((rec, index) => (
-                    <div
-                      key={rec.id || index}
-                      className="p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-lg"
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <span className="w-6 h-6 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center text-sm font-bold">
-                            {rec.priority || index + 1}
-                          </span>
-                          <h3 className="text-lg font-semibold text-white">{rec.action}</h3>
-                        </div>
-                        {rec.deadline && (
-                          <span className="text-xs text-slate-400">
-                            <Clock className="w-3 h-3 inline mr-1" />
-                            {rec.deadline}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-slate-300 mb-3 ml-8">{rec.reason}</p>
-                      {rec.cost && (
-                        <div className="text-sm text-slate-400 ml-8">
-                          Estimated cost: {rec.cost}
-                        </div>
-                      )}
-                      {rec.contractor_categories && rec.contractor_categories.length > 0 && (
-                        <Link
-                          href={`/marketplace?property_id=${propertyId}`}
-                          className="btn-primary text-sm mt-3 ml-8 inline-flex items-center"
+                  {analysis.analysis_data.recommendations
+                    .filter((rec, index) => !dismissedRecommendations.has(rec.id || index))
+                    .map((rec, index) => {
+                      const recommendationId = rec.id || index;
+                      const currentFeedback = recommendationFeedback[recommendationId];
+                      
+                      return (
+                        <div
+                          key={recommendationId}
+                          className="p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-lg hover:border-emerald-500/40 transition-all duration-200 group relative overflow-hidden"
+                          onTouchStart={(e) => handleTouchStart(e, recommendationId, 'recommendation')}
+                          onTouchMove={(e) => handleTouchMove(e, recommendationId, 'recommendation')}
+                          onTouchEnd={(e) => handleTouchEnd(e, recommendationId, 'recommendation')}
+                          style={{
+                            transform: swipeStart?.itemId === recommendationId && swipeStart?.type === 'recommendation'
+                              ? `translateX(${swipeOffset}px)` 
+                              : 'translateX(0)',
+                            opacity: swipeStart?.itemId === recommendationId && swipeStart?.type === 'recommendation'
+                              ? Math.max(0.3, 1 + swipeOffset / 200)
+                              : 1
+                          }}
                         >
-                          Find Contractors
-                          <ExternalLink className="w-4 h-4 ml-2" />
-                        </Link>
-                      )}
-                    </div>
-                  ))}
+                          {/* Swipe indicator */}
+                          {swipeStart?.itemId === recommendationId && swipeStart?.type === 'recommendation' && swipeOffset < -50 && (
+                            <div className="absolute inset-0 bg-ruby-500/20 flex items-center justify-center text-ruby-400 font-semibold">
+                              <X className="w-6 h-6 mr-2" />
+                              Swipe to dismiss
+                            </div>
+                          )}
+
+                          {/* Dismiss Button */}
+                          <button
+                            onClick={() => handleDismissRecommendation(recommendationId)}
+                            className="absolute top-3 right-3 p-1 text-slate-400 hover:text-slate-200 opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="Dismiss recommendation"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="w-6 h-6 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center text-sm font-bold">
+                                {rec.priority || index + 1}
+                              </span>
+                              <h3 className="text-lg font-semibold text-white">{rec.action}</h3>
+                            </div>
+                            {rec.deadline && (
+                              <span className="text-xs text-slate-400">
+                                <Clock className="w-3 h-3 inline mr-1" />
+                                {rec.deadline}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-slate-300 mb-3 ml-8">{rec.reason}</p>
+                          {rec.cost && (
+                            <div className="text-sm text-slate-400 ml-8 mb-3">
+                              Estimated cost: {rec.cost}
+                            </div>
+                          )}
+                          
+                          {/* Feedback Buttons */}
+                          <div className="flex items-center gap-2 ml-8">
+                            <button
+                              onClick={() => handleRecommendationFeedback(recommendationId, 'positive')}
+                              className={cn(
+                                "flex items-center gap-1 px-3 py-1 rounded text-sm transition-colors",
+                                currentFeedback === 'positive'
+                                  ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                                  : "text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10"
+                              )}
+                            >
+                              <ThumbsUp className="w-4 h-4" />
+                              <span>Helpful</span>
+                            </button>
+                            <button
+                              onClick={() => handleRecommendationFeedback(recommendationId, 'negative')}
+                              className={cn(
+                                "flex items-center gap-1 px-3 py-1 rounded text-sm transition-colors",
+                                currentFeedback === 'negative'
+                                  ? "bg-ruby-500/20 text-ruby-400 border border-ruby-500/30"
+                                  : "text-slate-400 hover:text-ruby-400 hover:bg-ruby-500/10"
+                              )}
+                            >
+                              <ThumbsDown className="w-4 h-4" />
+                              <span>Not Helpful</span>
+                            </button>
+                          </div>
+
+                          {rec.contractor_categories && rec.contractor_categories.length > 0 && (
+                            <Link
+                              href={`/marketplace?property_id=${propertyId}`}
+                              className="btn-primary text-sm mt-3 ml-8 inline-flex items-center"
+                            >
+                              Find Contractors
+                              <ExternalLink className="w-4 h-4 ml-2" />
+                            </Link>
+                          )}
+                        </div>
+                      );
+                    })}
                 </div>
               </div>
             )}
