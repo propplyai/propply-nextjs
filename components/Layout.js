@@ -1,13 +1,42 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Home, Building2, FileCheck, ShoppingBag, BarChart3, LogOut, User, CreditCard, Menu, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, getSubscriptionTierName, getSubscriptionTierBadge, getSubscriptionTierIcon } from '@/lib/utils';
+import { supabase } from '@/lib/supabase';
 
 export default function Layout({ children, user, onLogout }) {
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userProfile, setUserProfile] = useState(null);
+
+  // Load user profile data when user changes
+  useEffect(() => {
+    if (user?.id) {
+      loadUserProfile(user.id);
+    } else {
+      setUserProfile(null);
+    }
+  }, [user?.id]);
+
+  const loadUserProfile = async (userId) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('subscription_tier, subscription_status')
+        .eq('id', userId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error loading user profile:', error);
+      }
+
+      setUserProfile(data);
+    } catch (error) {
+      console.error('Error loading user profile:', error);
+    }
+  };
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
@@ -86,9 +115,17 @@ export default function Layout({ children, user, onLogout }) {
                 <div className="w-8 h-8 bg-gradient-to-r from-corporate-500 to-emerald-500 rounded-full flex items-center justify-center">
                   <User className="w-5 h-5 text-white" />
                 </div>
-                <span className="text-sm font-medium text-slate-300 hidden lg:block">
-                  {user?.email || 'User'}
-                </span>
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-slate-300 hidden lg:block">
+                    {user?.email || 'User'}
+                  </span>
+                  <span className={cn(
+                    'text-xs px-2 py-1 rounded-full border font-medium hidden lg:block',
+                    getSubscriptionTierBadge(userProfile?.subscription_tier || 'free')
+                  )}>
+                    {getSubscriptionTierIcon(userProfile?.subscription_tier || 'free')} {getSubscriptionTierName(userProfile?.subscription_tier || 'free')}
+                  </span>
+                </div>
               </Link>
               <button
                 onClick={onLogout}
@@ -120,9 +157,17 @@ export default function Layout({ children, user, onLogout }) {
                   <div className="w-8 h-8 bg-gradient-to-r from-corporate-500 to-emerald-500 rounded-full flex items-center justify-center">
                     <User className="w-5 h-5 text-white" />
                   </div>
-                  <span className="text-sm font-medium text-slate-300">
-                    {user?.email || 'User'}
-                  </span>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-slate-300">
+                      {user?.email || 'User'}
+                    </span>
+                    <span className={cn(
+                      'text-xs px-2 py-1 rounded-full border font-medium',
+                      getSubscriptionTierBadge(userProfile?.subscription_tier || 'free')
+                    )}>
+                      {getSubscriptionTierIcon(userProfile?.subscription_tier || 'free')} {getSubscriptionTierName(userProfile?.subscription_tier || 'free')}
+                    </span>
+                  </div>
                 </div>
                 <button
                   onClick={closeMobileMenu}
