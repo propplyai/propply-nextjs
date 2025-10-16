@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { createServerSupabaseClient } from '@/lib/supabase';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -12,10 +12,14 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'No authorization header' });
     }
 
+    // Create server Supabase client with the auth token
+    const supabase = createServerSupabaseClient({ req, res });
+
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
 
     if (userError || !user) {
+      console.error('Auth error:', userError);
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
@@ -43,6 +47,7 @@ export default async function handler(req, res) {
       .single();
 
     if (error) {
+      console.error('Database error:', error);
       // If it's a duplicate key error, that's okay - it's already dismissed
       if (error.code === '23505') {
         return res.status(200).json({ success: true, message: 'Already dismissed' });
