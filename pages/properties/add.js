@@ -2,15 +2,18 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Script from 'next/script';
 import Layout from '@/components/Layout';
+import PropertyLimitModal from '@/components/PropertyLimitModal';
 import { authHelpers, supabase } from '@/lib/supabase';
 import { Building2, MapPin, Loader2, CheckCircle } from 'lucide-react';
 
 export default function AddPropertyPage() {
   const router = useRouter();
   const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [showLimitModal, setShowLimitModal] = useState(false);
 
   const [formData, setFormData] = useState({
     address: '',
@@ -32,6 +35,25 @@ export default function AddPropertyPage() {
       return;
     }
     setUser(currentUser);
+    await loadProfile(currentUser.id);
+  };
+
+  const loadProfile = async (userId) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('subscription_tier, subscription_status')
+        .eq('id', userId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error loading profile:', error);
+      }
+
+      setProfile(data);
+    } catch (error) {
+      console.error('Error loading profile:', error);
+    }
   };
   
   useEffect(() => {
@@ -63,8 +85,41 @@ export default function AddPropertyPage() {
     });
   };
 
+  const checkPropertyLimit = async () => {
+    try {
+      // Get current property count
+      const { data: properties, error } = await supabase
+        .from('properties')
+        .select('id')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      const currentCount = properties?.length || 0;
+      
+      // Check if user can add more properties based on subscription tier
+      const tier = profile?.subscription_tier || 'free';
+      
+      // Free tier and single-one-time tier: limited to 1 property
+      if ((tier === 'free' || tier === 'single-one-time') && currentCount >= 1) {
+        setShowLimitModal(true);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error checking property limit:', error);
+      return true; // Allow on error to avoid blocking
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Check property limit first
+    const canAdd = await checkPropertyLimit();
+    if (!canAdd) return;
+
     setLoading(true);
     setError('');
 
@@ -320,6 +375,12 @@ export default function AddPropertyPage() {
             </button>
           </div>
         </form>
+
+        {/* Property Limit Modal */}
+        <PropertyLimitModal 
+          isOpen={showLimitModal} 
+          onClose={() => setShowLimitModal(false)} 
+        />
       </div>
     </Layout>
     </>

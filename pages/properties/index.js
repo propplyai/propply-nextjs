@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Layout from '@/components/Layout';
+import PropertyLimitModal from '@/components/PropertyLimitModal';
 import { authHelpers, supabase } from '@/lib/supabase';
 import { Building2, Plus, Search, Filter, MapPin, AlertTriangle } from 'lucide-react';
 import { cn, getComplianceScoreBadge } from '@/lib/utils';
@@ -9,11 +10,13 @@ import { cn, getComplianceScoreBadge } from '@/lib/utils';
 export default function PropertiesPage() {
   const router = useRouter();
   const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
   const [properties, setProperties] = useState([]);
   const [filteredProperties, setFilteredProperties] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [cityFilter, setCityFilter] = useState('all');
   const [loading, setLoading] = useState(true);
+  const [showLimitModal, setShowLimitModal] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -30,7 +33,28 @@ export default function PropertiesPage() {
       return;
     }
     setUser(currentUser);
-    await loadProperties(currentUser.id);
+    await Promise.all([
+      loadProperties(currentUser.id),
+      loadProfile(currentUser.id)
+    ]);
+  };
+
+  const loadProfile = async (userId) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('subscription_tier, subscription_status')
+        .eq('id', userId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error loading profile:', error);
+      }
+
+      setProfile(data);
+    } catch (error) {
+      console.error('Error loading profile:', error);
+    }
   };
 
   const loadProperties = async (userId) => {
@@ -69,6 +93,21 @@ export default function PropertiesPage() {
     setFilteredProperties(filtered);
   };
 
+  const handleAddProperty = async (e) => {
+    e.preventDefault();
+    
+    // Check property limit before navigating
+    const tier = profile?.subscription_tier || 'free';
+    if (tier === 'free' || tier === 'single-one-time') {
+      if (properties.length >= 1) {
+        setShowLimitModal(true);
+        return;
+      }
+    }
+    
+    router.push('/properties/add');
+  };
+
   const handleLogout = async () => {
     await authHelpers.signOut();
     router.push('/');
@@ -95,10 +134,10 @@ export default function PropertiesPage() {
             <h1 className="text-4xl font-bold gradient-text mb-2">Properties</h1>
             <p className="text-slate-400">Manage your property portfolio</p>
           </div>
-          <Link href="/properties/add" className="btn-primary mt-4 md:mt-0">
+          <button onClick={handleAddProperty} className="btn-primary mt-4 md:mt-0">
             <Plus className="w-5 h-5 mr-2 inline" />
             Add Property
-          </Link>
+          </button>
         </div>
 
         {/* Filters */}
@@ -219,6 +258,12 @@ export default function PropertiesPage() {
             </div>
           </>
         )}
+
+        {/* Property Limit Modal */}
+        <PropertyLimitModal 
+          isOpen={showLimitModal} 
+          onClose={() => setShowLimitModal(false)} 
+        />
       </div>
     </Layout>
   );

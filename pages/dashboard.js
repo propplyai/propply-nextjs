@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Layout from '@/components/Layout';
+import PropertyLimitModal from '@/components/PropertyLimitModal';
 import { authHelpers, supabase } from '@/lib/supabase';
 import { Building2, AlertTriangle, CheckCircle, TrendingUp, Plus, ArrowRight } from 'lucide-react';
 import { cn, getComplianceScoreBadge } from '@/lib/utils';
@@ -9,6 +10,7 @@ import { cn, getComplianceScoreBadge } from '@/lib/utils';
 export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
   const [properties, setProperties] = useState([]);
   const [stats, setStats] = useState({
     totalProperties: 0,
@@ -17,6 +19,7 @@ export default function DashboardPage() {
     upcomingInspections: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [showLimitModal, setShowLimitModal] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -29,7 +32,28 @@ export default function DashboardPage() {
       return;
     }
     setUser(currentUser);
-    await loadDashboardData(currentUser.id);
+    await Promise.all([
+      loadDashboardData(currentUser.id),
+      loadProfile(currentUser.id)
+    ]);
+  };
+
+  const loadProfile = async (userId) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('subscription_tier, subscription_status')
+        .eq('id', userId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error loading profile:', error);
+      }
+
+      setProfile(data);
+    } catch (error) {
+      console.error('Error loading profile:', error);
+    }
   };
 
   const loadDashboardData = async (userId) => {
@@ -64,6 +88,21 @@ export default function DashboardPage() {
     }
   };
 
+  const handleAddProperty = async (e) => {
+    e.preventDefault();
+    
+    // Check property limit before navigating
+    const tier = profile?.subscription_tier || 'free';
+    if (tier === 'free' || tier === 'single-one-time') {
+      if (properties.length >= 1) {
+        setShowLimitModal(true);
+        return;
+      }
+    }
+    
+    router.push('/properties/add');
+  };
+
   const handleLogout = async () => {
     await authHelpers.signOut();
     router.push('/');
@@ -91,10 +130,10 @@ export default function DashboardPage() {
             <h1 className="text-4xl font-bold gradient-text mb-2">Dashboard</h1>
             <p className="text-slate-400">Welcome back! Here's your property overview.</p>
           </div>
-          <Link href="/properties/add" className="btn-primary">
+          <button onClick={handleAddProperty} className="btn-primary">
             <Plus className="w-5 h-5 mr-2 inline" />
             Add Property
-          </Link>
+          </button>
         </div>
 
         {/* Stats Grid */}
@@ -232,6 +271,12 @@ export default function DashboardPage() {
             </Link>
           </div>
         </div>
+
+        {/* Property Limit Modal */}
+        <PropertyLimitModal 
+          isOpen={showLimitModal} 
+          onClose={() => setShowLimitModal(false)} 
+        />
       </div>
     </Layout>
   );
