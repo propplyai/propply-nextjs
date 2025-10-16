@@ -249,8 +249,8 @@ export default function Layout({ children, user, onLogout }) {
               <Link href="/terms" className="text-slate-400 hover:text-white text-sm transition-colors">
                 Terms of Service
               </Link>
-              <Link href="/support" className="text-slate-400 hover:text-white text-sm transition-colors">
-                Support
+              <Link href="/contact" className="text-slate-400 hover:text-white text-sm transition-colors">
+                Contact
               </Link>
             </div>
           </div>
