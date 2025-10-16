@@ -26,6 +26,8 @@ export default function PropertyDetailPage() {
   const [vendorSearch, setVendorSearch] = useState(null);
   const [loadingVendors, setLoadingVendors] = useState(false);
   const [hasAIAnalysis, setHasAIAnalysis] = useState(false);
+  const [triggeringAI, setTriggeringAI] = useState(false);
+  const [subscription, setSubscription] = useState(null);
 
   useEffect(() => {
     console.log('[Property Detail] useEffect triggered. ID from router.query:', id, 'Router is ready:', router.isReady, 'Pathname:', router.pathname);
@@ -56,7 +58,8 @@ export default function PropertyDetailPage() {
       console.log('[Property Detail] About to load property with ID from router:', propertyId);
       await Promise.all([
         loadProperty(propertyId, currentUser.id),
-        checkAIAnalysis(propertyId)
+        checkAIAnalysis(propertyId),
+        checkSubscription(currentUser.id)
       ]);
     } catch (error) {
       console.error('[Property Detail] Unexpected error during auth:', error);
@@ -219,6 +222,77 @@ export default function PropertyDetailPage() {
       setHasAIAnalysis(data && data.length > 0);
     } catch (err) {
       console.error('Error checking AI analysis:', err);
+    }
+  };
+
+  const checkSubscription = async (userId) => {
+    try {
+      const { data, error } = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('status', 'active')
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+
+      setSubscription(data);
+    } catch (err) {
+      console.error('Error checking subscription:', err);
+    }
+  };
+
+  const handleTriggerAI = async () => {
+    // Check if user has paid subscription
+    if (!subscription) {
+      alert('AI Analysis requires a paid subscription. Please upgrade your plan to access AI-powered insights.');
+      router.push('/pricing');
+      return;
+    }
+
+    // If analysis already exists, just navigate to it
+    if (hasAIAnalysis) {
+      router.push(`/ai-analysis/${property.id}`);
+      return;
+    }
+
+    // Otherwise, trigger new analysis
+    setTriggeringAI(true);
+
+    try {
+      console.log('Triggering AI analysis for property:', property.id);
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session');
+      }
+
+      const response = await fetch('/api/ai-analysis/trigger', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          property_id: property.id
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to trigger analysis');
+      }
+
+      // Navigate to AI analysis page
+      router.push(`/ai-analysis/${property.id}`);
+    } catch (err) {
+      console.error('AI trigger error:', err);
+      alert(`Error: ${err.message}`);
+    } finally {
+      setTriggeringAI(false);
     }
   };
 
@@ -614,15 +688,14 @@ export default function PropertyDetailPage() {
             <div className="card">
               <h3 className="text-lg font-bold text-white mb-4">Actions</h3>
               <div className="space-y-3">
-                {hasAIAnalysis && (
-                  <Link
-                    href={`/ai-analysis/${property.id}`}
-                    className="btn-primary w-full flex items-center justify-center"
-                  >
-                    <Sparkles className="w-5 h-5 mr-2" />
-                    View AI Analysis
-                  </Link>
-                )}
+                <button
+                  onClick={handleTriggerAI}
+                  disabled={triggeringAI}
+                  className="btn-primary w-full flex items-center justify-center bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Sparkles className={`w-5 h-5 mr-2 ${triggeringAI ? 'animate-pulse' : ''}`} />
+                  {triggeringAI ? 'Starting Analysis...' : hasAIAnalysis ? 'View AI Analysis' : 'Run AI Analysis'}
+                </button>
                 {latestReport && (
                   <Link
                     href={`/compliance/${latestReport.id}`}
