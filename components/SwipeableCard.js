@@ -2,16 +2,17 @@ import { useState, useRef, useEffect } from 'react';
 import { X, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export default function SwipeableCard({ 
-  children, 
-  onDismiss, 
+export default function SwipeableCard({
+  children,
+  onDismiss,
   className = '',
-  disabled = false 
+  disabled = false
 }) {
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [currentX, setCurrentX] = useState(0);
   const [offsetX, setOffsetX] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
   const cardRef = useRef(null);
   const dismissThreshold = 150; // pixels to swipe before dismissing
 
@@ -97,8 +98,23 @@ export default function SwipeableCard({
   const opacity = Math.max(0.3, 1 - Math.abs(offsetX) / 300);
   const rotation = offsetX / 50;
 
+  const handleCloseClick = (e) => {
+    e.stopPropagation();
+    if (disabled) return;
+
+    // Animate out to the right
+    setOffsetX(1000);
+    setTimeout(() => {
+      if (onDismiss) onDismiss();
+    }, 300);
+  };
+
   return (
-    <div className="relative">
+    <div
+      className="relative"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       {/* Swipe hint overlay */}
       {!disabled && Math.abs(offsetX) > 50 && (
         <div className={cn(
@@ -121,6 +137,17 @@ export default function SwipeableCard({
         </div>
       )}
 
+      {/* Desktop close button - appears on hover */}
+      {!disabled && isHovered && !isDragging && offsetX === 0 && (
+        <button
+          onClick={handleCloseClick}
+          className="absolute top-4 right-4 z-20 p-2 bg-slate-800/90 hover:bg-ruby-500/90 rounded-lg border border-slate-600 hover:border-ruby-500 transition-all duration-200 group shadow-lg"
+          aria-label="Dismiss section"
+        >
+          <X className="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" />
+        </button>
+      )}
+
       {/* Main card */}
       <div
         ref={cardRef}
@@ -130,7 +157,7 @@ export default function SwipeableCard({
         onMouseDown={handleMouseDown}
         className={cn(
           'relative z-10 transition-all',
-          isDragging ? 'cursor-grabbing' : 'cursor-grab',
+          disabled ? '' : (isDragging ? 'cursor-grabbing' : 'cursor-grab'),
           className
         )}
         style={{
