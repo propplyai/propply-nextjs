@@ -18,12 +18,12 @@ export default function LoginPage() {
   useEffect(() => {
     // Only run when router is ready to avoid stale query params
     if (!router.isReady) return;
-    
+
     // Check if signup query param is present
     if (router.query.signup === 'true') {
       setIsSignUp(true);
     }
-    
+
     // Check for error messages in query params
     if (router.query.error) {
       const errorMessage = decodeURIComponent(router.query.error);
@@ -36,14 +36,18 @@ export default function LoginPage() {
       setError(errorMap[errorMessage] || errorMessage);
     }
 
-    // Check if user is already logged in
+    // Check if user is already logged in - but only on initial mount
+    // Skip this check if user is actively logging in (isNavigating is true)
     const checkAuth = async () => {
+      if (isNavigating) return; // Don't check auth if we're already navigating
+
       const { user } = await authHelpers.getUser();
-      if (user && !isNavigating) {
+      if (user) {
+        setIsNavigating(true); // Set flag to prevent double redirect
         // Redirect to the specified URL or dashboard
         const redirectUrl = router.query.redirect || '/dashboard';
         const planId = router.query.plan;
-        
+
         if (planId) {
           router.push(`${redirectUrl}${redirectUrl.includes('?') ? '&' : '?'}autoCheckout=${planId}`);
         } else {
@@ -52,7 +56,7 @@ export default function LoginPage() {
       }
     };
     checkAuth();
-  }, [router.isReady, router.query]);
+  }, [router.isReady, router.query.error, router.query.signup]); // Removed router.query from dependencies to prevent re-runs
 
   const handleEmailAuth = async (e) => {
     e.preventDefault();
