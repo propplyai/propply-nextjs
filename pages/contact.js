@@ -60,9 +60,25 @@ export default function Contact() {
         return;
       }
 
-      // Here you would typically send the form data to your backend API
-      // For now, we'll simulate a successful submission
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Send form data to n8n webhook
+      const response = await fetch('https://klevaideas.app.n8n.cloud/webhook/contact-form', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          subject: formData.subject,
+          message: formData.message,
+          timestamp: new Date().toISOString(),
+          userId: user?.id || null,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send message');
+      }
 
       setStatus({
         type: 'success',
