@@ -97,7 +97,7 @@ export default function AnimatedCubeHero() {
             </svg>
           </a>
           <a
-            href="#features"
+            href="#how-it-works"
             className="btn-secondary text-lg px-8 py-4 inline-flex items-center justify-center"
           >
             See How It Works

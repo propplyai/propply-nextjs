@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Building2, Shield, BarChart3, Zap, CheckCircle, ArrowRight } from 'lucide-react';
+import { Building2, Shield, BarChart3, Zap, CheckCircle, ArrowRight, Search, FileCheck, ShoppingCart, ChevronDown } from 'lucide-react';
 import AnimatedCubeHero from '@/components/AnimatedCubeHero';
 
 export default function LandingPage() {
@@ -70,15 +70,15 @@ export default function LandingPage() {
       {/* Navigation */}
       <nav className="relative z-10 backdrop-blur-xl bg-slate-900/50 border-b border-slate-700/50">
         <div className="container-modern">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-14">
             <div className="flex items-center space-x-3">
-              <Image src="/logo.svg" alt="Propply AI" width={128} height={128} className="w-32 h-32" />
+              <Image src="/logo.svg" alt="Propply AI" width={96} height={96} className="w-24 h-24" />
             </div>
-            <div className="flex items-center space-x-4">
-              <Link href="/login" className="btn-secondary text-sm">
+            <div className="flex items-center space-x-3">
+              <Link href="/login" className="btn-secondary text-sm px-3 py-1.5">
                 Sign In
               </Link>
-              <Link href="/login?signup=true" className="btn-primary text-sm">
+              <Link href="/login?signup=true" className="btn-primary text-sm px-3 py-1.5">
                 Get Started
               </Link>
             </div>
@@ -87,16 +87,16 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero Section with Animated Cubes */}
-      <section className="relative z-10 pt-20 pb-32">
+      <section className="relative z-10 pt-12 pb-16">
         <div className="container-modern">
           <AnimatedCubeHero />
         </div>
       </section>
 
       {/* Features Grid */}
-      <section className="relative z-10 py-20">
+      <section className="relative z-10 py-12">
         <div className="container-modern">
-          <h2 className="text-4xl font-bold text-center mb-16 gradient-text">
+          <h2 className="text-3xl font-bold text-center mb-10 gradient-text">
             Everything You Need
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -121,20 +121,20 @@ export default function LandingPage() {
       </section>
 
       {/* Benefits Section */}
-      <section className="relative z-10 py-20 bg-slate-800/30 backdrop-blur-sm">
+      <section className="relative z-10 py-12 bg-slate-800/30 backdrop-blur-sm">
         <div className="container-modern">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
             <div>
-              <h2 className="text-4xl font-bold mb-6">
+              <h2 className="text-3xl font-bold mb-4">
                 <span className="gradient-text">Simplify Compliance</span>
                 <br />
                 <span className="text-white">Save Time & Money</span>
               </h2>
-              <p className="text-lg text-slate-300 mb-8">
+              <p className="text-base text-slate-300 mb-6">
                 Stop juggling spreadsheets and endless paperwork. Propply AI brings all your
                 compliance data into one intuitive platform.
               </p>
-              <ul className="space-y-4">
+              <ul className="space-y-3">
                 {[
                   'Automated data syncing from city databases',
                   'Real-time compliance scoring',
@@ -157,16 +157,250 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Pricing moved to dedicated /pricing page */}
+      {/* How It Works Section */}
+      <section id="how-it-works" className="relative z-10 py-12">
+        <div className="container-modern">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold mb-3">
+              <span className="gradient-text">See How It Works</span>
+            </h2>
+            <p className="text-base text-slate-400 max-w-2xl mx-auto">
+              Three simple steps to streamline your property compliance management
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+            {/* Step 1 */}
+            <div className="relative">
+              <div className="card text-center group hover:scale-105 transition-all duration-300">
+                <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-12 h-12 bg-gradient-to-r from-corporate-500 to-corporate-600 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-glow">
+                  1
+                </div>
+                <div className="pt-8">
+                  <div className="w-16 h-16 bg-corporate-500/10 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:shadow-glow transition-all">
+                    <Search className="w-8 h-8 text-corporate-400" />
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-3">Connect Your Properties</h3>
+                  <p className="text-slate-400">
+                    Add your properties to the platform. Our AI automatically syncs with NYC and Philadelphia city databases to pull in compliance data.
+                  </p>
+                </div>
+              </div>
+              {/* Connecting Arrow */}
+              <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2 text-corporate-500/30">
+                <ArrowRight className="w-8 h-8" />
+              </div>
+            </div>
+
+            {/* Step 2 */}
+            <div className="relative">
+              <div className="card text-center group hover:scale-105 transition-all duration-300">
+                <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-12 h-12 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-glow">
+                  2
+                </div>
+                <div className="pt-8">
+                  <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:shadow-glow transition-all">
+                    <FileCheck className="w-8 h-8 text-emerald-400" />
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-3">Monitor Compliance</h3>
+                  <p className="text-slate-400">
+                    View real-time compliance scores, track violations, and receive instant alerts when issues arise. AI-powered insights help you prioritize what matters most.
+                  </p>
+                </div>
+              </div>
+              {/* Connecting Arrow */}
+              <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2 text-emerald-500/30">
+                <ArrowRight className="w-8 h-8" />
+              </div>
+            </div>
+
+            {/* Step 3 */}
+            <div className="card text-center group hover:scale-105 transition-all duration-300">
+              <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-12 h-12 bg-gradient-to-r from-gold-500 to-gold-600 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-glow">
+                3
+              </div>
+              <div className="pt-8">
+                <div className="w-16 h-16 bg-gold-500/10 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:shadow-glow transition-all">
+                  <ShoppingCart className="w-8 h-8 text-gold-400" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-3">Take Action</h3>
+                <p className="text-slate-400">
+                  Connect with verified vendors in our marketplace to resolve violations quickly. Generate reports and stay compliant with ease.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* See It In Action CTA */}
+          <div className="text-center">
+            <Link
+              href="/login?signup=true"
+              className="btn-primary inline-flex items-center group"
+            >
+              Start Your Free Trial
+              <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="relative z-10 py-12 bg-slate-800/30 backdrop-blur-sm">
+        <div className="container-modern">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold mb-3">
+              <span className="gradient-text">Frequently Asked Questions</span>
+            </h2>
+            <p className="text-base text-slate-400 max-w-2xl mx-auto">
+              Everything you need to know about Propply AI
+            </p>
+          </div>
+
+          <div className="max-w-3xl mx-auto space-y-4">
+            {/* FAQ 1 */}
+            <details className="card group cursor-pointer">
+              <summary className="flex items-center justify-between cursor-pointer list-none">
+                <h3 className="text-lg font-semibold text-white group-hover:text-corporate-400 transition-colors">
+                  What is Propply AI?
+                </h3>
+                <ChevronDown className="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform" />
+              </summary>
+              <div className="mt-4 pt-4 border-t border-slate-700/50">
+                <p className="text-slate-400">
+                  Propply AI is an intelligent property compliance management platform designed for property managers and landlords. We automate the tracking and management of property compliance requirements across NYC and Philadelphia, helping you stay compliant while saving time and avoiding costly violations.
+                </p>
+              </div>
+            </details>
+
+            {/* FAQ 2 */}
+            <details className="card group cursor-pointer">
+              <summary className="flex items-center justify-between cursor-pointer list-none">
+                <h3 className="text-lg font-semibold text-white group-hover:text-corporate-400 transition-colors">
+                  Which cities does Propply AI support?
+                </h3>
+                <ChevronDown className="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform" />
+              </summary>
+              <div className="mt-4 pt-4 border-t border-slate-700/50">
+                <p className="text-slate-400">
+                  Currently, Propply AI supports property compliance management in New York City (NYC) and Philadelphia. We're continuously expanding our coverage to additional cities. If you'd like to see your city supported, please contact us to express your interest.
+                </p>
+              </div>
+            </details>
+
+            {/* FAQ 3 */}
+            <details className="card group cursor-pointer">
+              <summary className="flex items-center justify-between cursor-pointer list-none">
+                <h3 className="text-lg font-semibold text-white group-hover:text-corporate-400 transition-colors">
+                  How does the AI sync work?
+                </h3>
+                <ChevronDown className="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform" />
+              </summary>
+              <div className="mt-4 pt-4 border-t border-slate-700/50">
+                <p className="text-slate-400">
+                  Our AI-powered system automatically connects to city databases and pulls in compliance data for your properties. This includes violations, permits, certificates, and inspection records. The data is updated regularly to ensure you always have the most current information at your fingertips.
+                </p>
+              </div>
+            </details>
+
+            {/* FAQ 4 */}
+            <details className="card group cursor-pointer">
+              <summary className="flex items-center justify-between cursor-pointer list-none">
+                <h3 className="text-lg font-semibold text-white group-hover:text-corporate-400 transition-colors">
+                  What is the vendor marketplace?
+                </h3>
+                <ChevronDown className="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform" />
+              </summary>
+              <div className="mt-4 pt-4 border-t border-slate-700/50">
+                <p className="text-slate-400">
+                  Our vendor marketplace connects you with verified, qualified service providers who can help resolve compliance issues quickly. From plumbers and electricians to attorneys and inspectors, find trusted professionals who understand property compliance requirements.
+                </p>
+              </div>
+            </details>
+
+            {/* FAQ 5 */}
+            <details className="card group cursor-pointer">
+              <summary className="flex items-center justify-between cursor-pointer list-none">
+                <h3 className="text-lg font-semibold text-white group-hover:text-corporate-400 transition-colors">
+                  Is there a free trial available?
+                </h3>
+                <ChevronDown className="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform" />
+              </summary>
+              <div className="mt-4 pt-4 border-t border-slate-700/50">
+                <p className="text-slate-400">
+                  Yes! We offer a 14-day free trial with full access to all features. No credit card required to start. You can explore the platform, add your properties, and experience the power of automated compliance management risk-free.
+                </p>
+              </div>
+            </details>
+
+            {/* FAQ 6 */}
+            <details className="card group cursor-pointer">
+              <summary className="flex items-center justify-between cursor-pointer list-none">
+                <h3 className="text-lg font-semibold text-white group-hover:text-corporate-400 transition-colors">
+                  How much does Propply AI cost?
+                </h3>
+                <ChevronDown className="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform" />
+              </summary>
+              <div className="mt-4 pt-4 border-t border-slate-700/50">
+                <p className="text-slate-400">
+                  We offer flexible pricing plans to suit property managers of all sizes, from individual landlords to large portfolio managers. Visit our{' '}
+                  <Link href="/pricing" className="text-corporate-400 hover:text-corporate-300 underline">
+                    pricing page
+                  </Link>
+                  {' '}to see detailed plan comparisons and find the right fit for your needs.
+                </p>
+              </div>
+            </details>
+
+            {/* FAQ 7 */}
+            <details className="card group cursor-pointer">
+              <summary className="flex items-center justify-between cursor-pointer list-none">
+                <h3 className="text-lg font-semibold text-white group-hover:text-corporate-400 transition-colors">
+                  Is my data secure?
+                </h3>
+                <ChevronDown className="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform" />
+              </summary>
+              <div className="mt-4 pt-4 border-t border-slate-700/50">
+                <p className="text-slate-400">
+                  Absolutely. We take data security seriously and employ industry-standard encryption and security practices to protect your information. All data is encrypted in transit and at rest, and we never share your information with third parties without your explicit consent.
+                </p>
+              </div>
+            </details>
+
+            {/* FAQ 8 */}
+            <details className="card group cursor-pointer">
+              <summary className="flex items-center justify-between cursor-pointer list-none">
+                <h3 className="text-lg font-semibold text-white group-hover:text-corporate-400 transition-colors">
+                  Can I cancel anytime?
+                </h3>
+                <ChevronDown className="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform" />
+              </summary>
+              <div className="mt-4 pt-4 border-t border-slate-700/50">
+                <p className="text-slate-400">
+                  Yes, you can cancel your subscription at any time. There are no long-term contracts or cancellation fees. If you cancel, you'll continue to have access to your account until the end of your current billing period.
+                </p>
+              </div>
+            </details>
+          </div>
+
+          {/* Still have questions CTA */}
+          <div className="text-center mt-12">
+            <p className="text-slate-400 mb-4">Still have questions?</p>
+            <Link href="/contact" className="btn-secondary inline-flex items-center">
+              Contact Us
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Link>
+          </div>
+        </div>
+      </section>
 
       {/* CTA Section */}
-      <section className="relative z-10 py-20">
+      <section className="relative z-10 py-12">
         <div className="container-modern">
           <div className="card text-center max-w-3xl mx-auto bg-gradient-to-r from-corporate-500/10 to-emerald-500/10 border-corporate-500/30">
-            <h2 className="text-4xl font-bold mb-4 gradient-text">
+            <h2 className="text-3xl font-bold mb-3 gradient-text">
               Ready to Get Started?
             </h2>
-            <p className="text-lg text-slate-300 mb-8">
+            <p className="text-base text-slate-300 mb-6">
               Join property managers across NYC and Philadelphia who trust Propply AI.
             </p>
             <Link href="/login?signup=true" className="btn-primary text-lg inline-flex items-center group">
@@ -179,41 +413,41 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="relative z-10 border-t border-slate-700/50 bg-slate-900/80 backdrop-blur-xl">
-        <div className="container-modern py-12">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+        <div className="container-modern py-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             {/* Logo and Tagline */}
             <div className="flex flex-col items-center md:items-start">
-              <div className="flex items-center space-x-3 mb-3">
-                <Image src="/logo.svg" alt="Propply AI" width={112} height={112} className="w-28 h-28" />
+              <div className="flex items-center space-x-2 mb-2">
+                <Image src="/logo.svg" alt="Propply AI" width={80} height={80} className="w-20 h-20" />
               </div>
-              <p className="text-slate-400 text-sm text-center md:text-left max-w-xs">
+              <p className="text-slate-400 text-xs text-center md:text-left max-w-xs">
                 Intelligent property compliance management for modern property managers.
               </p>
             </div>
 
             {/* Footer Links */}
-            <div className="flex flex-wrap items-center justify-center gap-6">
-              <Link href="/features" className="text-slate-400 hover:text-white text-sm transition-colors">
+            <div className="flex flex-wrap items-center justify-center gap-4">
+              <Link href="/features" className="text-slate-400 hover:text-white text-xs transition-colors">
                 Features
               </Link>
-              <Link href="/pricing" className="text-slate-400 hover:text-white text-sm transition-colors">
+              <Link href="/pricing" className="text-slate-400 hover:text-white text-xs transition-colors">
                 Pricing
               </Link>
-              <Link href="/terms" className="text-slate-400 hover:text-white text-sm transition-colors">
+              <Link href="/terms" className="text-slate-400 hover:text-white text-xs transition-colors">
                 Terms of Service
               </Link>
-              <Link href="/privacy" className="text-slate-400 hover:text-white text-sm transition-colors">
+              <Link href="/privacy" className="text-slate-400 hover:text-white text-xs transition-colors">
                 Privacy
               </Link>
-              <Link href="/contact" className="text-slate-400 hover:text-white text-sm transition-colors">
+              <Link href="/contact" className="text-slate-400 hover:text-white text-xs transition-colors">
                 Contact
               </Link>
             </div>
           </div>
 
           {/* Copyright */}
-          <div className="border-t border-slate-700/50 mt-8 pt-8 text-center">
-            <p className="text-slate-400 text-sm">
+          <div className="border-t border-slate-700/50 mt-6 pt-6 text-center">
+            <p className="text-slate-400 text-xs">
               © {new Date().getFullYear()} Propply AI. All rights reserved.
             </p>
           </div>
