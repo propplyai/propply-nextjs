@@ -312,7 +312,7 @@ export default function LandingPage() {
               </summary>
               <div className="mt-4 pt-4 border-t border-slate-700/50">
                 <p className="text-slate-400">
-                  Our vendor marketplace connects you with verified, qualified service providers who can help resolve compliance issues quickly. From plumbers and electricians to attorneys and inspectors, find trusted professionals who understand property compliance requirements.
+                  Our vendor marketplace connects you with verified, qualified service providers who can help resolve compliance issues quickly. From plumbers and electricians to inspectors and contractors, find trusted professionals who understand property compliance requirements.
                 </p>
               </div>
             </details>
@@ -327,7 +327,7 @@ export default function LandingPage() {
               </summary>
               <div className="mt-4 pt-4 border-t border-slate-700/50">
                 <p className="text-slate-400">
-                  Yes! We offer a 14-day free trial with full access to all features. No credit card required to start. You can explore the platform, add your properties, and experience the power of automated compliance management risk-free.
+                  You can add one property for free to explore the platform and see how it works. However, AI analysis features require a paid subscription. This allows you to get familiar with the interface and basic compliance tracking before committing to a plan.
                 </p>
               </div>
             </details>
@@ -413,41 +413,39 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="relative z-10 border-t border-slate-700/50 bg-slate-900/80 backdrop-blur-xl">
-        <div className="container-modern py-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="container-modern py-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             {/* Logo and Tagline */}
-            <div className="flex flex-col items-center md:items-start">
-              <div className="flex items-center space-x-2 mb-2">
-                <Image src="/logo.svg" alt="Propply AI" width={80} height={80} className="w-20 h-20" />
-              </div>
-              <p className="text-slate-400 text-xs text-center md:text-left max-w-xs">
+            <div className="flex items-center gap-3">
+              <Image src="/logo.svg" alt="Propply AI" width={80} height={80} className="w-20 h-20" />
+              <p className="text-slate-400 text-sm hidden md:block max-w-xs">
                 Intelligent property compliance management for modern property managers.
               </p>
             </div>
 
             {/* Footer Links */}
-            <div className="flex flex-wrap items-center justify-center gap-4">
-              <Link href="/features" className="text-slate-400 hover:text-white text-xs transition-colors">
+            <div className="flex flex-wrap items-center justify-center gap-6">
+              <Link href="/features" className="text-slate-400 hover:text-white text-sm transition-colors">
                 Features
               </Link>
-              <Link href="/pricing" className="text-slate-400 hover:text-white text-xs transition-colors">
+              <Link href="/pricing" className="text-slate-400 hover:text-white text-sm transition-colors">
                 Pricing
               </Link>
-              <Link href="/terms" className="text-slate-400 hover:text-white text-xs transition-colors">
+              <Link href="/terms" className="text-slate-400 hover:text-white text-sm transition-colors">
                 Terms of Service
               </Link>
-              <Link href="/privacy" className="text-slate-400 hover:text-white text-xs transition-colors">
+              <Link href="/privacy" className="text-slate-400 hover:text-white text-sm transition-colors">
                 Privacy
               </Link>
-              <Link href="/contact" className="text-slate-400 hover:text-white text-xs transition-colors">
+              <Link href="/contact" className="text-slate-400 hover:text-white text-sm transition-colors">
                 Contact
               </Link>
             </div>
           </div>
 
           {/* Copyright */}
-          <div className="border-t border-slate-700/50 mt-6 pt-6 text-center">
-            <p className="text-slate-400 text-xs">
+          <div className="text-center mt-4 pt-4 border-t border-slate-700/50">
+            <p className="text-slate-400 text-sm">
               © {new Date().getFullYear()} Propply AI. All rights reserved.
             </p>
           </div>
