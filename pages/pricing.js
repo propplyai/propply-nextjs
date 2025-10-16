@@ -1,13 +1,21 @@
-import { useEffect } from 'react';
-import { useRouter } from 'next/router';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Building2, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import Pricing from '@/components/Pricing';
 import { authHelpers } from '@/lib/supabase';
 
 export default function PricingPage() {
-  const router = useRouter();
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = async () => {
+    const { user: currentUser } = await authHelpers.getUser();
+    setUser(currentUser);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -22,13 +30,15 @@ export default function PricingPage() {
       <nav className="relative z-10 backdrop-blur-xl bg-slate-900/50 border-b border-slate-700/50">
         <div className="container-modern">
           <div className="flex items-center justify-between h-16">
-            <Link href="/" className="flex items-center space-x-3">
+            <Link href={user ? "/dashboard" : "/"} className="flex items-center space-x-3">
               <Image src="/logo.svg" alt="Propply AI" width={112} height={112} className="w-28 h-28" />
             </Link>
-            <Link href="/dashboard" className="btn-secondary text-sm inline-flex items-center">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Dashboard
-            </Link>
+            {user && (
+              <Link href="/dashboard" className="btn-secondary text-sm inline-flex items-center">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Dashboard
+              </Link>
+            )}
           </div>
         </div>
       </nav>
