@@ -61,24 +61,38 @@ export default function Contact() {
       }
 
       // Send form data to n8n webhook
-      const response = await fetch('https://klevaideas.app.n8n.cloud/webhook/contact-form', {
+      const webhookUrl = 'https://klevaideas.app.n8n.cloud/webhook/contact-form';
+      const payload = {
+        name: formData.name,
+        email: formData.email,
+        subject: formData.subject,
+        message: formData.message,
+        timestamp: new Date().toISOString(),
+        userId: user?.id || null,
+      };
+
+      console.log('Sending to webhook:', webhookUrl);
+      console.log('Payload:', payload);
+
+      const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          subject: formData.subject,
-          message: formData.message,
-          timestamp: new Date().toISOString(),
-          userId: user?.id || null,
-        }),
+        body: JSON.stringify(payload),
       });
 
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+
       if (!response.ok) {
-        throw new Error('Failed to send message');
+        const errorText = await response.text();
+        console.error('Webhook error response:', errorText);
+        throw new Error(`Failed to send message: ${response.status} ${errorText}`);
       }
+
+      const responseData = await response.json().catch(() => ({}));
+      console.log('Webhook response:', responseData);
 
       setStatus({
         type: 'success',
