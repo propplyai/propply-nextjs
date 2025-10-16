@@ -351,8 +351,6 @@ export default function TermsOfService() {
                   Contact Information
                 </h3>
                 <div className="space-y-2 text-slate-300">
-                  <p><strong className="text-white">Company:</strong> Propply AI, LLC</p>
-                  <p><strong className="text-white">Address:</strong> Propply Address</p>
                   <p><strong className="text-white">Email:</strong> <a href="mailto:propplyai@gmail.com" className="text-corporate-400 hover:text-corporate-300 underline">propplyai@gmail.com</a></p>
                 </div>
               </div>

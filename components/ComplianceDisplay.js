@@ -180,6 +180,16 @@ function ComplianceSection({ icon, title, count, activeCount, description, statu
 
   const hasItems = data && data.length > 0;
 
+  // Sort data by date (most recent first) if it's violations data
+  const sortedData = hasItems && title.includes('Violations') 
+    ? [...data].sort((a, b) => {
+        // Try various date field names used in NYC violations
+        const dateA = new Date(a.novissueddate || a.inspectiondate || a.issue_date || a.issuedate || a.violation_date || a.certify_date || 0);
+        const dateB = new Date(b.novissueddate || b.inspectiondate || b.issue_date || b.issuedate || b.violation_date || b.certify_date || 0);
+        return dateB - dateA; // Newest first
+      })
+    : data;
+
   return (
     <div className="card">
       <div
@@ -200,14 +210,14 @@ function ComplianceSection({ icon, title, count, activeCount, description, statu
         </div>
         <div className="flex items-center space-x-4">
           {hasItems && (
-            <span className="badge badge-primary">{data.length} records</span>
+            <span className="badge badge-primary">{sortedData.length} records</span>
           )}
         </div>
       </div>
 
       {expanded && hasItems && (
         <div className="border-t border-slate-700 p-6 space-y-3">
-          {data.slice(0, visibleCount).map(renderItem)}
+          {sortedData.slice(0, visibleCount).map(renderItem)}
 
           {data.length > visibleCount && (
             <button

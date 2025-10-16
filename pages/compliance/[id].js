@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Layout from '@/components/Layout';
+import SwipeableCard from '@/components/SwipeableCard';
 import { authHelpers, supabase } from '@/lib/supabase';
 import {
   Building2, ArrowLeft, AlertTriangle, CheckCircle, ChevronDown, ChevronRight,
-  Flame, Zap, TrendingUp, ShoppingBag
+  Flame, Zap, TrendingUp, ShoppingBag, Eye
 } from 'lucide-react';
-import { cn, formatDate } from '@/lib/utils';
+import { cn, formatDate, authenticatedFetch } from '@/lib/utils';
 
 export default function ComplianceReportPage() {
   const router = useRouter();
@@ -19,6 +20,7 @@ export default function ComplianceReportPage() {
   const [expandedDescription, setExpandedDescription] = useState(null);
   const [hpdVisibleCount, setHpdVisibleCount] = useState(10);
   const [dobVisibleCount, setDobVisibleCount] = useState(10);
+  const [dismissedSections, setDismissedSections] = useState([]);
 
   useEffect(() => {
     console.log('[Compliance Page] useEffect triggered');
@@ -68,6 +70,7 @@ export default function ComplianceReportPage() {
       console.log('[Compliance Page] User authenticated:', currentUser.id);
       setUser(currentUser);
       await loadReport(id, currentUser.id);
+      await loadDismissedSections(id);
     } catch (error) {
       console.error('[Compliance Page] Unexpected error during auth check:', error);
       setLoading(false);
@@ -215,6 +218,43 @@ export default function ComplianceReportPage() {
       console.log('[Compliance Page] Final report state:', report ? 'has report' : 'no report');
       setLoading(false);
     }
+  };
+
+  const loadDismissedSections = async (reportId) => {
+    try {
+      const response = await authenticatedFetch(`/api/compliance/dismissed?report_id=${reportId}`);
+      const result = await response.json();
+      
+      if (result.success) {
+        setDismissedSections(result.data.map(d => d.section_type));
+      }
+    } catch (error) {
+      console.error('Error loading dismissed sections:', error);
+    }
+  };
+
+  const handleDismiss = async (sectionType) => {
+    try {
+      const response = await authenticatedFetch('/api/compliance/dismiss', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          report_id: id,
+          section_type: sectionType
+        })
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setDismissedSections([...dismissedSections, sectionType]);
+      }
+    } catch (error) {
+      console.error('Error dismissing section:', error);
+    }
+  };
+
+  const isSectionDismissed = (sectionType) => {
+    return dismissedSections.includes(sectionType);
   };
 
   const toggleSection = (section) => {
@@ -394,12 +434,23 @@ export default function ComplianceReportPage() {
 
           {/* Bottom Section: Records Header */}
           <div className="pt-5 border-t border-slate-700/50">
-            <div className="flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-corporate-400" />
-              <h2 className="text-lg font-semibold text-white">
-                {isPhilly ? 'Philadelphia L&I Records' : 'Detailed Property Records'}
-              </h2>
-              <span className="text-sm text-slate-500 ml-1">Click any category to expand</span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Building2 className="w-5 h-5 text-corporate-400" />
+                <h2 className="text-lg font-semibold text-white">
+                  {isPhilly ? 'Philadelphia L&I Records' : 'Detailed Property Records'}
+                </h2>
+                <span className="text-sm text-slate-500 ml-1">Click any category to expand</span>
+              </div>
+              {dismissedSections.length > 0 && (
+                <Link
+                  href={`/compliance/${id}/dismissed`}
+                  className="flex items-center space-x-2 text-sm text-corporate-400 hover:text-corporate-300 transition-colors"
+                >
+                  <Eye className="w-4 h-4" />
+                  <span>View Dismissed ({dismissedSections.length})</span>
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -408,6 +459,8 @@ export default function ComplianceReportPage() {
         {(!report.city || report.city === 'NYC' || report.city === 'New York') && (
           <div className="space-y-4 mb-8">
           {/* Elevator Equipment */}
+          {!isSectionDismissed('elevators') && (
+          <SwipeableCard onDismiss={() => handleDismiss('elevators')}>
           <div className="card cursor-pointer" onClick={() => toggleSection('elevators')}>
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
@@ -503,8 +556,12 @@ export default function ComplianceReportPage() {
               </div>
             )}
           </div>
+          </SwipeableCard>
+          )}
 
           {/* Boiler Equipment */}
+          {!isSectionDismissed('boilers') && (
+          <SwipeableCard onDismiss={() => handleDismiss('boilers')}>
           <div className="card cursor-pointer" onClick={() => toggleSection('boilers')}>
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
@@ -622,8 +679,12 @@ export default function ComplianceReportPage() {
               </div>
             )}
           </div>
+          </SwipeableCard>
+          )}
 
           {/* Electrical Permits */}
+          {!isSectionDismissed('electrical') && (
+          <SwipeableCard onDismiss={() => handleDismiss('electrical')}>
           <div className="card cursor-pointer" onClick={() => toggleSection('electrical')}>
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
@@ -678,8 +739,12 @@ export default function ComplianceReportPage() {
               </div>
             )}
           </div>
+          </SwipeableCard>
+          )}
 
           {/* HPD Violations */}
+          {!isSectionDismissed('hpd') && (
+          <SwipeableCard onDismiss={() => handleDismiss('hpd')}>
           <div className="card cursor-pointer bg-ruby-500/5" onClick={() => toggleSection('hpd')}>
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
@@ -727,8 +792,9 @@ export default function ComplianceReportPage() {
                     <tbody>
                       {[...data.hpd_violations]
                         .sort((a, b) => {
-                          const dateA = new Date(a.inspectiondate || 0);
-                          const dateB = new Date(b.inspectiondate || 0);
+                          // Try multiple date fields to match what's displayed
+                          const dateA = new Date(a.novissueddate || a.inspectiondate || a.currentstatus_date || a.certifieddate || 0);
+                          const dateB = new Date(b.novissueddate || b.inspectiondate || b.currentstatus_date || b.certifieddate || 0);
                           return dateB - dateA; // Newest first
                         })
                         .slice(0, hpdVisibleCount)
@@ -759,7 +825,9 @@ export default function ComplianceReportPage() {
                             </div>
                           </td>
                           <td className="py-3 px-4 text-slate-300">{violation.violationstatus}</td>
-                          <td className="py-3 px-4 text-slate-300">{formatDate(violation.inspectiondate)}</td>
+                          <td className="py-3 px-4 text-slate-300">
+                            {formatDate(violation.novissueddate || violation.inspectiondate || violation.currentstatus_date || violation.certifieddate)}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -794,8 +862,12 @@ export default function ComplianceReportPage() {
               </div>
             )}
           </div>
+          </SwipeableCard>
+          )}
 
           {/* DOB Violations */}
+          {!isSectionDismissed('dob') && (
+          <SwipeableCard onDismiss={() => handleDismiss('dob')}>
           <div className="card cursor-pointer bg-ruby-500/5" onClick={() => toggleSection('dob')}>
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
@@ -849,9 +921,9 @@ export default function ComplianceReportPage() {
                         }
                         return violations
                           .sort((a, b) => {
-                            // Try multiple date fields
-                            const dateA = new Date(a.issue_date || a.issuedate || a.violation_date || a.certify_date || 0);
-                            const dateB = new Date(b.issue_date || b.issuedate || b.violation_date || b.certify_date || 0);
+                            // Try multiple date fields to match what's displayed
+                            const dateA = new Date(a.issue_date || a.issuedate || a.issueddate || a.violation_date || a.certify_date || 0);
+                            const dateB = new Date(b.issue_date || b.issuedate || b.issueddate || b.violation_date || b.certify_date || 0);
                             return dateB - dateA; // Newest first
                           })
                           .slice(0, dobVisibleCount)
@@ -861,8 +933,8 @@ export default function ComplianceReportPage() {
                                                violation.description || 
                                                violation.violation_type_code || 
                                                'No description available';
-                            // Try multiple date fields
-                            const displayDate = violation.issue_date || violation.issuedate || violation.violation_date || violation.certify_date;
+                            // Try multiple date fields (same order as sorting)
+                            const displayDate = violation.issue_date || violation.issuedate || violation.issueddate || violation.violation_date || violation.certify_date;
                             
                             // Debug: Log the first few violations to see what fields we have
                             if (index < 3) {
@@ -935,6 +1007,8 @@ export default function ComplianceReportPage() {
               </div>
             )}
           </div>
+          </SwipeableCard>
+          )}
         </div>
         )}
 

@@ -242,6 +242,12 @@ export default function PropertyDetailPage() {
   };
 
   const handleGenerateReport = async () => {
+    // Prevent double-clicks
+    if (generating) {
+      console.log('[Property Detail] Report generation already in progress, ignoring click');
+      return;
+    }
+
     setGenerating(true);
     setReportError('');
 
@@ -303,6 +309,21 @@ export default function PropertyDetailPage() {
         };
       }
 
+      // Check if a report was JUST created (within last 10 seconds) to prevent duplicates
+      const { data: recentReports } = await supabase
+        .from('compliance_reports')
+        .select('id, generated_at')
+        .eq('property_id', property.id)
+        .eq('user_id', user.id)
+        .gte('generated_at', new Date(Date.now() - 10000).toISOString())
+        .order('generated_at', { ascending: false });
+
+      if (recentReports && recentReports.length > 0) {
+        console.log('[Property Detail] Recent report already exists, redirecting to it');
+        router.push(`/compliance/${recentReports[0].id}`);
+        return;
+      }
+
       // Save the full report to database
       const { data: savedReport, error: saveError } = await supabase
         .from('compliance_reports')
@@ -333,22 +354,10 @@ export default function PropertyDetailPage() {
         })
         .eq('id', property.id);
 
-      // Reload property data
-      await loadProperty(id, user.id);
-
-      // Redirect to detailed report page
-      if (savedReport) {
-        router.push(`/compliance/${savedReport.id}`);
-        return;
-      }
-
-      // Show success message (city-specific)
-      const scores = complianceData.scores;
-      if (city === 'Philadelphia') {
-        alert(`✅ Property Data Retrieved Successfully!\n\n📊 Compliance Score: ${scores.overall_score}%\n\n🏗️ L&I Data Found:\n  • Active Violations: ${scores.li_violations_active}\n  • Total Permits: ${scores.li_permits_total}\n  • Active Certifications: ${scores.li_certifications_active}\n  • Investigations: ${scores.li_investigations_total}`);
-      } else {
-        alert(`✅ Property Data Retrieved Successfully!\n\n📊 Compliance Score: ${scores.overall_score}%\n\n🏗️ Violations Found:\n  • HPD: ${scores.hpd_violations_active}\n  • DOB: ${scores.dob_violations_active}\n\n🏢 Equipment Data:\n  • Elevators: ${scores.elevator_devices || 0}\n  • Boilers: ${scores.boiler_devices || 0}\n  • Electrical Permits: ${scores.electrical_permits || 0}`);
-      }
+      // Redirect immediately to detailed report page (don't reload property first)
+      console.log('[Property Detail] Report saved, redirecting to:', savedReport.id);
+      router.push(`/compliance/${savedReport.id}`);
+      // Don't execute anything after redirect - the return will happen when router.push completes
     } catch (error) {
       console.error('Error generating report:', error);
       const errorMsg = error.message || 'Unknown error occurred';
