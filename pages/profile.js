@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
 import { authHelpers, supabase } from '@/lib/supabase';
-import { User, Mail, Calendar, CreditCard, CheckCircle, XCircle, Clock, Shield, Settings, ExternalLink, Sparkles } from 'lucide-react';
+import { User, Mail, Calendar, CreditCard, CheckCircle, XCircle, Clock, Shield, Settings, ExternalLink, Sparkles, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function ProfilePage() {
@@ -11,6 +11,7 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [managingSubscription, setManagingSubscription] = useState(false);
+  const [syncingSubscription, setSyncingSubscription] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -40,10 +41,47 @@ export default function ProfilePage() {
       }
 
       setProfile(profileData);
+
+      // If user has a subscription but no billing period data, sync from Stripe
+      if (profileData?.subscription_id && profileData?.customer_id && 
+          (!profileData.current_period_start || !profileData.current_period_end)) {
+        await syncSubscriptionData();
+      }
     } catch (error) {
       console.error('Error loading profile:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const syncSubscriptionData = async (showLoading = false) => {
+    if (showLoading) {
+      setSyncingSubscription(true);
+    }
+    
+    try {
+      const response = await fetch('/api/stripe/sync-subscription', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.profile) {
+        // Update profile with synced data
+        setProfile(prevProfile => ({
+          ...prevProfile,
+          ...data.profile
+        }));
+      }
+    } catch (error) {
+      console.error('Error syncing subscription data:', error);
+    } finally {
+      if (showLoading) {
+        setSyncingSubscription(false);
+      }
     }
   };
 
@@ -248,24 +286,56 @@ export default function ProfilePage() {
                 {/* Billing Details - Show for active subscriptions */}
                 {profile?.subscription_status === 'active' && (
                   <>
-                    <div className="flex items-center p-4 bg-slate-800/50 rounded-xl border border-slate-700">
-                      <Clock className="w-5 h-5 text-corporate-400 mr-4" />
-                      <div className="flex-1">
-                        <p className="text-sm text-slate-400">Billing Period Start</p>
-                        <p className="text-white font-medium">
-                          {formatDate(profile?.current_period_start)}
-                        </p>
+                    <div className="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+                      <div className="flex items-center flex-1">
+                        <Clock className="w-5 h-5 text-corporate-400 mr-4" />
+                        <div className="flex-1">
+                          <p className="text-sm text-slate-400">Billing Period Start</p>
+                          <p className="text-white font-medium">
+                            {formatDate(profile?.current_period_start)}
+                          </p>
+                        </div>
                       </div>
+                      {(!profile?.current_period_start || !profile?.current_period_end) && (
+                        <button
+                          onClick={() => syncSubscriptionData(true)}
+                          disabled={syncingSubscription}
+                          className="ml-4 p-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors disabled:opacity-50"
+                          title="Sync billing data from Stripe"
+                        >
+                          {syncingSubscription ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          ) : (
+                            <RefreshCw className="w-4 h-4 text-slate-400" />
+                          )}
+                        </button>
+                      )}
                     </div>
 
-                    <div className="flex items-center p-4 bg-slate-800/50 rounded-xl border border-slate-700">
-                      <Calendar className="w-5 h-5 text-emerald-400 mr-4" />
-                      <div className="flex-1">
-                        <p className="text-sm text-slate-400">Next Billing Date</p>
-                        <p className="text-white font-medium">
-                          {formatDate(profile?.current_period_end)}
-                        </p>
+                    <div className="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+                      <div className="flex items-center flex-1">
+                        <Calendar className="w-5 h-5 text-emerald-400 mr-4" />
+                        <div className="flex-1">
+                          <p className="text-sm text-slate-400">Next Billing Date</p>
+                          <p className="text-white font-medium">
+                            {formatDate(profile?.current_period_end)}
+                          </p>
+                        </div>
                       </div>
+                      {(!profile?.current_period_start || !profile?.current_period_end) && (
+                        <button
+                          onClick={() => syncSubscriptionData(true)}
+                          disabled={syncingSubscription}
+                          className="ml-4 p-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors disabled:opacity-50"
+                          title="Sync billing data from Stripe"
+                        >
+                          {syncingSubscription ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          ) : (
+                            <RefreshCw className="w-4 h-4 text-slate-400" />
+                          )}
+                        </button>
+                      )}
                     </div>
                   </>
                 )}
@@ -335,10 +405,10 @@ export default function ProfilePage() {
                 Contact our support team for assistance
               </p>
               <a
-                href="mailto:support@propply.ai"
+                href="mailto:propplyai@gmail.com"
                 className="text-corporate-400 hover:text-corporate-300 font-semibold text-sm"
               >
-                support@propply.ai
+                propplyai@gmail.com
               </a>
             </div>
           </div>

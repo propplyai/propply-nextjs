@@ -96,8 +96,8 @@ export default function Success() {
               <div className="mt-8 pt-8 border-t border-slate-700">
                 <p className="text-sm text-slate-400">
                   Need help? Contact us at{' '}
-                  <a href="mailto:support@propply.ai" className="text-corporate-400 hover:text-corporate-300">
-                    support@propply.ai
+                  <a href="mailto:propplyai@gmail.com" className="text-corporate-400 hover:text-corporate-300">
+                    propplyai@gmail.com
                   </a>
                 </p>
               </div>
