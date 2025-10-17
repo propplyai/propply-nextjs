@@ -68,15 +68,15 @@ export default function RFPDashboard() {
 
   const getStatusColor = (status) => {
     const colors = {
-      draft: 'bg-slate-500',
-      published: 'bg-blue-500',
-      vendor_responses: 'bg-yellow-500',
-      evaluation: 'bg-purple-500',
-      awarded: 'bg-green-500',
-      completed: 'bg-emerald-500',
-      cancelled: 'bg-red-500'
+      draft: 'bg-slate-500/20 text-slate-300 border border-slate-500/50',
+      published: 'bg-blue-500/20 text-blue-400 border border-blue-500/50',
+      vendor_responses: 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50',
+      evaluation: 'bg-purple-500/20 text-purple-400 border border-purple-500/50',
+      awarded: 'bg-green-500/20 text-green-400 border border-green-500/50',
+      completed: 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50',
+      cancelled: 'bg-red-500/20 text-red-400 border border-red-500/50'
     };
-    return colors[status] || 'bg-slate-500';
+    return colors[status] || 'bg-slate-500/20 text-slate-300 border border-slate-500/50';
   };
 
   const getStatusIcon = (status) => {
@@ -90,6 +90,19 @@ export default function RFPDashboard() {
       cancelled: XCircle
     };
     return icons[status] || FileText;
+  };
+
+  const getStatusLabel = (status) => {
+    const labels = {
+      draft: 'Draft',
+      published: 'Published',
+      vendor_responses: 'Active',
+      evaluation: 'In Review',
+      awarded: 'Awarded',
+      completed: 'Completed',
+      cancelled: 'Cancelled'
+    };
+    return labels[status] || status;
   };
 
   const filteredRFPs = rfps.filter(rfp => {
@@ -133,9 +146,19 @@ export default function RFPDashboard() {
 
   const handleGenerateDocuments = async (rfpId) => {
     try {
+      // Get current session for auth token
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session?.access_token) {
+        throw new Error('Not authenticated. Please log in again.');
+      }
+
       const response = await fetch('/api/rfp/generate-documents', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
         body: JSON.stringify({ rfp_project_id: rfpId })
       });
 
@@ -149,7 +172,7 @@ export default function RFPDashboard() {
       }
     } catch (error) {
       console.error('Error generating documents:', error);
-      alert('Failed to generate documents');
+      alert('Failed to generate documents: ' + error.message);
     }
   };
 
@@ -189,31 +212,48 @@ export default function RFPDashboard() {
         </div>
 
         {/* Filters and Search */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 space-y-4 md:space-y-0">
-          <div className="flex flex-wrap gap-2">
-            {['all', 'draft', 'published', 'vendor_responses', 'evaluation', 'awarded', 'completed'].map(status => (
-              <button
-                key={status}
-                onClick={() => setFilter(status)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  filter === status
-                    ? 'bg-corporate-500 text-white'
-                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                }`}
-              >
-                {status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}
-              </button>
-            ))}
+        <div className="mb-6">
+          <div className="flex flex-col md:flex-row md:items-center gap-4">
+            {/* Status Filters */}
+            <div className="flex flex-wrap gap-2">
+              {[
+                { value: 'all', label: 'All', icon: FileText },
+                { value: 'draft', label: 'Draft', icon: Edit },
+                { value: 'published', label: 'Published', icon: FileText },
+                { value: 'vendor_responses', label: 'Active', icon: Users }
+              ].map(({ value, label, icon: Icon }) => (
+                <button
+                  key={value}
+                  onClick={() => setFilter(value)}
+                  className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center space-x-2 ${
+                    filter === value
+                      ? 'bg-corporate-500 text-white shadow-lg shadow-corporate-500/30'
+                      : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600/50 border border-slate-600/50'
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                  <span>{label}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Search Bar */}
+            <div className="flex-1 min-w-[200px] max-w-md">
+              <input
+                type="text"
+                placeholder="Search RFPs..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="input-modern w-full"
+              />
+            </div>
           </div>
-          
-          <div className="flex-1 max-w-md">
-            <input
-              type="text"
-              placeholder="Search RFPs..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="input-modern w-full"
-            />
+
+          {/* Stats Summary */}
+          <div className="mt-4 flex items-center space-x-6 text-sm text-slate-400">
+            <span>Total: <span className="text-white font-semibold">{rfps.length}</span></span>
+            <span>•</span>
+            <span>Showing: <span className="text-white font-semibold">{filteredRFPs.length}</span></span>
           </div>
         </div>
 
@@ -243,92 +283,121 @@ export default function RFPDashboard() {
               const StatusIcon = getStatusIcon(rfp.status);
               const vendorCount = rfp.rfp_vendor_invitations?.length || 0;
               const proposalCount = rfp.rfp_vendor_proposals?.length || 0;
-              
+
               return (
-                <div key={rfp.id} className="card p-6">
+                <div
+                  key={rfp.id}
+                  className="card p-6 hover:border-corporate-500/50 transition-all duration-200 cursor-pointer group"
+                  onClick={() => handleViewRFP(rfp.id)}
+                >
+                  {/* Header */}
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <h3 className="text-xl font-semibold text-white">{rfp.project_title}</h3>
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium text-white ${getStatusColor(rfp.status)}`}>
-                          {rfp.status.replace('_', ' ')}
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="text-xl font-semibold text-white group-hover:text-corporate-400 transition-colors">
+                          {rfp.project_title}
+                        </h3>
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(rfp.status)}`}>
+                          {getStatusLabel(rfp.status)}
                         </span>
                       </div>
-                      <p className="text-slate-400 mb-2">{rfp.properties?.address}</p>
-                      <p className="text-slate-300 text-sm">{rfp.project_description}</p>
+                      <div className="flex items-center space-x-2 text-sm text-slate-400 mb-3">
+                        <MapPin className="w-4 h-4" />
+                        <span>{rfp.properties?.address}, {rfp.properties?.city}</span>
+                      </div>
+                      <p className="text-slate-300 text-sm line-clamp-2">{rfp.project_description}</p>
                     </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => handleViewRFP(rfp.id)}
-                        className="p-2 rounded-lg bg-slate-700 text-slate-400 hover:bg-slate-600 hover:text-white transition-all"
-                        title="View RFP"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center space-x-2 ml-4">
                       {rfp.status === 'draft' && (
-                        <button
-                          onClick={() => handleEditRFP(rfp.id)}
-                          className="p-2 rounded-lg bg-slate-700 text-slate-400 hover:bg-slate-600 hover:text-white transition-all"
-                          title="Edit RFP"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
+                        <>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditRFP(rfp.id);
+                            }}
+                            className="p-2 rounded-lg bg-slate-700/50 text-slate-400 hover:bg-slate-600 hover:text-white transition-all border border-slate-600/50"
+                            title="Edit RFP"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleGenerateDocuments(rfp.id);
+                            }}
+                            className="p-2 rounded-lg bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white transition-all border border-blue-500/50"
+                            title="Generate Documents"
+                          >
+                            <Send className="w-4 h-4" />
+                          </button>
+                        </>
                       )}
-                      
-                      {rfp.status === 'draft' && (
-                        <button
-                          onClick={() => handleGenerateDocuments(rfp.id)}
-                          className="p-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-all"
-                          title="Generate Documents"
-                        >
-                          <FileText className="w-4 h-4" />
-                        </button>
-                      )}
-                      
+
                       <button
-                        onClick={() => handleDeleteRFP(rfp.id)}
-                        className="p-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-all"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteRFP(rfp.id);
+                        }}
+                        className="p-2 rounded-lg bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white transition-all border border-red-500/50"
                         title="Delete RFP"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
-                  
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+
+                  {/* Stats Grid */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-slate-700/50">
                     <div className="flex items-center space-x-2">
-                      <StatusIcon className="w-4 h-4 text-slate-400" />
-                      <span className="text-slate-300">Status: {rfp.status}</span>
+                      <div className="p-2 rounded-lg bg-slate-700/30">
+                        <Users className="w-4 h-4 text-blue-400" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-500">Vendors</p>
+                        <p className="text-sm font-semibold text-white">{vendorCount}</p>
+                      </div>
                     </div>
-                    
+
                     <div className="flex items-center space-x-2">
-                      <Users className="w-4 h-4 text-slate-400" />
-                      <span className="text-slate-300">{vendorCount} vendors</span>
+                      <div className="p-2 rounded-lg bg-slate-700/30">
+                        <FileText className="w-4 h-4 text-green-400" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-500">Proposals</p>
+                        <p className="text-sm font-semibold text-white">{proposalCount}</p>
+                      </div>
                     </div>
-                    
+
                     <div className="flex items-center space-x-2">
-                      <FileText className="w-4 h-4 text-slate-400" />
-                      <span className="text-slate-300">{proposalCount} proposals</span>
+                      <div className="p-2 rounded-lg bg-slate-700/30">
+                        <Clock className="w-4 h-4 text-yellow-400" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-500">Timeline</p>
+                        <p className="text-sm font-semibold text-white">
+                          {rfp.project_timeline_days ? `${rfp.project_timeline_days}d` : 'TBD'}
+                        </p>
+                      </div>
                     </div>
-                    
+
                     <div className="flex items-center space-x-2">
-                      <Clock className="w-4 h-4 text-slate-400" />
-                      <span className="text-slate-300">
-                        {rfp.project_timeline_days ? `${rfp.project_timeline_days} days` : 'TBD'}
-                      </span>
+                      <div className="p-2 rounded-lg bg-slate-700/30">
+                        <DollarSign className="w-4 h-4 text-emerald-400" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-500">Budget</p>
+                        <p className="text-sm font-semibold text-white">
+                          {rfp.budget_range_min && rfp.budget_range_max
+                            ? `$${(rfp.budget_range_min / 1000).toFixed(0)}k-${(rfp.budget_range_max / 1000).toFixed(0)}k`
+                            : 'TBD'
+                          }
+                        </p>
+                      </div>
                     </div>
                   </div>
-                  
-                  {rfp.budget_range_min && rfp.budget_range_max && (
-                    <div className="mt-4 flex items-center space-x-2">
-                      <DollarSign className="w-4 h-4 text-slate-400" />
-                      <span className="text-slate-300">
-                        Budget: ${rfp.budget_range_min.toLocaleString()} - ${rfp.budget_range_max.toLocaleString()}
-                      </span>
-                    </div>
-                  )}
                 </div>
               );
             })

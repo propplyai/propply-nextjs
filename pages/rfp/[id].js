@@ -106,9 +106,19 @@ export default function RFPDetailPage() {
 
   const handleGenerateDocuments = async () => {
     try {
+      // Get current session for auth token
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session?.access_token) {
+        throw new Error('Not authenticated. Please log in again.');
+      }
+
       const response = await fetch('/api/rfp/generate-documents', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
         body: JSON.stringify({ rfp_project_id: id })
       });
 
@@ -122,7 +132,7 @@ export default function RFPDetailPage() {
       }
     } catch (error) {
       console.error('Error generating documents:', error);
-      alert('Failed to generate documents');
+      alert('Failed to generate documents: ' + error.message);
     }
   };
 
@@ -132,15 +142,15 @@ export default function RFPDetailPage() {
 
   const getStatusColor = (status) => {
     const colors = {
-      draft: 'bg-slate-500',
-      published: 'bg-blue-500',
-      vendor_responses: 'bg-yellow-500',
-      evaluation: 'bg-purple-500',
-      awarded: 'bg-green-500',
-      completed: 'bg-emerald-500',
-      cancelled: 'bg-red-500'
+      draft: 'bg-slate-500/20 text-slate-300 border border-slate-500/50',
+      published: 'bg-blue-500/20 text-blue-400 border border-blue-500/50',
+      vendor_responses: 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50',
+      evaluation: 'bg-purple-500/20 text-purple-400 border border-purple-500/50',
+      awarded: 'bg-green-500/20 text-green-400 border border-green-500/50',
+      completed: 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50',
+      cancelled: 'bg-red-500/20 text-red-400 border border-red-500/50'
     };
-    return colors[status] || 'bg-slate-500';
+    return colors[status] || 'bg-slate-500/20 text-slate-300 border border-slate-500/50';
   };
 
   const getStatusIcon = (status) => {
@@ -154,6 +164,19 @@ export default function RFPDetailPage() {
       cancelled: XCircle
     };
     return icons[status] || FileText;
+  };
+
+  const getStatusLabel = (status) => {
+    const labels = {
+      draft: 'Draft',
+      published: 'Published',
+      vendor_responses: 'Active',
+      evaluation: 'In Review',
+      awarded: 'Awarded',
+      completed: 'Completed',
+      cancelled: 'Cancelled'
+    };
+    return labels[status] || status;
   };
 
   const handleLogout = async () => {
@@ -214,8 +237,8 @@ export default function RFPDetailPage() {
           </div>
           
           <div className="flex items-center space-x-2">
-            <span className={`px-3 py-1 rounded-full text-sm font-medium text-white ${getStatusColor(rfp.status)}`}>
-              {rfp.status.replace('_', ' ')}
+            <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(rfp.status)}`}>
+              {getStatusLabel(rfp.status)}
             </span>
             {rfp.status === 'draft' && (
               <button
