@@ -184,7 +184,9 @@ export default function RFPDashboard() {
           ? 'RFP documents regenerated successfully!'
           : 'RFP documents generated successfully!';
         alert(message);
-        loadRFPs(user.id); // Refresh the list
+
+        // Refresh the list to show updated status
+        await loadRFPs(user.id);
       } else {
         throw new Error(result.error || result.message);
       }

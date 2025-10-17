@@ -44,8 +44,9 @@ export default async function handler(req, res) {
     const rfpGenerator = new RFPGenerator(supabase);
     const result = await rfpGenerator.generateRFP(rfp_project_id);
 
-    // Update RFP status to documents_generated (only if not already set)
-    if (rfp.status === 'draft') {
+    // Always update status to documents_generated if currently draft or not set properly
+    // This ensures the status is correct even if previous generation failed to update
+    if (rfp.status === 'draft' || !rfp.documents_generated_at) {
       const { error: updateError } = await supabase
         .from('rfp_projects')
         .update({
@@ -54,7 +55,12 @@ export default async function handler(req, res) {
         })
         .eq('id', rfp_project_id);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('[API /rfp/generate-documents] Failed to update status:', updateError);
+        throw updateError;
+      }
+
+      console.log(`[API /rfp/generate-documents] Updated status to documents_generated`);
     }
 
     const action = result.regenerated ? 'regenerated' : 'generated';

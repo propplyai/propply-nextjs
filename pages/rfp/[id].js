@@ -145,7 +145,9 @@ export default function RFPDetailPage() {
           ? 'RFP documents regenerated successfully!'
           : 'RFP documents generated successfully!';
         alert(message);
-        loadRFPData(); // Refresh data
+
+        // Force a full page reload to ensure status updates
+        window.location.reload();
       } else {
         throw new Error(result.error || result.message);
       }
