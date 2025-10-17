@@ -368,6 +368,20 @@ export default function RFPDashboard() {
                         </button>
                       )}
 
+                      {/* Evaluate button - for vendors_contacted and beyond */}
+                      {['vendors_contacted', 'published', 'vendor_responses', 'evaluation'].includes(rfp.status) && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(`/rfp/${rfp.id}/evaluate`);
+                          }}
+                          className="p-2 rounded-lg bg-purple-600/20 text-purple-400 hover:bg-purple-600 hover:text-white transition-all border border-purple-500/50"
+                          title="Evaluate Proposals"
+                        >
+                          <Users className="w-4 h-4" />
+                        </button>
+                      )}
+
                       <button
                         onClick={(e) => {
                           e.stopPropagation();

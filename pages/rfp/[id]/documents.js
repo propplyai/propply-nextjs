@@ -313,6 +313,29 @@ export default function RFPDocumentsPage() {
           </div>
         )}
 
+        {/* Additional Actions */}
+        <div className="card p-6 mt-6">
+          <h3 className="text-lg font-semibold text-white mb-4">Additional Tools</h3>
+
+          <div className="space-y-3">
+            <button
+              onClick={() => router.push(`/rfp/${id}/evaluate`)}
+              className="w-full btn-primary flex items-center justify-center space-x-2"
+            >
+              <FileText className="w-4 h-4" />
+              <span>Evaluate Proposals</span>
+            </button>
+
+            <button
+              onClick={() => router.push(`/rfp/${id}/invite-vendors`)}
+              className="w-full btn-secondary flex items-center justify-center space-x-2"
+            >
+              <FileText className="w-4 h-4" />
+              <span>Invite Vendors</span>
+            </button>
+          </div>
+        </div>
+
         {/* Document Info */}
         {documents.length > 0 && (
           <div className="card p-6 mt-6">
@@ -323,9 +346,6 @@ export default function RFPDocumentsPage() {
               </p>
               <p>
                 <strong className="text-white">Vendor Invitation Template:</strong> Email template to send to potential vendors when inviting them to submit proposals.
-              </p>
-              <p>
-                <strong className="text-white">Evaluation Sheet:</strong> Template for scoring and comparing vendor proposals using weighted criteria.
               </p>
             </div>
           </div>
