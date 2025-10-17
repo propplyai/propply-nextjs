@@ -310,30 +310,32 @@ export default function RFPDashboard() {
 
                     {/* Action Buttons */}
                     <div className="flex items-center space-x-2 ml-4">
-                      {rfp.status === 'draft' && (
-                        <>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEditRFP(rfp.id);
-                            }}
-                            className="p-2 rounded-lg bg-slate-700/50 text-slate-400 hover:bg-slate-600 hover:text-white transition-all border border-slate-600/50"
-                            title="Edit RFP"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
+                      {/* Edit button - show for draft and published status */}
+                      {(rfp.status === 'draft' || rfp.status === 'published') && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditRFP(rfp.id);
+                          }}
+                          className="p-2 rounded-lg bg-slate-700/50 text-slate-400 hover:bg-slate-600 hover:text-white transition-all border border-slate-600/50"
+                          title="Edit RFP"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                      )}
 
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleGenerateDocuments(rfp.id);
-                            }}
-                            className="p-2 rounded-lg bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white transition-all border border-blue-500/50"
-                            title="Generate Documents"
-                          >
-                            <Send className="w-4 h-4" />
-                          </button>
-                        </>
+                      {/* Generate Documents button - only for draft status */}
+                      {rfp.status === 'draft' && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleGenerateDocuments(rfp.id);
+                          }}
+                          className="p-2 rounded-lg bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white transition-all border border-blue-500/50"
+                          title="Generate Documents"
+                        >
+                          <Send className="w-4 h-4" />
+                        </button>
                       )}
 
                       <button
