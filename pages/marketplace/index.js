@@ -248,42 +248,6 @@ export default function MarketplacePage() {
     }
   };
 
-  const handleRequestQuote = async (vendor) => {
-    if (!selectedProperty && userProperties.length > 0) {
-      // If no property selected, prompt user to select one
-      alert('Please select a property first');
-      return;
-    }
-
-    try {
-      const response = await authenticatedFetch('/api/marketplace/save', {
-        method: 'POST',
-        body: JSON.stringify({
-          action: 'request_quote',
-          property_id: selectedProperty || userProperties[0]?.id,
-          vendor_place_id: vendor.place_id,
-          vendor_name: vendor.name,
-          vendor_category: vendor.category || activeCategories[0],
-          vendor_phone: vendor.phone,
-          vendor_website: vendor.website,
-          vendor_address: vendor.address,
-          vendor_rating: vendor.rating
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to save request');
-      }
-
-      alert('✅ Quote request saved! You can track it in your profile.');
-    } catch (error) {
-      console.error('Request quote error:', error);
-      alert(`Error: ${error.message}`);
-    }
-  };
-
   const handleInviteToBid = async (vendor) => {
     setSelectedVendor(vendor);
     setShowInviteToBidModal(true);
@@ -508,7 +472,6 @@ export default function MarketplacePage() {
                       vendor={{ ...vendor, category }}
                       category={CATEGORY_INFO[category]?.name}
                       onBookmark={handleBookmark}
-                      onRequestQuote={handleRequestQuote}
                       onInviteToBid={handleInviteToBid}
                     />
                   ))}
@@ -579,19 +542,19 @@ export default function MarketplacePage() {
                           <p className="text-xs text-slate-500 mb-4">
                             Saved {new Date(bookmark.created_at).toLocaleDateString()}
                           </p>
-                          <div className="space-y-2">
+                          <div className="flex items-center space-x-2">
                             <Link
                               href={`/marketplace/${bookmark.vendor_place_id}`}
-                              className="btn-secondary w-full text-sm"
+                              className="flex-1 btn-secondary text-sm py-2 text-center"
                             >
                               View Details
                             </Link>
                             <button
                               onClick={() => handleInviteToBid(bookmark)}
-                              className="btn-outline w-full text-sm flex items-center justify-center space-x-2"
+                              className="flex-1 btn-primary text-sm py-2 flex items-center justify-center space-x-1"
                             >
                               <Send className="w-4 h-4" />
-                              <span>Invite to Bid</span>
+                              <span>Invite</span>
                             </button>
                           </div>
                         </div>
@@ -637,19 +600,19 @@ export default function MarketplacePage() {
                           <p className="text-xs text-slate-500 mb-4">
                             Requested {new Date(request.created_at).toLocaleDateString()}
                           </p>
-                          <div className="space-y-2">
+                          <div className="flex items-center space-x-2">
                             <Link
                               href={`/marketplace/${request.vendor_place_id}`}
-                              className="btn-secondary w-full text-sm"
+                              className="flex-1 btn-secondary text-sm py-2 text-center"
                             >
                               View Details
                             </Link>
                             <button
                               onClick={() => handleInviteToBid(request)}
-                              className="btn-outline w-full text-sm flex items-center justify-center space-x-2"
+                              className="flex-1 btn-primary text-sm py-2 flex items-center justify-center space-x-1"
                             >
                               <Send className="w-4 h-4" />
-                              <span>Invite to Bid</span>
+                              <span>Invite</span>
                             </button>
                           </div>
                         </div>
@@ -692,7 +655,6 @@ export default function MarketplacePage() {
             setSelectedVendor(null);
           }}
           onBookmark={handleBookmark}
-          onRequestQuote={handleRequestQuote}
         />
       )}
 

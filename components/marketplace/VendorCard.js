@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export default function VendorCard({ vendor, category, onBookmark, onRequestQuote, onInviteToBid }) {
+export default function VendorCard({ vendor, category, onBookmark, onInviteToBid }) {
   const [isBookmarked, setIsBookmarked] = useState(vendor.is_bookmarked || false);
   const [bookmarking, setBookmarking] = useState(false);
 
@@ -29,12 +29,6 @@ export default function VendorCard({ vendor, category, onBookmark, onRequestQuot
     } finally {
       setBookmarking(false);
     }
-  };
-
-  const handleRequestQuote = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onRequestQuote(vendor);
   };
 
   const handleInviteToBid = (e) => {
@@ -184,7 +178,7 @@ export default function VendorCard({ vendor, category, onBookmark, onRequestQuot
       )}
 
       {/* Actions */}
-      <div className="space-y-2 pt-4 border-t border-slate-700">
+      <div className="pt-4 border-t border-slate-700">
         <div className="flex items-center space-x-2">
           <Link
             href={`/marketplace/${vendor.place_id}`}
@@ -193,19 +187,13 @@ export default function VendorCard({ vendor, category, onBookmark, onRequestQuot
             View Details
           </Link>
           <button
-            onClick={handleRequestQuote}
-            className="flex-1 btn-primary text-sm py-2"
+            onClick={handleInviteToBid}
+            className="flex-1 btn-primary text-sm py-2 flex items-center justify-center space-x-2"
           >
-            Request Quote
+            <Send className="w-4 h-4" />
+            <span>Invite to Bid</span>
           </button>
         </div>
-        <button
-          onClick={handleInviteToBid}
-          className="w-full btn-outline text-sm py-2 flex items-center justify-center space-x-2"
-        >
-          <Send className="w-4 h-4" />
-          <span>Invite to Bid</span>
-        </button>
       </div>
     </div>
   );
