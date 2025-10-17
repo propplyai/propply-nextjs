@@ -72,7 +72,7 @@ export default function LandingPage() {
         <div className="container-modern">
           <div className="flex items-center justify-between h-14">
             <div className="flex items-center space-x-3">
-              <Image src="/logo.svg" alt="Propply AI" width={96} height={96} className="w-24 h-24" />
+              <Image src="/logo.svg" alt="Propply AI" width={160} height={160} className="w-40 h-40" />
             </div>
             <div className="flex items-center space-x-3">
               <Link href="/login" className="btn-secondary text-sm px-3 py-1.5">
@@ -417,7 +417,7 @@ export default function LandingPage() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             {/* Logo and Tagline */}
             <div className="flex items-center gap-3">
-              <Image src="/logo.svg" alt="Propply AI" width={80} height={80} className="w-20 h-20" />
+              <Image src="/logo.svg" alt="Propply AI" width={120} height={120} className="w-30 h-30" />
               <p className="text-slate-400 text-sm hidden md:block max-w-xs">
                 Intelligent property compliance management for modern property managers.
               </p>
