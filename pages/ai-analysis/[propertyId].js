@@ -35,6 +35,43 @@ export default function AIAnalysisPage() {
     }
   }, [propertyId, router.isReady]);
 
+  // Polling for analysis updates while processing
+  useEffect(() => {
+    // Only poll if analysis is in processing state
+    if (analysis?.status === 'processing') {
+      console.log('🔄 Starting polling for analysis updates...');
+
+      const pollInterval = setInterval(async () => {
+        console.log('⏰ Polling for analysis updates...');
+        const { data, error } = await supabase
+          .from('ai_property_analyses')
+          .select('*')
+          .eq('property_id', propertyId)
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (!error && data && data.length > 0) {
+          const updatedAnalysis = data[0];
+          setAnalysis(updatedAnalysis);
+
+          // If analysis completed or failed, stop polling
+          if (updatedAnalysis.status === 'completed' || updatedAnalysis.status === 'failed') {
+            console.log('✅ Analysis completed, stopping polling');
+            setAnalyzing(false);
+            if (updatedAnalysis.status === 'failed') {
+              setError(updatedAnalysis.error_message || 'Analysis failed');
+            }
+          }
+        }
+      }, 5000); // Poll every 5 seconds
+
+      return () => {
+        console.log('🛑 Stopping polling');
+        clearInterval(pollInterval);
+      };
+    }
+  }, [analysis?.status, propertyId]);
+
   const checkAuth = async () => {
     try {
       const { user: currentUser, error: authError } = await authHelpers.getUser();
@@ -525,6 +562,14 @@ export default function AIAnalysisPage() {
               <p>✓ Analyzing violations...</p>
               <p>⏳ Matching regulations...</p>
               <p>⏳ Generating recommendations...</p>
+            </div>
+
+            {/* Polling indicator */}
+            <div className="mt-6 flex items-center justify-center gap-2 text-xs">
+              <div className="w-2 h-2 rounded-full bg-corporate-400 animate-pulse" />
+              <span className="text-slate-500">
+                Checking for updates every 5 seconds...
+              </span>
             </div>
           </div>
         )}
