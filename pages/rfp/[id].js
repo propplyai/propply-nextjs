@@ -18,6 +18,7 @@ export default function RFPDetailPage() {
   const { id } = router.query;
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [rfpLoading, setRfpLoading] = useState(true);
   const [rfp, setRfp] = useState(null);
   const [documents, setDocuments] = useState([]);
   const [invitations, setInvitations] = useState([]);
@@ -45,6 +46,7 @@ export default function RFPDetailPage() {
 
   const loadRFPData = async () => {
     try {
+      setRfpLoading(true);
       console.log('[RFP Detail] Loading RFP data for ID:', id);
 
       // Load RFP with all related data
@@ -112,6 +114,8 @@ export default function RFPDetailPage() {
     } catch (error) {
       console.error('[RFP Detail] Critical error loading RFP data:', error);
       setRfp(null); // Ensure we show "not found" message
+    } finally {
+      setRfpLoading(false);
     }
   };
 
@@ -195,7 +199,7 @@ export default function RFPDetailPage() {
     router.push('/');
   };
 
-  if (loading) {
+  if (loading || rfpLoading) {
     return (
       <Layout user={user} onLogout={handleLogout}>
         <div className="container-modern py-8">
