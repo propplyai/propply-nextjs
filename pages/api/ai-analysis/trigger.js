@@ -61,18 +61,38 @@ export default async function handler(req, res) {
     console.log('🔍 Checking for existing processing analysis...');
     const { data: existingAnalysis } = await supabase
       .from('ai_property_analyses')
-      .select('id, status')
+      .select('id, status, created_at')
       .eq('property_id', property_id)
       .eq('status', 'processing')
       .single();
 
     if (existingAnalysis) {
-      console.log('⚠️  Analysis already in progress:', existingAnalysis.id);
-      return res.status(409).json({
-        error: 'Analysis already in progress',
-        analysis_id: existingAnalysis.id,
-        status: 'processing'
-      });
+      // Check if the existing analysis is stuck (older than 5 minutes)
+      const createdAt = new Date(existingAnalysis.created_at);
+      const now = new Date();
+      const ageInMinutes = (now - createdAt) / (1000 * 60);
+
+      if (ageInMinutes > 5) {
+        console.log('⚠️  Found stuck analysis (age: ' + Math.round(ageInMinutes) + ' minutes), marking as failed...');
+
+        // Mark the stuck analysis as failed
+        await supabase
+          .from('ai_property_analyses')
+          .update({
+            status: 'failed',
+            error_message: 'Analysis timed out - please try again'
+          })
+          .eq('id', existingAnalysis.id);
+
+        console.log('✅ Marked stuck analysis as failed, proceeding with new analysis');
+      } else {
+        console.log('⚠️  Analysis already in progress:', existingAnalysis.id);
+        return res.status(409).json({
+          error: 'Analysis already in progress',
+          analysis_id: existingAnalysis.id,
+          status: 'processing'
+        });
+      }
     }
 
     console.log('✅ No existing processing analysis');
