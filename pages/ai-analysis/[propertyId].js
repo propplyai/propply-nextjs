@@ -38,9 +38,9 @@ export default function AIAnalysisPage() {
 
   // Polling for analysis updates while processing
   useEffect(() => {
-    // Only poll if analysis is in processing state OR if we're analyzing
-    if (analysis?.status === 'processing' || (analyzing && analysis)) {
-      console.log('🔄 Starting polling for analysis updates...');
+    // Only poll if analysis is in processing state
+    if (analysis?.status === 'processing') {
+      console.log('🔄 Starting polling for analysis updates... Status:', analysis.status);
 
       const pollInterval = setInterval(async () => {
         console.log('⏰ Polling for analysis updates...');
@@ -71,12 +71,8 @@ export default function AIAnalysisPage() {
         console.log('🛑 Stopping polling');
         clearInterval(pollInterval);
       };
-    } else if (!analysis?.status || (analysis?.status !== 'processing' && analyzing)) {
-      // Edge case: if analyzing is true but analysis status isn't processing, set to false
-      console.log('⚠️ Analyzing state inconsistent, correcting...');
-      setAnalyzing(false);
     }
-  }, [analysis?.status, propertyId, analyzing, analysis]);
+  }, [analysis?.status, propertyId]);
 
   const checkAuth = async () => {
     try {
@@ -149,12 +145,16 @@ export default function AIAnalysisPage() {
 
       if (error) throw error;
       if (data && data.length > 0) {
-        setAnalysis(data[0]);
+        const loadedAnalysis = data[0];
+        console.log('📥 Loaded analysis with status:', loadedAnalysis.status);
+        setAnalysis(loadedAnalysis);
 
         // Set analyzing state based on analysis status
-        if (data[0].status === 'processing') {
+        if (loadedAnalysis.status === 'processing') {
+          console.log('⚙️ Analysis is processing, setting analyzing = true');
           setAnalyzing(true);
         } else {
+          console.log('✅ Analysis is completed/failed, setting analyzing = false');
           // If analysis is completed or failed, ensure analyzing is false
           setAnalyzing(false);
         }
@@ -162,6 +162,7 @@ export default function AIAnalysisPage() {
         // Load existing feedback and dismissed insights
         await loadUserFeedback();
       }
+      console.log('🔍 Final state - analyzing:', analyzing, 'analysis.status:', data?.[0]?.status);
     } catch (err) {
       console.error('Error loading analysis:', err);
     }
@@ -538,7 +539,7 @@ export default function AIAnalysisPage() {
                 Re-run Analysis
               </button>
             )}
-            {(analyzing || analysis?.status === 'processing') && (
+            {analysis?.status === 'processing' && (
               <div className="flex items-center gap-2 text-purple-400">
                 <Loader2 className="w-4 h-4 animate-spin" />
                 <span className="text-sm">Analysis in progress...</span>
@@ -561,7 +562,7 @@ export default function AIAnalysisPage() {
         )}
 
         {/* Analysis Content */}
-        {!analysis && !analyzing && analysis?.status !== 'processing' && (
+        {!analysis && analysis?.status !== 'processing' && (
           <div className="card text-center py-20">
             {!hasComplianceReport ? (
               <>
