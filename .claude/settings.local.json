@@ -8,7 +8,9 @@
       "Bash(python3:*)",
       "Bash(git reset:*)",
       "Bash(source:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(mkdir:*)",
+      "Bash(npm run dev:*)"
     ],
     "deny": [],
     "ask": []
