@@ -180,10 +180,13 @@ export default function RFPDashboard() {
       const result = await response.json();
 
       if (result.success) {
-        alert('RFP documents generated successfully!');
+        const message = result.regenerated
+          ? 'RFP documents regenerated successfully!'
+          : 'RFP documents generated successfully!';
+        alert(message);
         loadRFPs(user.id); // Refresh the list
       } else {
-        throw new Error(result.error);
+        throw new Error(result.error || result.message);
       }
     } catch (error) {
       console.error('Error generating documents:', error);

@@ -44,22 +44,28 @@ export default async function handler(req, res) {
     const rfpGenerator = new RFPGenerator(supabase);
     const result = await rfpGenerator.generateRFP(rfp_project_id);
 
-    // Update RFP status to documents_generated
-    const { error: updateError } = await supabase
-      .from('rfp_projects')
-      .update({
-        status: 'documents_generated',
-        documents_generated_at: new Date().toISOString()
-      })
-      .eq('id', rfp_project_id);
+    // Update RFP status to documents_generated (only if not already set)
+    if (rfp.status === 'draft') {
+      const { error: updateError } = await supabase
+        .from('rfp_projects')
+        .update({
+          status: 'documents_generated',
+          documents_generated_at: new Date().toISOString()
+        })
+        .eq('id', rfp_project_id);
 
-    if (updateError) throw updateError;
+      if (updateError) throw updateError;
+    }
 
-    console.log(`[API /rfp/generate-documents] Documents generated for RFP: ${rfp_project_id}`);
+    const action = result.regenerated ? 'regenerated' : 'generated';
+    console.log(`[API /rfp/generate-documents] Documents ${action} for RFP: ${rfp_project_id}`);
 
     return res.status(200).json({
       success: true,
-      message: 'RFP documents generated successfully',
+      message: result.regenerated
+        ? 'RFP documents regenerated successfully'
+        : 'RFP documents generated successfully',
+      regenerated: result.regenerated,
       documents: result.documents
     });
 
