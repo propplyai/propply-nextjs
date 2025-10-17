@@ -136,17 +136,26 @@ export default function RFPDashboard() {
     }
 
     try {
+      console.log('[RFP Delete] Attempting to delete RFP:', rfpId);
+      
       const { error } = await supabase
         .from('rfp_projects')
         .delete()
         .eq('id', rfpId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('[RFP Delete] Database error:', error);
+        throw error;
+      }
 
+      console.log('[RFP Delete] Successfully deleted RFP:', rfpId);
       setRfps(rfps.filter(rfp => rfp.id !== rfpId));
+      
+      // Show success message
+      alert('RFP deleted successfully!');
     } catch (error) {
-      console.error('Error deleting RFP:', error);
-      alert('Failed to delete RFP');
+      console.error('[RFP Delete] Error deleting RFP:', error);
+      alert(`Failed to delete RFP: ${error.message}`);
     }
   };
 
