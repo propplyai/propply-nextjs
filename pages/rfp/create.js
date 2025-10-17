@@ -165,7 +165,11 @@ export default function CreateRFPPage() {
       if (result.success) {
         router.push(`/rfp/${result.rfp.id}`);
       } else {
-        throw new Error(result.error);
+        // Show detailed error information
+        const errorMsg = result.message || result.error;
+        const details = result.details ? `\n\nDetails: ${JSON.stringify(result.details)}` : '';
+        const code = result.code ? `\n\nError Code: ${result.code}` : '';
+        throw new Error(errorMsg + details + code);
       }
     } catch (error) {
       console.error('Error creating RFP:', error);
