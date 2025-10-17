@@ -196,7 +196,7 @@ export default function AddPropertyPage() {
         user_id: user.id,
         report_type: 'full_compliance', // Add required report_type field
         city: city,
-        overall_score: complianceData.scores.overall_score,
+        overall_score: Math.round(complianceData.scores.overall_score),
         report_data: complianceData
       };
 
@@ -248,7 +248,7 @@ export default function AddPropertyPage() {
       await supabase
         .from('properties')
         .update({
-          compliance_score: complianceData.scores.overall_score,
+          compliance_score: Math.round(complianceData.scores.overall_score),
           active_violations: activeViolations
         })
         .eq('id', property.id);

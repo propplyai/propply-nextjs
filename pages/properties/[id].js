@@ -174,13 +174,15 @@ export default function PropertyDetailPage() {
       }
 
       // Load vendor search if it exists
-      const { data: vendorSearchData } = await supabase
+      const { data: vendorSearchData, error: vendorSearchError } = await supabase
         .from('property_vendor_searches')
         .select('*')
         .eq('property_id', propertyId)
-        .single();
+        .maybeSingle();
 
-      if (vendorSearchData) {
+      if (vendorSearchError) {
+        console.error('[Property Detail] Error loading vendor search:', vendorSearchError);
+      } else if (vendorSearchData) {
         console.log('[Property Detail] Vendor search found:', vendorSearchData);
         setVendorSearch(vendorSearchData);
       }
@@ -354,7 +356,7 @@ export default function PropertyDetailPage() {
         user_id: user.id,
         report_type: 'full_compliance', // Add required report_type field
         city: city,
-        overall_score: complianceData.scores.overall_score,
+        overall_score: Math.round(complianceData.scores.overall_score),
         report_data: complianceData
       };
 
@@ -423,7 +425,7 @@ export default function PropertyDetailPage() {
       await supabase
         .from('properties')
         .update({
-          compliance_score: complianceData.scores.overall_score,
+          compliance_score: Math.round(complianceData.scores.overall_score),
           active_violations: activeViolations
         })
         .eq('id', property.id);
