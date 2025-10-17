@@ -68,6 +68,7 @@ export default function RFPDetailPage() {
       }
 
       console.log('[RFP Detail] RFP loaded successfully:', rfpData);
+      console.log('[RFP Detail] Current status:', rfpData?.status);
       setRfp(rfpData);
 
       // Load documents (don't fail if error)
@@ -448,23 +449,27 @@ export default function RFPDetailPage() {
               <h3 className="text-lg font-semibold text-white mb-4">Actions</h3>
               
               <div className="space-y-3">
-                {rfp.status === 'draft' && (
+                {/* Generate Documents - show for draft and documents_generated to allow regeneration */}
+                {(rfp.status === 'draft' || rfp.status === 'documents_generated') && (
                   <button
                     onClick={handleGenerateDocuments}
-                    className="w-full btn-primary flex items-center justify-center space-x-2"
+                    className="w-full btn-secondary flex items-center justify-center space-x-2"
                   >
                     <FileText className="w-4 h-4" />
-                    <span>Generate Documents</span>
+                    <span>{rfp.status === 'draft' ? 'Generate Documents' : 'Regenerate Documents'}</span>
                   </button>
                 )}
 
-                {(rfp.status === 'documents_generated' || rfp.status === 'vendors_contacted') && (
+                {/* Invite Vendors - show for documents_generated and beyond */}
+                {!['draft'].includes(rfp.status) && (
                   <button
                     onClick={handleInviteVendors}
                     className="w-full btn-primary flex items-center justify-center space-x-2"
                   >
                     <Send className="w-4 h-4" />
-                    <span>Invite Vendors</span>
+                    <span>
+                      {rfp.status === 'vendors_contacted' ? 'Invite More Vendors' : 'Invite Vendors'}
+                    </span>
                   </button>
                 )}
 
