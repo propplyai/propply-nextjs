@@ -69,7 +69,9 @@ export default function RFPDashboard() {
   const getStatusColor = (status) => {
     const colors = {
       draft: 'bg-slate-500/20 text-slate-300 border border-slate-500/50',
-      published: 'bg-blue-500/20 text-blue-400 border border-blue-500/50',
+      documents_generated: 'bg-blue-500/20 text-blue-400 border border-blue-500/50',
+      vendors_contacted: 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/50',
+      published: 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/50',
       vendor_responses: 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50',
       evaluation: 'bg-purple-500/20 text-purple-400 border border-purple-500/50',
       awarded: 'bg-green-500/20 text-green-400 border border-green-500/50',
@@ -82,7 +84,9 @@ export default function RFPDashboard() {
   const getStatusIcon = (status) => {
     const icons = {
       draft: Edit,
-      published: FileText,
+      documents_generated: FileText,
+      vendors_contacted: Send,
+      published: CheckCircle,
       vendor_responses: Users,
       evaluation: Clock,
       awarded: CheckCircle,
@@ -95,6 +99,8 @@ export default function RFPDashboard() {
   const getStatusLabel = (status) => {
     const labels = {
       draft: 'Draft',
+      documents_generated: 'Documents Generated',
+      vendors_contacted: 'Vendors Contacted',
       published: 'Published',
       vendor_responses: 'Active',
       evaluation: 'In Review',
@@ -219,8 +225,9 @@ export default function RFPDashboard() {
               {[
                 { value: 'all', label: 'All', icon: FileText },
                 { value: 'draft', label: 'Draft', icon: Edit },
-                { value: 'published', label: 'Published', icon: FileText },
-                { value: 'vendor_responses', label: 'Active', icon: Users }
+                { value: 'documents_generated', label: 'Docs Generated', icon: FileText },
+                { value: 'vendors_contacted', label: 'Vendors Contacted', icon: Send },
+                { value: 'published', label: 'Published', icon: CheckCircle }
               ].map(({ value, label, icon: Icon }) => (
                 <button
                   key={value}
@@ -310,8 +317,8 @@ export default function RFPDashboard() {
 
                     {/* Action Buttons */}
                     <div className="flex items-center space-x-2 ml-4">
-                      {/* Edit button - show for draft and published status */}
-                      {(rfp.status === 'draft' || rfp.status === 'published') && (
+                      {/* Edit button - show for draft, documents_generated, and vendors_contacted */}
+                      {['draft', 'documents_generated', 'vendors_contacted'].includes(rfp.status) && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -333,6 +340,20 @@ export default function RFPDashboard() {
                           }}
                           className="p-2 rounded-lg bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white transition-all border border-blue-500/50"
                           title="Generate Documents"
+                        >
+                          <FileText className="w-4 h-4" />
+                        </button>
+                      )}
+
+                      {/* Invite Vendors button - for documents_generated and vendors_contacted */}
+                      {['documents_generated', 'vendors_contacted'].includes(rfp.status) && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(`/rfp/${rfp.id}/invite-vendors`);
+                          }}
+                          className="p-2 rounded-lg bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600 hover:text-white transition-all border border-indigo-500/50"
+                          title="Invite Vendors"
                         >
                           <Send className="w-4 h-4" />
                         </button>

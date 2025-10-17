@@ -158,7 +158,9 @@ export default function RFPDetailPage() {
   const getStatusColor = (status) => {
     const colors = {
       draft: 'bg-slate-500/20 text-slate-300 border border-slate-500/50',
-      published: 'bg-blue-500/20 text-blue-400 border border-blue-500/50',
+      documents_generated: 'bg-blue-500/20 text-blue-400 border border-blue-500/50',
+      vendors_contacted: 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/50',
+      published: 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/50',
       vendor_responses: 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50',
       evaluation: 'bg-purple-500/20 text-purple-400 border border-purple-500/50',
       awarded: 'bg-green-500/20 text-green-400 border border-green-500/50',
@@ -171,7 +173,9 @@ export default function RFPDetailPage() {
   const getStatusIcon = (status) => {
     const icons = {
       draft: Edit,
-      published: FileText,
+      documents_generated: FileText,
+      vendors_contacted: Send,
+      published: CheckCircle,
       vendor_responses: Users,
       evaluation: Clock,
       awarded: CheckCircle,
@@ -184,6 +188,8 @@ export default function RFPDetailPage() {
   const getStatusLabel = (status) => {
     const labels = {
       draft: 'Draft',
+      documents_generated: 'Documents Generated',
+      vendors_contacted: 'Vendors Contacted',
       published: 'Published',
       vendor_responses: 'Active',
       evaluation: 'In Review',
@@ -448,8 +454,8 @@ export default function RFPDetailPage() {
                     <span>Generate Documents</span>
                   </button>
                 )}
-                
-                {rfp.status === 'published' && (
+
+                {(rfp.status === 'documents_generated' || rfp.status === 'vendors_contacted') && (
                   <button
                     onClick={handleInviteVendors}
                     className="w-full btn-primary flex items-center justify-center space-x-2"
@@ -458,7 +464,7 @@ export default function RFPDetailPage() {
                     <span>Invite Vendors</span>
                   </button>
                 )}
-                
+
                 <button
                   onClick={() => router.push(`/rfp/${id}/documents`)}
                   className="w-full btn-secondary flex items-center justify-center space-x-2"

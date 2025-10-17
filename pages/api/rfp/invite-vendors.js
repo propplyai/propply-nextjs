@@ -41,9 +41,10 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: 'RFP not found or access denied' });
     }
 
-    if (rfp.status !== 'published') {
-      return res.status(400).json({ 
-        error: 'RFP must be published before inviting vendors' 
+    // Allow inviting vendors if documents are generated
+    if (rfp.status !== 'documents_generated' && rfp.status !== 'vendors_contacted') {
+      return res.status(400).json({
+        error: 'RFP documents must be generated before inviting vendors'
       });
     }
 
@@ -97,10 +98,13 @@ export default async function handler(req, res) {
         .eq('id', invitation.id);
     }
 
-    // Update RFP status to vendor_responses
+    // Update RFP status to vendors_contacted
     const { error: updateError } = await supabase
       .from('rfp_projects')
-      .update({ status: 'vendor_responses' })
+      .update({
+        status: 'vendors_contacted',
+        vendors_contacted_at: new Date().toISOString()
+      })
       .eq('id', rfp_project_id);
 
     if (updateError) throw updateError;

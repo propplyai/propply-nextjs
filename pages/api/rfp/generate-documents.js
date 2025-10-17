@@ -44,12 +44,12 @@ export default async function handler(req, res) {
     const rfpGenerator = new RFPGenerator(supabase);
     const result = await rfpGenerator.generateRFP(rfp_project_id);
 
-    // Update RFP status to published
+    // Update RFP status to documents_generated
     const { error: updateError } = await supabase
       .from('rfp_projects')
-      .update({ 
-        status: 'published',
-        published_at: new Date().toISOString()
+      .update({
+        status: 'documents_generated',
+        documents_generated_at: new Date().toISOString()
       })
       .eq('id', rfp_project_id);
 
