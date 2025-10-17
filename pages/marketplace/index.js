@@ -79,8 +79,12 @@ export default function MarketplacePage() {
   useEffect(() => {
     // Auto-search if property_id or report_id is in URL
     if (user && router.isReady) {
-      const { property_id, report_id } = router.query;
-      if (property_id || report_id) {
+      const { property_id, report_id, restore_search } = router.query;
+      
+      if (restore_search === 'true' && property_id) {
+        // Restore saved search results
+        handleRestoreSearch(property_id);
+      } else if (property_id || report_id) {
         handleAutoSearch(property_id, report_id);
       }
     }
@@ -142,6 +146,34 @@ export default function MarketplacePage() {
       console.error('Error loading saved vendors:', error);
     } finally {
       setLoadingSaved(false);
+    }
+  };
+
+  const handleRestoreSearch = async (propertyId) => {
+    if (searching) return;
+
+    try {
+      setSearching(true);
+      setError('');
+
+      const response = await authenticatedFetch(`/api/marketplace/restore-search?property_id=${propertyId}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to restore search');
+      }
+
+      setVendors(data.vendors);
+      setSearchedAddress(data.address);
+      setActiveCategories(data.categories);
+      
+      // Set the property as selected since we're restoring its search
+      setSelectedProperty(propertyId);
+    } catch (err) {
+      console.error('Restore search error:', err);
+      setError(err.message);
+    } finally {
+      setSearching(false);
     }
   };
 
@@ -473,6 +505,8 @@ export default function MarketplacePage() {
                       category={CATEGORY_INFO[category]?.name}
                       onBookmark={handleBookmark}
                       onInviteToBid={handleInviteToBid}
+                      propertyId={selectedProperty}
+                      restoreSearch={true}
                     />
                   ))}
                 </div>

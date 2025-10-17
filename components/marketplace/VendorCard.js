@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export default function VendorCard({ vendor, category, onBookmark, onInviteToBid }) {
+export default function VendorCard({ vendor, category, onBookmark, onInviteToBid, propertyId, restoreSearch }) {
   const [isBookmarked, setIsBookmarked] = useState(vendor.is_bookmarked || false);
   const [bookmarking, setBookmarking] = useState(false);
 
@@ -181,7 +181,7 @@ export default function VendorCard({ vendor, category, onBookmark, onInviteToBid
       <div className="pt-4 border-t border-slate-700">
         <div className="flex items-center space-x-2">
           <Link
-            href={`/marketplace/${vendor.place_id}`}
+            href={`/marketplace/${vendor.place_id}${propertyId && restoreSearch ? `?property_id=${propertyId}&restore_search=true` : ''}`}
             className="flex-1 btn-secondary text-sm py-2"
           >
             View Details

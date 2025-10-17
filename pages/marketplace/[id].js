@@ -15,7 +15,7 @@ import { cn, authenticatedFetch } from '@/lib/utils';
 
 export default function VendorDetailPage() {
   const router = useRouter();
-  const { id: placeId } = router.query;
+  const { id: placeId, property_id, restore_search } = router.query;
 
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -163,7 +163,10 @@ export default function VendorDetailPage() {
       <div className="container-modern py-8">
         {/* Back Button */}
         <Link
-          href="/marketplace"
+          href={property_id && restore_search === 'true' 
+            ? `/marketplace?property_id=${property_id}&restore_search=true`
+            : "/marketplace"
+          }
           className="inline-flex items-center space-x-2 text-corporate-400 hover:text-corporate-300 mb-6"
         >
           <ArrowLeft className="w-5 h-5" />
