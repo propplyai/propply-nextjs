@@ -45,6 +45,8 @@ export default function RFPDetailPage() {
 
   const loadRFPData = async () => {
     try {
+      console.log('[RFP Detail] Loading RFP data for ID:', id);
+
       // Load RFP with all related data
       const { data: rfpData, error: rfpError } = await supabase
         .from('rfp_projects')
@@ -53,38 +55,44 @@ export default function RFPDetailPage() {
           properties (
             id, address, city, state, zip_code, property_type,
             compliance_score, active_violations
-          ),
-          compliance_reports (
-            id, report_data, scores, overall_score, created_at
           )
         `)
         .eq('id', id)
         .single();
 
-      if (rfpError) throw rfpError;
+      if (rfpError) {
+        console.error('[RFP Detail] Error loading RFP:', rfpError);
+        throw rfpError;
+      }
+
+      console.log('[RFP Detail] RFP loaded successfully:', rfpData);
       setRfp(rfpData);
 
-      // Load documents
+      // Load documents (don't fail if error)
       const { data: docs, error: docsError } = await supabase
         .from('rfp_documents')
         .select('*')
         .eq('rfp_project_id', id)
         .order('created_at', { ascending: false });
 
-      if (docsError) throw docsError;
+      if (docsError) {
+        console.warn('[RFP Detail] Error loading documents:', docsError);
+      }
       setDocuments(docs || []);
 
-      // Load vendor invitations
+      // Load vendor invitations (don't fail if error)
       const { data: invs, error: invsError } = await supabase
         .from('rfp_vendor_invitations')
         .select('*')
         .eq('rfp_project_id', id)
         .order('created_at', { ascending: false });
 
-      if (invsError) throw invsError;
+      if (invsError) {
+        console.warn('[RFP Detail] Error loading invitations:', invsError);
+      }
       setInvitations(invs || []);
 
-      // Load vendor proposals
+      // Load vendor proposals (don't fail if error)
       const { data: props, error: propsError } = await supabase
         .from('rfp_vendor_proposals')
         .select(`
@@ -96,11 +104,14 @@ export default function RFPDetailPage() {
         .eq('rfp_project_id', id)
         .order('submitted_at', { ascending: false });
 
-      if (propsError) throw propsError;
+      if (propsError) {
+        console.warn('[RFP Detail] Error loading proposals:', propsError);
+      }
       setProposals(props || []);
 
     } catch (error) {
-      console.error('Error loading RFP data:', error);
+      console.error('[RFP Detail] Critical error loading RFP data:', error);
+      setRfp(null); // Ensure we show "not found" message
     }
   };
 

@@ -6,10 +6,10 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { 
-  Plus, FileText, Users, Clock, DollarSign, 
+import {
+  Plus, FileText, Users, Clock, DollarSign,
   AlertTriangle, CheckCircle, XCircle, Eye,
-  Edit, Trash2, Send, Download
+  Edit, Trash2, Send, Download, MapPin
 } from 'lucide-react';
 import Layout from '@/components/Layout';
 import { supabase, authHelpers } from '@/lib/supabase';
