@@ -204,7 +204,7 @@ export default function CreateRFPPage() {
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <h1 className="text-3xl font-bold text-white">Create RFP</h1>
+            <h1 className="text-3xl font-bold gradient-text">Create RFP</h1>
             <p className="text-slate-400">Create a new Request for Proposal</p>
           </div>
         </div>

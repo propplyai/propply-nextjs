@@ -242,7 +242,7 @@ export default function RFPDetailPage() {
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div>
-              <h1 className="text-3xl font-bold text-white">{rfp.project_title}</h1>
+              <h1 className="text-3xl font-bold gradient-text">{rfp.project_title}</h1>
               <p className="text-slate-400">{rfp.properties?.address}</p>
             </div>
           </div>

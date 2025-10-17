@@ -199,7 +199,7 @@ export default function RFPDashboard() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-white mb-2">RFP Management</h1>
+            <h1 className="text-3xl font-bold gradient-text mb-2">RFP Management</h1>
             <p className="text-slate-400">Manage your Request for Proposals</p>
           </div>
           <button
