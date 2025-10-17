@@ -8,11 +8,11 @@ import { useState } from 'react';
 import Link from 'next/link';
 import {
   Star, MapPin, Phone, Globe, Bookmark, BookmarkCheck,
-  ExternalLink, FileText
+  ExternalLink, Send
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export default function VendorCard({ vendor, category, onBookmark, onRequestQuote, onCreateRFP }) {
+export default function VendorCard({ vendor, category, onBookmark, onRequestQuote, onInviteToBid }) {
   const [isBookmarked, setIsBookmarked] = useState(vendor.is_bookmarked || false);
   const [bookmarking, setBookmarking] = useState(false);
 
@@ -37,10 +37,10 @@ export default function VendorCard({ vendor, category, onBookmark, onRequestQuot
     onRequestQuote(vendor);
   };
 
-  const handleCreateRFP = (e) => {
+  const handleInviteToBid = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    onCreateRFP(vendor);
+    onInviteToBid(vendor);
   };
 
   // Format phone number for display
@@ -200,11 +200,11 @@ export default function VendorCard({ vendor, category, onBookmark, onRequestQuot
           </button>
         </div>
         <button
-          onClick={handleCreateRFP}
+          onClick={handleInviteToBid}
           className="w-full btn-outline text-sm py-2 flex items-center justify-center space-x-2"
         >
-          <FileText className="w-4 h-4" />
-          <span>Create Formal RFP</span>
+          <Send className="w-4 h-4" />
+          <span>Invite to Bid</span>
         </button>
       </div>
     </div>

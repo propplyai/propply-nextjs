@@ -8,10 +8,11 @@ import Link from 'next/link';
 import Layout from '@/components/Layout';
 import VendorCard from '@/components/marketplace/VendorCard';
 import VendorDetailsModal from '@/components/marketplace/VendorDetailsModal';
+import InviteToBidModal from '@/components/marketplace/InviteToBidModal';
 import { authHelpers, supabase } from '@/lib/supabase';
 import {
   Search, MapPin, Filter, AlertCircle, Loader2,
-  ShoppingBag, Bookmark, FileText, Star
+  ShoppingBag, Bookmark, FileText, Star, Send
 } from 'lucide-react';
 import { cn, authenticatedFetch } from '@/lib/utils';
 
@@ -61,6 +62,7 @@ export default function MarketplacePage() {
   // UI state
   const [selectedVendor, setSelectedVendor] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showInviteToBidModal, setShowInviteToBidModal] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState([]);
   const [error, setError] = useState('');
@@ -282,15 +284,9 @@ export default function MarketplacePage() {
     }
   };
 
-  const handleCreateRFP = async (vendor) => {
-    if (!selectedProperty && userProperties.length > 0) {
-      alert('Please select a property first');
-      return;
-    }
-
-    // Navigate to RFP creation with vendor pre-selected
-    const propertyId = selectedProperty || userProperties[0]?.id;
-    router.push(`/rfp/create?property_id=${propertyId}&vendor_id=${vendor.place_id}&vendor_name=${encodeURIComponent(vendor.name)}`);
+  const handleInviteToBid = async (vendor) => {
+    setSelectedVendor(vendor);
+    setShowInviteToBidModal(true);
   };
 
   const handleLogout = async () => {
@@ -513,7 +509,7 @@ export default function MarketplacePage() {
                       category={CATEGORY_INFO[category]?.name}
                       onBookmark={handleBookmark}
                       onRequestQuote={handleRequestQuote}
-                      onCreateRFP={handleCreateRFP}
+                      onInviteToBid={handleInviteToBid}
                     />
                   ))}
                 </div>
@@ -583,12 +579,21 @@ export default function MarketplacePage() {
                           <p className="text-xs text-slate-500 mb-4">
                             Saved {new Date(bookmark.created_at).toLocaleDateString()}
                           </p>
-                          <Link
-                            href={`/marketplace/${bookmark.vendor_place_id}`}
-                            className="btn-secondary w-full text-sm"
-                          >
-                            View Details
-                          </Link>
+                          <div className="space-y-2">
+                            <Link
+                              href={`/marketplace/${bookmark.vendor_place_id}`}
+                              className="btn-secondary w-full text-sm"
+                            >
+                              View Details
+                            </Link>
+                            <button
+                              onClick={() => handleInviteToBid(bookmark)}
+                              className="btn-outline w-full text-sm flex items-center justify-center space-x-2"
+                            >
+                              <Send className="w-4 h-4" />
+                              <span>Invite to Bid</span>
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -632,12 +637,21 @@ export default function MarketplacePage() {
                           <p className="text-xs text-slate-500 mb-4">
                             Requested {new Date(request.created_at).toLocaleDateString()}
                           </p>
-                          <Link
-                            href={`/marketplace/${request.vendor_place_id}`}
-                            className="btn-secondary w-full text-sm"
-                          >
-                            View Details
-                          </Link>
+                          <div className="space-y-2">
+                            <Link
+                              href={`/marketplace/${request.vendor_place_id}`}
+                              className="btn-secondary w-full text-sm"
+                            >
+                              View Details
+                            </Link>
+                            <button
+                              onClick={() => handleInviteToBid(request)}
+                              className="btn-outline w-full text-sm flex items-center justify-center space-x-2"
+                            >
+                              <Send className="w-4 h-4" />
+                              <span>Invite to Bid</span>
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -679,6 +693,19 @@ export default function MarketplacePage() {
           }}
           onBookmark={handleBookmark}
           onRequestQuote={handleRequestQuote}
+        />
+      )}
+
+      {/* Invite to Bid Modal */}
+      {selectedVendor && (
+        <InviteToBidModal
+          vendor={selectedVendor}
+          isOpen={showInviteToBidModal}
+          onClose={() => {
+            setShowInviteToBidModal(false);
+            setSelectedVendor(null);
+          }}
+          propertyId={selectedProperty}
         />
       )}
     </Layout>
