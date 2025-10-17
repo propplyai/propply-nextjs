@@ -18,6 +18,7 @@ export default function InviteVendorsPage() {
   const { id } = router.query;
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [rfpLoading, setRfpLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [rfp, setRfp] = useState(null);
   const [invitationTemplate, setInvitationTemplate] = useState(null);
@@ -47,6 +48,8 @@ export default function InviteVendorsPage() {
 
   const loadData = async () => {
     try {
+      setRfpLoading(true);
+      
       // Load RFP
       const { data: rfpData, error: rfpError } = await supabase
         .from('rfp_projects')
@@ -72,6 +75,8 @@ export default function InviteVendorsPage() {
 
     } catch (error) {
       console.error('Error loading data:', error);
+    } finally {
+      setRfpLoading(false);
     }
   };
 
@@ -142,7 +147,7 @@ export default function InviteVendorsPage() {
     router.push('/');
   };
 
-  if (loading) {
+  if (loading || rfpLoading) {
     return (
       <Layout user={user} onLogout={handleLogout}>
         <div className="container-modern py-8">
