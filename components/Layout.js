@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
-import { Home, Building2, FileCheck, ShoppingBag, BarChart3, LogOut, User, CreditCard, Menu, X } from 'lucide-react';
+import { Home, Building2, FileCheck, ShoppingBag, BarChart3, LogOut, User, CreditCard, Menu, X, FileText } from 'lucide-react';
 import { cn, getSubscriptionTierName, getSubscriptionTierBadge, getSubscriptionTierIcon } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 
@@ -42,6 +42,7 @@ export default function Layout({ children, user, onLogout }) {
     { name: 'Dashboard', href: '/dashboard', icon: Home },
     { name: 'Compliance', href: '/compliance', icon: FileCheck },
     { name: 'Marketplace', href: '/marketplace', icon: ShoppingBag },
+    { name: 'RFPs', href: '/rfp', icon: FileText },
     // Pricing is only shown on landing page, not for logged-in users
     ...(user ? [] : [{ name: 'Pricing', href: '/pricing', icon: CreditCard }]),
   ];

@@ -282,6 +282,17 @@ export default function MarketplacePage() {
     }
   };
 
+  const handleCreateRFP = async (vendor) => {
+    if (!selectedProperty && userProperties.length > 0) {
+      alert('Please select a property first');
+      return;
+    }
+
+    // Navigate to RFP creation with vendor pre-selected
+    const propertyId = selectedProperty || userProperties[0]?.id;
+    router.push(`/rfp/create?property_id=${propertyId}&vendor_id=${vendor.place_id}&vendor_name=${encodeURIComponent(vendor.name)}`);
+  };
+
   const handleLogout = async () => {
     await authHelpers.signOut();
     router.push('/');
@@ -502,6 +513,7 @@ export default function MarketplacePage() {
                       category={CATEGORY_INFO[category]?.name}
                       onBookmark={handleBookmark}
                       onRequestQuote={handleRequestQuote}
+                      onCreateRFP={handleCreateRFP}
                     />
                   ))}
                 </div>

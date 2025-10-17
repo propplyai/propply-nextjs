@@ -8,11 +8,11 @@ import { useState } from 'react';
 import Link from 'next/link';
 import {
   Star, MapPin, Phone, Globe, Bookmark, BookmarkCheck,
-  ExternalLink
+  ExternalLink, FileText
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export default function VendorCard({ vendor, category, onBookmark, onRequestQuote }) {
+export default function VendorCard({ vendor, category, onBookmark, onRequestQuote, onCreateRFP }) {
   const [isBookmarked, setIsBookmarked] = useState(vendor.is_bookmarked || false);
   const [bookmarking, setBookmarking] = useState(false);
 
@@ -35,6 +35,12 @@ export default function VendorCard({ vendor, category, onBookmark, onRequestQuot
     e.preventDefault();
     e.stopPropagation();
     onRequestQuote(vendor);
+  };
+
+  const handleCreateRFP = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onCreateRFP(vendor);
   };
 
   // Format phone number for display
@@ -178,18 +184,27 @@ export default function VendorCard({ vendor, category, onBookmark, onRequestQuot
       )}
 
       {/* Actions */}
-      <div className="flex items-center space-x-3 pt-4 border-t border-slate-700">
-        <Link
-          href={`/marketplace/${vendor.place_id}`}
-          className="flex-1 btn-secondary text-sm py-2"
-        >
-          View Details
-        </Link>
+      <div className="space-y-2 pt-4 border-t border-slate-700">
+        <div className="flex items-center space-x-2">
+          <Link
+            href={`/marketplace/${vendor.place_id}`}
+            className="flex-1 btn-secondary text-sm py-2"
+          >
+            View Details
+          </Link>
+          <button
+            onClick={handleRequestQuote}
+            className="flex-1 btn-primary text-sm py-2"
+          >
+            Request Quote
+          </button>
+        </div>
         <button
-          onClick={handleRequestQuote}
-          className="flex-1 btn-primary text-sm py-2"
+          onClick={handleCreateRFP}
+          className="w-full btn-outline text-sm py-2 flex items-center justify-center space-x-2"
         >
-          Request Quote
+          <FileText className="w-4 h-4" />
+          <span>Create Formal RFP</span>
         </button>
       </div>
     </div>
