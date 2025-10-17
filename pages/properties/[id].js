@@ -247,6 +247,12 @@ export default function PropertyDetailPage() {
   };
 
   const handleTriggerAI = async () => {
+    // Check if property data has been fetched first
+    if (!latestReport) {
+      alert('Please fetch the property data first before running AI analysis. Click "Fetch Property Data" or "Refresh Data" button to get started.');
+      return;
+    }
+
     // Check if user has paid subscription
     if (!subscription) {
       alert('AI Analysis requires a paid subscription. Please upgrade your plan to access AI-powered insights.');
@@ -690,14 +696,22 @@ export default function PropertyDetailPage() {
             <div className="card">
               <h3 className="text-lg font-bold text-white mb-4">Actions</h3>
               <div className="space-y-3">
-                <button
-                  onClick={handleTriggerAI}
-                  disabled={triggeringAI}
-                  className="btn-primary w-full flex items-center justify-center bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Sparkles className={`w-5 h-5 mr-2 ${triggeringAI ? 'animate-pulse' : ''}`} />
-                  {triggeringAI ? 'Starting Analysis...' : hasAIAnalysis ? 'View AI Analysis' : 'Run AI Analysis'}
-                </button>
+                <div className="relative group">
+                  <button
+                    onClick={handleTriggerAI}
+                    disabled={triggeringAI || !latestReport}
+                    className="btn-primary w-full flex items-center justify-center bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title={!latestReport ? 'Fetch property data first' : ''}
+                  >
+                    <Sparkles className={`w-5 h-5 mr-2 ${triggeringAI ? 'animate-pulse' : ''}`} />
+                    {triggeringAI ? 'Starting Analysis...' : hasAIAnalysis ? 'View AI Analysis' : 'Run AI Analysis'}
+                  </button>
+                  {!latestReport && (
+                    <div className="mt-2 text-xs text-amber-400 bg-amber-500/10 border border-amber-500/30 rounded px-2 py-1">
+                      ⚠️ Fetch property data first
+                    </div>
+                  )}
+                </div>
                 {latestReport && (
                   <Link
                     href={`/compliance/${latestReport.id}`}

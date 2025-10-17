@@ -57,6 +57,33 @@ export default async function handler(req, res) {
 
     console.log('✅ Property found:', property.address);
 
+    // Check if property data has been fetched (compliance report exists)
+    console.log('🔍 Checking for existing compliance report...');
+    const { data: complianceReport, error: reportError } = await supabase
+      .from('compliance_reports')
+      .select('id, generated_at')
+      .eq('property_id', property_id)
+      .order('generated_at', { ascending: false })
+      .limit(1);
+
+    if (reportError) {
+      console.error('❌ Error checking compliance report:', reportError);
+      return res.status(500).json({
+        error: 'Failed to verify property data',
+        details: reportError.message
+      });
+    }
+
+    if (!complianceReport || complianceReport.length === 0) {
+      console.log('❌ No compliance report found - data not fetched yet');
+      return res.status(400).json({
+        error: 'Property data not fetched yet. Please fetch the property data first before running AI analysis.',
+        code: 'DATA_NOT_FETCHED'
+      });
+    }
+
+    console.log('✅ Compliance report found:', complianceReport[0].id);
+
     // Check if there's already a processing analysis
     console.log('🔍 Checking for existing processing analysis...');
     const { data: existingAnalysis } = await supabase

@@ -28,6 +28,7 @@ export default function AIAnalysisPage() {
   const [dismissedRecommendations, setDismissedRecommendations] = useState(new Set());
   const [swipeStart, setSwipeStart] = useState(null);
   const [swipeOffset, setSwipeOffset] = useState(0);
+  const [hasComplianceReport, setHasComplianceReport] = useState(false);
 
   useEffect(() => {
     if (propertyId && router.isReady) {
@@ -85,13 +86,33 @@ export default function AIAnalysisPage() {
       await Promise.all([
         loadProperty(currentUser.id),
         loadAnalysis(),
-        checkSubscription(currentUser.id)
+        checkSubscription(currentUser.id),
+        checkComplianceReport()
       ]);
     } catch (error) {
       console.error('Auth error:', error);
       router.push('/login');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkComplianceReport = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('compliance_reports')
+        .select('id')
+        .eq('property_id', propertyId)
+        .limit(1);
+
+      if (error) {
+        console.error('Error checking compliance report:', error);
+        return;
+      }
+
+      setHasComplianceReport(data && data.length > 0);
+    } catch (err) {
+      console.error('Error checking compliance report:', err);
     }
   };
 
@@ -124,7 +145,12 @@ export default function AIAnalysisPage() {
       if (error) throw error;
       if (data && data.length > 0) {
         setAnalysis(data[0]);
-        
+
+        // If analysis is still processing, set analyzing to true
+        if (data[0].status === 'processing') {
+          setAnalyzing(true);
+        }
+
         // Load existing feedback and dismissed insights
         await loadUserFeedback();
       }
@@ -215,6 +241,12 @@ export default function AIAnalysisPage() {
   };
 
   const handleRunAnalysis = async () => {
+    // Check if property data has been fetched first
+    if (!hasComplianceReport) {
+      setError('Property data must be fetched before running AI analysis. Please go back to the property page and fetch the data first.');
+      return;
+    }
+
     // Check if user has paid subscription
     if (!subscription) {
       setShowUpgradeModal(true);
@@ -242,14 +274,16 @@ export default function AIAnalysisPage() {
         throw new Error(data.error || 'Failed to trigger analysis');
       }
 
-      // Reload analysis after completion
+      // Reload analysis to get the processing status
       await loadAnalysis();
+
+      // Keep analyzing state true - polling will set it to false when complete
+      // Don't set setAnalyzing(false) here - let the polling useEffect handle it
     } catch (err) {
       console.error('Analysis error:', err);
       setError(err.message);
       alert(`Error: ${err.message}`);
-    } finally {
-      setAnalyzing(false);
+      setAnalyzing(false); // Only set to false on error
     }
   };
 
@@ -486,7 +520,7 @@ export default function AIAnalysisPage() {
                 {property?.city || 'NYC'} • {property?.property_type || 'Residential'}
               </p>
             </div>
-            {analysis && (
+            {analysis && analysis.status !== 'processing' && !analyzing && (
               <button
                 onClick={handleRunAnalysis}
                 disabled={analyzing}
@@ -495,6 +529,12 @@ export default function AIAnalysisPage() {
                 <RefreshCw className={cn("w-4 h-4", analyzing && "animate-spin")} />
                 Re-run Analysis
               </button>
+            )}
+            {(analyzing || analysis?.status === 'processing') && (
+              <div className="flex items-center gap-2 text-purple-400">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span className="text-sm">Analysis in progress...</span>
+              </div>
             )}
           </div>
         </div>
@@ -513,42 +553,65 @@ export default function AIAnalysisPage() {
         )}
 
         {/* Analysis Content */}
-        {!analysis && !analyzing && (
+        {!analysis && !analyzing && analysis?.status !== 'processing' && (
           <div className="card text-center py-20">
-            <Sparkles className="w-20 h-20 text-purple-400 mx-auto mb-6" />
-            <h2 className="text-2xl font-bold text-white mb-3">
-              No Analysis Yet
-            </h2>
-            <p className="text-slate-400 mb-8 max-w-md mx-auto">
-              Run an AI analysis to get intelligent insights, recommendations, and action items
-              for this property based on current regulations.
-            </p>
-            <button
-              onClick={handleRunAnalysis}
-              disabled={analyzing}
-              className="btn-primary inline-flex items-center"
-            >
-              {analyzing ? (
-                <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Analyzing Property...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-5 h-5 mr-2" />
-                  Run AI Analysis
-                </>
-              )}
-            </button>
-            {!subscription && (
-              <p className="text-xs text-slate-500 mt-4">
-                AI Analysis requires a paid subscription
-              </p>
+            {!hasComplianceReport ? (
+              <>
+                <AlertTriangle className="w-20 h-20 text-amber-400 mx-auto mb-6" />
+                <h2 className="text-2xl font-bold text-white mb-3">
+                  Property Data Required
+                </h2>
+                <p className="text-slate-400 mb-8 max-w-md mx-auto">
+                  Before running AI analysis, you need to fetch the property data first.
+                  This includes compliance information, violations, and other important details
+                  that the AI needs to analyze.
+                </p>
+                <Link
+                  href={`/properties/${propertyId}`}
+                  className="btn-primary inline-flex items-center"
+                >
+                  <ArrowLeft className="w-5 h-5 mr-2" />
+                  Go Back and Fetch Data
+                </Link>
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-20 h-20 text-purple-400 mx-auto mb-6" />
+                <h2 className="text-2xl font-bold text-white mb-3">
+                  No Analysis Yet
+                </h2>
+                <p className="text-slate-400 mb-8 max-w-md mx-auto">
+                  Run an AI analysis to get intelligent insights, recommendations, and action items
+                  for this property based on current regulations.
+                </p>
+                <button
+                  onClick={handleRunAnalysis}
+                  disabled={analyzing}
+                  className="btn-primary inline-flex items-center"
+                >
+                  {analyzing ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Analyzing Property...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-5 h-5 mr-2" />
+                      Run AI Analysis
+                    </>
+                  )}
+                </button>
+                {!subscription && (
+                  <p className="text-xs text-slate-500 mt-4">
+                    AI Analysis requires a paid subscription
+                  </p>
+                )}
+              </>
             )}
           </div>
         )}
 
-        {analyzing && (
+        {(analyzing || analysis?.status === 'processing') && (
           <div className="card text-center py-20">
             <Loader2 className="w-20 h-20 text-purple-400 mx-auto mb-6 animate-spin" />
             <h2 className="text-2xl font-bold text-white mb-3">
@@ -574,7 +637,7 @@ export default function AIAnalysisPage() {
           </div>
         )}
 
-        {analysis && !analyzing && (
+        {analysis && analysis.status !== 'processing' && !analyzing && (
           <div className="space-y-6">
             {/* Overall Assessment */}
             <div className="card">
