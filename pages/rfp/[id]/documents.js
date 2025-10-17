@@ -113,71 +113,70 @@ export default function RFPDocumentsPage() {
     try {
       const content = JSON.parse(doc.document_content);
 
-      // Create a readable HTML preview
-      const htmlContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>${doc.document_title}</title>
-          <style>
-            body {
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-              line-height: 1.6;
-              max-width: 900px;
-              margin: 0 auto;
-              padding: 20px;
-              background: #f5f5f5;
-            }
-            .header {
-              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-              color: white;
-              padding: 30px;
-              border-radius: 10px;
-              margin-bottom: 30px;
-            }
-            .section {
-              background: white;
-              padding: 25px;
-              margin-bottom: 20px;
-              border-radius: 8px;
-              box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            }
-            h1 { margin: 0 0 10px 0; font-size: 28px; }
-            h2 { color: #667eea; border-bottom: 2px solid #667eea; padding-bottom: 10px; }
-            h3 { color: #764ba2; margin-top: 20px; }
-            .metadata { color: rgba(255,255,255,0.9); font-size: 14px; }
-            pre { background: #f8f9fa; padding: 15px; border-radius: 5px; overflow-x: auto; }
-            ul { padding-left: 20px; }
-            li { margin: 8px 0; }
-            .badge {
-              display: inline-block;
-              padding: 4px 12px;
-              background: #e0e7ff;
-              color: #667eea;
-              border-radius: 12px;
-              font-size: 12px;
-              margin: 4px;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h1>${doc.document_title}</h1>
-            <div class="metadata">Generated: ${new Date(doc.created_at).toLocaleString()}</div>
-          </div>
+      // Check if content has HTML format
+      const htmlContent = content.html || content.format === 'html' ? content.html : null;
 
-          <div class="section">
-            <h2>Document Content</h2>
-            <pre>${JSON.stringify(content, null, 2)}</pre>
-          </div>
-        </body>
-        </html>
-      `;
+      if (htmlContent) {
+        // Open the HTML document directly
+        const blob = new Blob([htmlContent], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        setTimeout(() => URL.revokeObjectURL(url), 100);
+      } else {
+        // Fallback to JSON preview for non-HTML content
+        const fallbackHtml = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>${doc.document_title}</title>
+            <style>
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+                line-height: 1.6;
+                max-width: 900px;
+                margin: 0 auto;
+                padding: 20px;
+                background: #f5f5f5;
+              }
+              .header {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 30px;
+                border-radius: 10px;
+                margin-bottom: 30px;
+              }
+              .section {
+                background: white;
+                padding: 25px;
+                margin-bottom: 20px;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+              }
+              h1 { margin: 0 0 10px 0; font-size: 28px; }
+              h2 { color: #667eea; border-bottom: 2px solid #667eea; padding-bottom: 10px; }
+              .metadata { color: rgba(255,255,255,0.9); font-size: 14px; }
+              pre { background: #f8f9fa; padding: 15px; border-radius: 5px; overflow-x: auto; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>${doc.document_title}</h1>
+              <div class="metadata">Generated: ${new Date(doc.created_at).toLocaleString()}</div>
+            </div>
 
-      const blob = new Blob([htmlContent], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      window.open(url, '_blank');
-      setTimeout(() => URL.revokeObjectURL(url), 100);
+            <div class="section">
+              <h2>Document Content</h2>
+              <pre>${JSON.stringify(content, null, 2)}</pre>
+            </div>
+          </body>
+          </html>
+        `;
+
+        const blob = new Blob([fallbackHtml], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        setTimeout(() => URL.revokeObjectURL(url), 100);
+      }
     } catch (error) {
       console.error('Error viewing document:', error);
       alert('Failed to view document');

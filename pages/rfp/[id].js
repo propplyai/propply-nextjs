@@ -465,6 +465,16 @@ export default function RFPDetailPage() {
                   </button>
                 )}
 
+                {(rfp.status === 'vendors_contacted' || rfp.status === 'published' || rfp.status === 'vendor_responses') && (
+                  <button
+                    onClick={() => router.push(`/rfp/${id}/evaluate`)}
+                    className="w-full btn-primary flex items-center justify-center space-x-2"
+                  >
+                    <Users className="w-4 h-4" />
+                    <span>Evaluate Proposals</span>
+                  </button>
+                )}
+
                 <button
                   onClick={() => router.push(`/rfp/${id}/documents`)}
                   className="w-full btn-secondary flex items-center justify-center space-x-2"
