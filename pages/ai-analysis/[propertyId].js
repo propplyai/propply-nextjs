@@ -38,8 +38,8 @@ export default function AIAnalysisPage() {
 
   // Polling for analysis updates while processing
   useEffect(() => {
-    // Only poll if analysis is in processing state
-    if (analysis?.status === 'processing') {
+    // Only poll if analysis is in processing state OR if we're analyzing
+    if (analysis?.status === 'processing' || (analyzing && analysis)) {
       console.log('🔄 Starting polling for analysis updates...');
 
       const pollInterval = setInterval(async () => {
@@ -53,11 +53,12 @@ export default function AIAnalysisPage() {
 
         if (!error && data && data.length > 0) {
           const updatedAnalysis = data[0];
+          console.log('📊 Polled analysis status:', updatedAnalysis.status);
           setAnalysis(updatedAnalysis);
 
           // If analysis completed or failed, stop polling
           if (updatedAnalysis.status === 'completed' || updatedAnalysis.status === 'failed') {
-            console.log('✅ Analysis completed, stopping polling');
+            console.log('✅ Analysis completed/failed, stopping polling and clearing analyzing state');
             setAnalyzing(false);
             if (updatedAnalysis.status === 'failed') {
               setError(updatedAnalysis.error_message || 'Analysis failed');
@@ -70,8 +71,12 @@ export default function AIAnalysisPage() {
         console.log('🛑 Stopping polling');
         clearInterval(pollInterval);
       };
+    } else if (!analysis?.status || (analysis?.status !== 'processing' && analyzing)) {
+      // Edge case: if analyzing is true but analysis status isn't processing, set to false
+      console.log('⚠️ Analyzing state inconsistent, correcting...');
+      setAnalyzing(false);
     }
-  }, [analysis?.status, propertyId]);
+  }, [analysis?.status, propertyId, analyzing, analysis]);
 
   const checkAuth = async () => {
     try {
@@ -146,9 +151,12 @@ export default function AIAnalysisPage() {
       if (data && data.length > 0) {
         setAnalysis(data[0]);
 
-        // If analysis is still processing, set analyzing to true
+        // Set analyzing state based on analysis status
         if (data[0].status === 'processing') {
           setAnalyzing(true);
+        } else {
+          // If analysis is completed or failed, ensure analyzing is false
+          setAnalyzing(false);
         }
 
         // Load existing feedback and dismissed insights
