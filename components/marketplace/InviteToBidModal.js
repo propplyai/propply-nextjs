@@ -27,7 +27,17 @@ export default function InviteToBidModal({ vendor, isOpen, onClose, propertyId }
       loadRFPs();
       setSuccess(false);
       setError('');
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = 'hidden';
+    } else {
+      // Restore body scroll when modal closes
+      document.body.style.overflow = 'unset';
     }
+
+    // Cleanup function
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
   }, [isOpen]);
 
   const loadRFPs = async () => {
@@ -148,8 +158,8 @@ export default function InviteToBidModal({ vendor, isOpen, onClose, propertyId }
   const vendorName = vendor.name || vendor.vendor_name;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-slate-800 rounded-xl border border-slate-700 max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+      <div className="bg-slate-800 rounded-xl border border-slate-700 max-w-2xl w-full max-h-[90vh] my-8 overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-slate-700">
           <div>
