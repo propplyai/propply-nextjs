@@ -171,7 +171,12 @@ export default function MarketplacePage() {
       setSelectedProperty(propertyId);
     } catch (err) {
       console.error('Restore search error:', err);
-      setError(err.message);
+      setError(`Failed to restore search results: ${err.message}. Please try searching again.`);
+      // Clear any partial state
+      setVendors({});
+      setSearchedAddress('');
+      setActiveCategories([]);
+      setSelectedProperty(null);
     } finally {
       setSearching(false);
     }
@@ -524,7 +529,7 @@ export default function MarketplacePage() {
         )}
 
         {/* Empty State */}
-        {!searchedAddress && (
+        {!searchedAddress && !searching && (
           <div className="text-center py-12">
             <ShoppingBag className="w-16 h-16 text-slate-600 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-white mb-2">
@@ -532,6 +537,22 @@ export default function MarketplacePage() {
             </h3>
             <p className="text-slate-400 mb-6">
               Search by property or address to find qualified contractors
+            </p>
+          </div>
+        )}
+
+        {/* Loading State */}
+        {searching && (
+          <div className="text-center py-12">
+            <Loader2 className="w-8 h-8 text-corporate-400 animate-spin mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-white mb-2">
+              {router.query.restore_search === 'true' ? 'Restoring Search Results...' : 'Searching for Contractors...'}
+            </h3>
+            <p className="text-slate-400">
+              {router.query.restore_search === 'true' 
+                ? 'Loading your previous search results...' 
+                : 'Finding qualified contractors near your property...'
+              }
             </p>
           </div>
         )}
