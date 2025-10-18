@@ -6,9 +6,10 @@ import SwipeableCard from '@/components/SwipeableCard';
 import { authHelpers, supabase } from '@/lib/supabase';
 import {
   Building2, ArrowLeft, AlertTriangle, CheckCircle, ChevronDown, ChevronRight,
-  Flame, Zap, TrendingUp, ShoppingBag, Eye
+  Flame, Zap, TrendingUp, ShoppingBag, Eye, Plus, FileText, Shield, Calendar
 } from 'lucide-react';
 import { cn, formatDate, authenticatedFetch } from '@/lib/utils';
+import AddManualRecordModal from '@/components/AddManualRecordModal';
 
 export default function ComplianceReportPage() {
   const router = useRouter();
@@ -21,6 +22,9 @@ export default function ComplianceReportPage() {
   const [hpdVisibleCount, setHpdVisibleCount] = useState(10);
   const [dobVisibleCount, setDobVisibleCount] = useState(10);
   const [dismissedSections, setDismissedSections] = useState([]);
+  const [manualEntries, setManualEntries] = useState([]);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [loadingManualEntries, setLoadingManualEntries] = useState(false);
 
   useEffect(() => {
     console.log('[Compliance Page] useEffect triggered');
@@ -202,6 +206,7 @@ export default function ComplianceReportPage() {
         generated_at: data.generated_at
       });
       setReport(data);
+      await loadManualEntries(data.property_id);
     } catch (error) {
       console.error('[Compliance Page] Error loading report:', error);
       console.error('[Compliance Page] Full error object:', error);
@@ -217,6 +222,24 @@ export default function ComplianceReportPage() {
       console.log('[Compliance Page] Loading complete, setting loading to false');
       console.log('[Compliance Page] Final report state:', report ? 'has report' : 'no report');
       setLoading(false);
+    }
+  };
+
+  const loadManualEntries = async (propertyId) => {
+    if (!propertyId) return;
+    
+    try {
+      setLoadingManualEntries(true);
+      const response = await authenticatedFetch(`/api/compliance/manual-entries?property_id=${propertyId}`);
+      const data = await response.json();
+      
+      if (response.ok) {
+        setManualEntries(data.entries || []);
+      }
+    } catch (error) {
+      console.error('Error loading manual entries:', error);
+    } finally {
+      setLoadingManualEntries(false);
     }
   };
 
@@ -1268,7 +1291,135 @@ export default function ComplianceReportPage() {
             )}
           </div>
         )}
+
+        {/* Manual Records Section */}
+        <div className="space-y-4 mb-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-corporate-500/10 rounded-xl flex items-center justify-center">
+                <FileText className="w-6 h-6 text-corporate-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-white">Manual Records</h3>
+                <p className="text-sm text-slate-400">
+                  {manualEntries.length} record{manualEntries.length !== 1 ? 's' : ''} added manually
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="btn-primary flex items-center space-x-2"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Record</span>
+            </button>
+          </div>
+
+          {loadingManualEntries ? (
+            <div className="card text-center py-8">
+              <div className="animate-spin w-8 h-8 border-2 border-corporate-400 border-t-transparent rounded-full mx-auto mb-4"></div>
+              <p className="text-slate-400">Loading manual records...</p>
+            </div>
+          ) : manualEntries.length === 0 ? (
+            <div className="card text-center py-12">
+              <FileText className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+              <h4 className="text-lg font-semibold text-white mb-2">No Manual Records Yet</h4>
+              <p className="text-slate-400 mb-6">
+                Add permits, inspections, certifications, or violations manually
+              </p>
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="btn-primary"
+              >
+                Add Your First Record
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {manualEntries.map((entry) => {
+                const getTypeIcon = (type) => {
+                  switch (type) {
+                    case 'permit': return FileText;
+                    case 'inspection': return CheckCircle;
+                    case 'certification': return Shield;
+                    case 'violation': return AlertTriangle;
+                    default: return FileText;
+                  }
+                };
+
+                const getStatusColor = (status) => {
+                  switch (status) {
+                    case 'active': return 'text-green-400 bg-green-500/10';
+                    case 'expired': return 'text-red-400 bg-red-500/10';
+                    case 'pending': return 'text-yellow-400 bg-yellow-500/10';
+                    case 'completed': return 'text-blue-400 bg-blue-500/10';
+                    default: return 'text-slate-400 bg-slate-500/10';
+                  }
+                };
+
+                const TypeIcon = getTypeIcon(entry.type);
+                const statusColor = getStatusColor(entry.status);
+
+                return (
+                  <div key={entry.id} className="card">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center space-x-2">
+                        <TypeIcon className="w-5 h-5 text-corporate-400" />
+                        <span className="text-sm font-medium text-slate-400 capitalize">
+                          {entry.type}
+                        </span>
+                      </div>
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${statusColor}`}>
+                        {entry.status}
+                      </span>
+                    </div>
+
+                    <h4 className="text-lg font-semibold text-white mb-2">{entry.title}</h4>
+                    <p className="text-sm text-slate-400 mb-3">{entry.category}</p>
+
+                    {entry.description && (
+                      <p className="text-sm text-slate-300 mb-3 line-clamp-2">
+                        {entry.description}
+                      </p>
+                    )}
+
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center space-x-2 text-sm text-slate-400">
+                        <Calendar className="w-4 h-4" />
+                        <span>{formatDate(entry.date)}</span>
+                      </div>
+                      {entry.expiration_date && (
+                        <div className="flex items-center space-x-2 text-sm text-slate-400">
+                          <Calendar className="w-4 h-4" />
+                          <span>Expires: {formatDate(entry.expiration_date)}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {entry.notes && (
+                      <div className="text-xs text-slate-500 italic">
+                        Note: {entry.notes}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* Add Manual Record Modal */}
+      {showAddModal && (
+        <AddManualRecordModal
+          isOpen={showAddModal}
+          onClose={() => setShowAddModal(false)}
+          propertyId={report?.property_id}
+          onRecordAdded={(newEntry) => {
+            setManualEntries(prev => [newEntry, ...prev]);
+          }}
+        />
+      )}
     </Layout>
   );
 }
