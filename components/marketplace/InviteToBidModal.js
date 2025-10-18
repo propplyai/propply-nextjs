@@ -24,12 +24,16 @@ export default function InviteToBidModal({ vendor, isOpen, onClose, propertyId }
 
   useEffect(() => {
     if (isOpen) {
+      // Reset modal state
       setSuccess(false);
       setError('');
+      setSelectedRfp(null);
+
       // Use requestAnimationFrame to defer body scroll change until after the modal renders
       requestAnimationFrame(() => {
         document.body.style.overflow = 'hidden';
       });
+
       // Load RFPs asynchronously without blocking
       loadRFPs();
     } else {

@@ -693,17 +693,15 @@ export default function MarketplacePage() {
       )}
 
       {/* Invite to Bid Modal */}
-      {selectedVendor && (
-        <InviteToBidModal
-          vendor={selectedVendor}
-          isOpen={showInviteToBidModal}
-          onClose={() => {
-            setShowInviteToBidModal(false);
-            setSelectedVendor(null);
-          }}
-          propertyId={selectedProperty}
-        />
-      )}
+      <InviteToBidModal
+        vendor={selectedVendor || {}}
+        isOpen={showInviteToBidModal && !!selectedVendor}
+        onClose={() => {
+          setShowInviteToBidModal(false);
+          setSelectedVendor(null);
+        }}
+        propertyId={selectedProperty}
+      />
     </Layout>
   );
 }
