@@ -24,11 +24,14 @@ export default function InviteToBidModal({ vendor, isOpen, onClose, propertyId }
 
   useEffect(() => {
     if (isOpen) {
-      loadRFPs();
       setSuccess(false);
       setError('');
-      // Prevent body scroll when modal is open
-      document.body.style.overflow = 'hidden';
+      // Use requestAnimationFrame to defer body scroll change until after the modal renders
+      requestAnimationFrame(() => {
+        document.body.style.overflow = 'hidden';
+      });
+      // Load RFPs asynchronously without blocking
+      loadRFPs();
     } else {
       // Restore body scroll when modal closes
       document.body.style.overflow = 'unset';
@@ -41,6 +44,8 @@ export default function InviteToBidModal({ vendor, isOpen, onClose, propertyId }
   }, [isOpen]);
 
   const loadRFPs = async () => {
+    const startTime = Date.now();
+
     try {
       setLoading(true);
 
@@ -56,16 +61,23 @@ export default function InviteToBidModal({ vendor, isOpen, onClose, propertyId }
           budget_range_min,
           budget_range_max,
           project_timeline_days,
-          properties (
+          properties!inner (
             id, address, city, state
           )
         `)
         .in('status', ['documents_generated', 'vendors_contacted'])
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(20);
 
       if (error) throw error;
 
       setRfps(data || []);
+
+      // Ensure minimum loading time of 300ms to prevent UI flashing
+      const elapsedTime = Date.now() - startTime;
+      if (elapsedTime < 300) {
+        await new Promise(resolve => setTimeout(resolve, 300 - elapsedTime));
+      }
     } catch (err) {
       console.error('Error loading RFPs:', err);
       setError('Failed to load RFPs');
@@ -158,8 +170,8 @@ export default function InviteToBidModal({ vendor, isOpen, onClose, propertyId }
   const vendorName = vendor.name || vendor.vendor_name;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-slate-800 rounded-xl border border-slate-700 max-w-2xl w-full max-h-[90vh] my-8 overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto animate-fade-in">
+      <div className="bg-slate-800 rounded-xl border border-slate-700 max-w-2xl w-full max-h-[90vh] my-8 overflow-hidden flex flex-col animate-slide-up">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-slate-700">
           <div>
