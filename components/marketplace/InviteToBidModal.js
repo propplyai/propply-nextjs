@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/router';
 import {
   X, FileText, Plus, Send, Loader2, AlertCircle,
@@ -21,6 +22,13 @@ export default function InviteToBidModal({ vendor, isOpen, onClose, propertyId }
   const [selectedRfp, setSelectedRfp] = useState(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Handle client-side mounting for portal
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -169,12 +177,12 @@ export default function InviteToBidModal({ vendor, isOpen, onClose, propertyId }
     return status === 'documents_generated' ? 'Ready to Send' : 'Active';
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const vendorName = vendor.name || vendor.vendor_name;
 
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto animate-fade-in">
+  const modalContent = (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 overflow-y-auto animate-fade-in">
       <div className="bg-slate-800 rounded-xl border border-slate-700 max-w-2xl w-full max-h-[90vh] my-8 overflow-hidden flex flex-col animate-slide-up">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-slate-700">
@@ -354,4 +362,6 @@ export default function InviteToBidModal({ vendor, isOpen, onClose, propertyId }
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }
