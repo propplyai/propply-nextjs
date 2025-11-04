@@ -336,19 +336,34 @@ export default function AIAnalysisPage() {
     }
   };
 
-  const handleDismissInsight = (insightId) => {
+  const handleDismissInsight = async (insightId) => {
     setDismissedInsights(prev => new Set([...prev, insightId]));
     
     // Save dismissal to database
-    supabase
-      .from('dismissed_insights')
-      .upsert({
-        insight_id: insightId,
-        property_id: propertyId,
-        user_id: user.id,
-        dismissed_at: new Date().toISOString()
-      })
-      .catch(err => console.error('Error saving dismissal:', err));
+    try {
+      const { error } = await supabase
+        .from('dismissed_insights')
+        .upsert({
+          insight_id: insightId,
+          property_id: propertyId,
+          user_id: user.id,
+          dismissed_at: new Date().toISOString()
+        }, {
+          onConflict: 'insight_id,property_id,user_id'
+        });
+
+      if (error) {
+        console.error('Error saving dismissal:', error);
+        // Revert local state on error
+        setDismissedInsights(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(insightId);
+          return newSet;
+        });
+      }
+    } catch (err) {
+      console.error('Error saving dismissal:', err);
+    }
   };
 
   const handleRecommendationFeedback = async (recommendationId, feedbackType) => {
@@ -386,19 +401,34 @@ export default function AIAnalysisPage() {
     }
   };
 
-  const handleDismissRecommendation = (recommendationId) => {
+  const handleDismissRecommendation = async (recommendationId) => {
     setDismissedRecommendations(prev => new Set([...prev, recommendationId]));
     
     // Save dismissal to database
-    supabase
-      .from('dismissed_recommendations')
-      .upsert({
-        recommendation_id: recommendationId,
-        property_id: propertyId,
-        user_id: user.id,
-        dismissed_at: new Date().toISOString()
-      })
-      .catch(err => console.error('Error saving recommendation dismissal:', err));
+    try {
+      const { error } = await supabase
+        .from('dismissed_recommendations')
+        .upsert({
+          recommendation_id: recommendationId,
+          property_id: propertyId,
+          user_id: user.id,
+          dismissed_at: new Date().toISOString()
+        }, {
+          onConflict: 'recommendation_id,property_id,user_id'
+        });
+
+      if (error) {
+        console.error('Error saving recommendation dismissal:', error);
+        // Revert local state on error
+        setDismissedRecommendations(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(recommendationId);
+          return newSet;
+        });
+      }
+    } catch (err) {
+      console.error('Error saving recommendation dismissal:', err);
+    }
   };
 
   const handleTouchStart = (e, itemId, type = 'insight') => {
