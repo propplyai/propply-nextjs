@@ -86,7 +86,7 @@ export default function AIAnalysisPage() {
       setUser(currentUser);
       await Promise.all([
         loadProperty(currentUser.id),
-        loadAnalysis(),
+        loadAnalysis(currentUser),
         checkSubscription(currentUser.id),
         checkComplianceReport()
       ]);
@@ -134,7 +134,7 @@ export default function AIAnalysisPage() {
     }
   };
 
-  const loadAnalysis = async () => {
+  const loadAnalysis = async (currentUser = null) => {
     try {
       const { data, error } = await supabase
         .from('ai_property_analyses')
@@ -160,7 +160,7 @@ export default function AIAnalysisPage() {
         }
 
         // Load existing feedback and dismissed insights
-        await loadUserFeedback();
+        await loadUserFeedback(currentUser);
       }
       console.log('🔍 Final state - analyzing:', analyzing, 'analysis.status:', data?.[0]?.status);
     } catch (err) {
@@ -168,8 +168,9 @@ export default function AIAnalysisPage() {
     }
   };
 
-  const loadUserFeedback = async () => {
-    if (!user) return;
+  const loadUserFeedback = async (currentUser = null) => {
+    const userToUse = currentUser || user;
+    if (!userToUse) return;
     
     try {
       // Load insight feedback
@@ -177,7 +178,7 @@ export default function AIAnalysisPage() {
         .from('insight_feedback')
         .select('insight_id, feedback_type')
         .eq('property_id', propertyId)
-        .eq('user_id', user.id);
+        .eq('user_id', userToUse.id);
 
       if (!feedbackError && feedbackData) {
         const feedbackMap = {};
@@ -192,7 +193,7 @@ export default function AIAnalysisPage() {
         .from('dismissed_insights')
         .select('insight_id')
         .eq('property_id', propertyId)
-        .eq('user_id', user.id);
+        .eq('user_id', userToUse.id);
 
       if (!dismissedError && dismissedData) {
         const dismissedSet = new Set(dismissedData.map(item => item.insight_id));
@@ -204,7 +205,7 @@ export default function AIAnalysisPage() {
         .from('recommendation_feedback')
         .select('recommendation_id, feedback_type')
         .eq('property_id', propertyId)
-        .eq('user_id', user.id);
+        .eq('user_id', userToUse.id);
 
       if (!recFeedbackError && recFeedbackData) {
         const recFeedbackMap = {};
@@ -219,7 +220,7 @@ export default function AIAnalysisPage() {
         .from('dismissed_recommendations')
         .select('recommendation_id')
         .eq('property_id', propertyId)
-        .eq('user_id', user.id);
+        .eq('user_id', userToUse.id);
 
       if (!dismissedRecError && dismissedRecData) {
         const dismissedRecSet = new Set(dismissedRecData.map(item => item.recommendation_id));
