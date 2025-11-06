@@ -6,7 +6,7 @@ import SwipeableCard from '@/components/SwipeableCard';
 import { authHelpers, supabase } from '@/lib/supabase';
 import {
   Building2, ArrowLeft, AlertTriangle, CheckCircle, ChevronDown, ChevronRight,
-  Flame, Zap, TrendingUp, ShoppingBag, Eye, Plus, FileText, Shield, Calendar
+  Flame, Zap, TrendingUp, ShoppingBag, Eye, Plus, FileText, Shield, Calendar, X, RotateCcw
 } from 'lucide-react';
 import { cn, formatDate, authenticatedFetch } from '@/lib/utils';
 import AddManualRecordModal from '@/components/AddManualRecordModal';
@@ -22,6 +22,7 @@ export default function ComplianceReportPage() {
   const [hpdVisibleCount, setHpdVisibleCount] = useState(10);
   const [dobVisibleCount, setDobVisibleCount] = useState(10);
   const [dismissedSections, setDismissedSections] = useState([]);
+  const [dismissedViolations, setDismissedViolations] = useState([]);
   const [manualEntries, setManualEntries] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [loadingManualEntries, setLoadingManualEntries] = useState(false);
@@ -75,6 +76,7 @@ export default function ComplianceReportPage() {
       setUser(currentUser);
       await loadReport(id, currentUser.id);
       await loadDismissedSections(id);
+      await loadDismissedViolations(id);
     } catch (error) {
       console.error('[Compliance Page] Unexpected error during auth check:', error);
       setLoading(false);
@@ -270,6 +272,23 @@ export default function ComplianceReportPage() {
       const result = await response.json();
       if (result.success) {
         setDismissedSections([...dismissedSections, sectionType]);
+        
+        // Reload dismissed violations list (section dismiss also dismisses all violations)
+        await loadDismissedViolations(id);
+        
+        // Update report scores in real-time
+        if (result.updated_scores) {
+          setReport(prev => ({
+            ...prev,
+            hpd_violations_active: result.updated_scores.hpd_violations_active,
+            hpd_violations_dismissed: result.updated_scores.hpd_violations_dismissed,
+            hpd_compliance_score: result.updated_scores.hpd_compliance_score,
+            dob_violations_active: result.updated_scores.dob_violations_active,
+            dob_violations_dismissed: result.updated_scores.dob_violations_dismissed,
+            dob_compliance_score: result.updated_scores.dob_compliance_score,
+            compliance_score: result.updated_scores.compliance_score
+          }));
+        }
       }
     } catch (error) {
       console.error('Error dismissing section:', error);
@@ -278,6 +297,98 @@ export default function ComplianceReportPage() {
 
   const isSectionDismissed = (sectionType) => {
     return dismissedSections.includes(sectionType);
+  };
+
+  const loadDismissedViolations = async (reportId) => {
+    try {
+      const response = await authenticatedFetch(`/api/compliance/violations/dismissed?report_id=${reportId}`);
+      const result = await response.json();
+      
+      if (result.success) {
+        setDismissedViolations(result.data || []);
+      }
+    } catch (error) {
+      console.error('Error loading dismissed violations:', error);
+    }
+  };
+
+  const isViolationDismissed = (violationType, violationId) => {
+    return dismissedViolations.some(
+      dv => dv.violation_type === violationType && dv.violation_id === violationId
+    );
+  };
+
+  const handleDismissViolation = async (violationType, violationId, violationData) => {
+    try {
+      const response = await authenticatedFetch('/api/compliance/violations/dismiss', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          report_id: id,
+          violation_type: violationType,
+          violation_id: violationId,
+          violation_data: violationData
+        })
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        // Update dismissed violations list
+        await loadDismissedViolations(id);
+        
+        // Update report scores in real-time
+        if (result.updated_scores) {
+          setReport(prev => ({
+            ...prev,
+            hpd_violations_active: result.updated_scores.hpd_violations_active,
+            hpd_violations_dismissed: result.updated_scores.hpd_violations_dismissed,
+            hpd_compliance_score: result.updated_scores.hpd_compliance_score,
+            dob_violations_active: result.updated_scores.dob_violations_active,
+            dob_violations_dismissed: result.updated_scores.dob_violations_dismissed,
+            dob_compliance_score: result.updated_scores.dob_compliance_score,
+            compliance_score: result.updated_scores.compliance_score
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Error dismissing violation:', error);
+    }
+  };
+
+  const handleRestoreViolation = async (violationType, violationId) => {
+    try {
+      const response = await authenticatedFetch('/api/compliance/violations/restore', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          report_id: id,
+          violation_type: violationType,
+          violation_id: violationId
+        })
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        // Update dismissed violations list
+        await loadDismissedViolations(id);
+        
+        // Update report scores in real-time
+        if (result.updated_scores) {
+          setReport(prev => ({
+            ...prev,
+            hpd_violations_active: result.updated_scores.hpd_violations_active,
+            hpd_violations_dismissed: result.updated_scores.hpd_violations_dismissed,
+            hpd_compliance_score: result.updated_scores.hpd_compliance_score,
+            dob_violations_active: result.updated_scores.dob_violations_active,
+            dob_violations_dismissed: result.updated_scores.dob_violations_dismissed,
+            dob_compliance_score: result.updated_scores.dob_compliance_score,
+            compliance_score: result.updated_scores.compliance_score
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Error restoring violation:', error);
+    }
   };
 
   const toggleSection = (section) => {
@@ -810,6 +921,7 @@ export default function ComplianceReportPage() {
                         <th className="text-left py-3 px-4 text-slate-400 font-medium">Description</th>
                         <th className="text-left py-3 px-4 text-slate-400 font-medium">Status</th>
                         <th className="text-left py-3 px-4 text-slate-400 font-medium">Inspection Date</th>
+                        <th className="text-center py-3 px-4 text-slate-400 font-medium">Action</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -821,9 +933,21 @@ export default function ComplianceReportPage() {
                           return dateB - dateA; // Newest first
                         })
                         .slice(0, hpdVisibleCount)
-                        .map((violation, index) => (
-                        <tr key={index} className="border-b border-slate-800 hover:bg-slate-800/50">
-                          <td className="py-3 px-4 text-white font-mono text-xs">{violation.violationid}</td>
+                        .map((violation, index) => {
+                          const isDismissed = isViolationDismissed('HPD', violation.violationid);
+                          return (
+                        <tr key={index} className={cn(
+                          "border-b border-slate-800 hover:bg-slate-800/50 transition-all",
+                          isDismissed && "opacity-50 bg-slate-800/30"
+                        )}>
+                          <td className="py-3 px-4 text-white font-mono text-xs">
+                            {violation.violationid}
+                            {isDismissed && (
+                              <span className="ml-2 px-2 py-0.5 rounded text-xs bg-slate-700 text-slate-400">
+                                Dismissed
+                              </span>
+                            )}
+                          </td>
                           <td className="py-3 px-4">
                             <span className="px-2 py-1 rounded text-xs font-semibold bg-ruby-500/10 text-ruby-400">
                               Class {violation.class}
@@ -851,8 +975,34 @@ export default function ComplianceReportPage() {
                           <td className="py-3 px-4 text-slate-300">
                             {formatDate(violation.novissueddate || violation.inspectiondate || violation.currentstatus_date || violation.certifieddate)}
                           </td>
+                          <td className="py-3 px-4 text-center">
+                            {isDismissed ? (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRestoreViolation('HPD', violation.violationid);
+                                }}
+                                className="p-1.5 rounded hover:bg-emerald-500/20 text-emerald-400 transition-colors"
+                                title="Restore violation"
+                              >
+                                <RotateCcw className="w-4 h-4" />
+                              </button>
+                            ) : (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDismissViolation('HPD', violation.violationid, violation);
+                                }}
+                                className="p-1.5 rounded hover:bg-ruby-500/20 text-ruby-400 transition-colors"
+                                title="Dismiss violation"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            )}
+                          </td>
                         </tr>
-                      ))}
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -932,6 +1082,7 @@ export default function ComplianceReportPage() {
                         <th className="text-left py-3 px-4 text-slate-400 font-medium">Type</th>
                         <th className="text-left py-3 px-4 text-slate-400 font-medium">Description</th>
                         <th className="text-left py-3 px-4 text-slate-400 font-medium">Issue Date</th>
+                        <th className="text-center py-3 px-4 text-slate-400 font-medium">Action</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -967,9 +1118,21 @@ export default function ComplianceReportPage() {
                               console.log(`[DOB Violation ${index}] formatted:`, formatDate(displayDate));
                             }
                             
+                            const isDismissed = isViolationDismissed('DOB', violation.isn_dob_bis_viol);
+                            
                             return (
-                        <tr key={index} className="border-b border-slate-800 hover:bg-slate-800/50">
-                          <td className="py-3 px-4 text-white font-mono text-xs">{violation.isn_dob_bis_viol}</td>
+                        <tr key={index} className={cn(
+                          "border-b border-slate-800 hover:bg-slate-800/50 transition-all",
+                          isDismissed && "opacity-50 bg-slate-800/30"
+                        )}>
+                          <td className="py-3 px-4 text-white font-mono text-xs">
+                            {violation.isn_dob_bis_viol}
+                            {isDismissed && (
+                              <span className="ml-2 px-2 py-0.5 rounded text-xs bg-slate-700 text-slate-400">
+                                Dismissed
+                              </span>
+                            )}
+                          </td>
                           <td className="py-3 px-4">
                             <span className="px-2 py-1 rounded text-xs font-semibold bg-ruby-500/10 text-ruby-400">
                               {violation.violation_type || 'N/A'}
@@ -994,6 +1157,31 @@ export default function ComplianceReportPage() {
                             </div>
                           </td>
                           <td className="py-3 px-4 text-slate-300">{formatDate(displayDate)}</td>
+                          <td className="py-3 px-4 text-center">
+                            {isDismissed ? (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRestoreViolation('DOB', violation.isn_dob_bis_viol);
+                                }}
+                                className="p-1.5 rounded hover:bg-emerald-500/20 text-emerald-400 transition-colors"
+                                title="Restore violation"
+                              >
+                                <RotateCcw className="w-4 h-4" />
+                              </button>
+                            ) : (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDismissViolation('DOB', violation.isn_dob_bis_viol, violation);
+                                }}
+                                className="p-1.5 rounded hover:bg-ruby-500/20 text-ruby-400 transition-colors"
+                                title="Dismiss violation"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            )}
+                          </td>
                         </tr>
                           );
                         });

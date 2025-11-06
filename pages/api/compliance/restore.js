@@ -41,7 +41,37 @@ export default async function handler(req, res) {
       throw error;
     }
 
-    return res.status(200).json({ success: true });
+    // If restoring HPD or DOB section, also restore all individual violations
+    if (section_type === 'hpd' || section_type === 'dob') {
+      const violationType = section_type === 'hpd' ? 'HPD' : 'DOB';
+      
+      // Delete all dismissed violations for this section
+      const { error: bulkDeleteError } = await supabase
+        .from('dismissed_violations')
+        .delete()
+        .eq('report_id', report_id)
+        .eq('violation_type', violationType);
+
+      if (bulkDeleteError) {
+        console.error('Error bulk restoring violations:', bulkDeleteError);
+      }
+    }
+
+    // Fetch updated scores after recalculation (trigger runs automatically)
+    const { data: updatedReport, error: scoreError } = await supabase
+      .from('compliance_reports')
+      .select('hpd_violations_active, hpd_violations_dismissed, hpd_compliance_score, dob_violations_active, dob_violations_dismissed, dob_compliance_score, compliance_score')
+      .eq('id', report_id)
+      .single();
+
+    if (scoreError) {
+      console.error('Error fetching updated scores:', scoreError);
+    }
+
+    return res.status(200).json({ 
+      success: true,
+      updated_scores: updatedReport || null
+    });
   } catch (error) {
     console.error('Error restoring section:', error);
     return res.status(500).json({ error: error.message });

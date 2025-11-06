@@ -13,7 +13,9 @@
       "Bash(npm run dev:*)",
       "Bash(cat:*)",
       "Bash(psql:*)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(find:*)",
+      "Bash(git log:*)"
     ],
     "deny": [],
     "ask": []

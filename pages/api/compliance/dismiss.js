@@ -55,7 +55,62 @@ export default async function handler(req, res) {
       throw error;
     }
 
-    return res.status(200).json({ success: true, data });
+    // If dismissing HPD or DOB section, also dismiss all individual violations
+    if (section_type === 'hpd' || section_type === 'dob') {
+      // Get the report to access violation data
+      const { data: reportData, error: reportError } = await supabase
+        .from('compliance_reports')
+        .select('report_data')
+        .eq('id', report_id)
+        .single();
+
+      if (!reportError && reportData?.report_data?.data) {
+        const violationType = section_type === 'hpd' ? 'HPD' : 'DOB';
+        const violationsKey = section_type === 'hpd' ? 'hpd_violations' : 'dob_violations';
+        const violations = reportData.report_data.data[violationsKey] || [];
+
+        // Dismiss all violations in this section
+        const violationsToInsert = violations.map(v => ({
+          report_id,
+          violation_type: violationType,
+          violation_id: section_type === 'hpd' ? v.violationid : v.isn_dob_bis_viol,
+          violation_data: v,
+          dismissed_by: user.email || user.id,
+          dismiss_reason: `Dismissed via section: ${section_type}`
+        }));
+
+        if (violationsToInsert.length > 0) {
+          // Use upsert to avoid duplicate key errors
+          const { error: bulkError } = await supabase
+            .from('dismissed_violations')
+            .upsert(violationsToInsert, { 
+              onConflict: 'report_id,violation_type,violation_id',
+              ignoreDuplicates: true 
+            });
+
+          if (bulkError) {
+            console.error('Error bulk dismissing violations:', bulkError);
+          }
+        }
+      }
+    }
+
+    // Fetch updated scores after recalculation (trigger runs automatically)
+    const { data: updatedReport, error: scoreError } = await supabase
+      .from('compliance_reports')
+      .select('hpd_violations_active, hpd_violations_dismissed, hpd_compliance_score, dob_violations_active, dob_violations_dismissed, dob_compliance_score, compliance_score')
+      .eq('id', report_id)
+      .single();
+
+    if (scoreError) {
+      console.error('Error fetching updated scores:', scoreError);
+    }
+
+    return res.status(200).json({ 
+      success: true, 
+      data,
+      updated_scores: updatedReport || null
+    });
   } catch (error) {
     console.error('Error dismissing section:', error);
     return res.status(500).json({ error: error.message });
