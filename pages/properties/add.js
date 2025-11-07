@@ -58,31 +58,61 @@ export default function AddPropertyPage() {
   
   useEffect(() => {
     if (googleMapsLoaded && addressInputRef.current && !autocompleteRef.current) {
-      autocompleteRef.current = new window.google.maps.places.Autocomplete(
-        addressInputRef.current,
-        {
-          componentRestrictions: { country: 'us' },
-          fields: ['formatted_address', 'address_components'],
+      try {
+        // Check if Google Maps API is available
+        if (!window.google || !window.google.maps || !window.google.maps.places) {
+          console.error('[Add Property] Google Maps Places API not loaded');
+          return;
         }
-      );
-      
-      autocompleteRef.current.addListener('place_changed', () => {
-        const place = autocompleteRef.current.getPlace();
-        if (place.formatted_address) {
-          setFormData(prev => ({
-            ...prev,
-            address: place.formatted_address
-          }));
-        }
-      });
+
+        autocompleteRef.current = new window.google.maps.places.Autocomplete(
+          addressInputRef.current,
+          {
+            componentRestrictions: { country: 'us' },
+            fields: ['formatted_address', 'address_components'],
+          }
+        );
+        
+        autocompleteRef.current.addListener('place_changed', () => {
+          const place = autocompleteRef.current.getPlace();
+          if (place.formatted_address) {
+            setFormData(prev => ({
+              ...prev,
+              address: place.formatted_address
+            }));
+          }
+        });
+        
+        console.log('[Add Property] Google Places Autocomplete initialized');
+      } catch (error) {
+        console.error('[Add Property] Error initializing Google Places Autocomplete:', error);
+      }
     }
+
+    // Cleanup function
+    return () => {
+      if (autocompleteRef.current) {
+        // Remove all listeners
+        window.google?.maps?.event?.clearInstanceListeners(autocompleteRef.current);
+      }
+    };
   }, [googleMapsLoaded]);
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+    
+    // For address field, allow manual typing but don't interfere with autocomplete
+    if (name === 'address') {
+      setFormData(prev => ({
+        ...prev,
+        address: value,
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
   const checkPropertyLimit = async () => {
@@ -271,7 +301,13 @@ export default function AddPropertyPage() {
     <>
       <Script
         src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`}
-        onLoad={() => setGoogleMapsLoaded(true)}
+        onLoad={() => {
+          console.log('[Add Property] Google Maps script loaded');
+          setGoogleMapsLoaded(true);
+        }}
+        onError={(e) => {
+          console.error('[Add Property] Error loading Google Maps script:', e);
+        }}
       />
       <Layout user={user} onLogout={handleLogout}>
       <div className="container-modern py-8 max-w-3xl">
