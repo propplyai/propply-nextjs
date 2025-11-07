@@ -86,38 +86,14 @@ BEGIN
     dob_total := COALESCE(report_data.dob_violations_total, 0);
     dob_active := GREATEST(0, dob_total - dob_dismissed);
     
-    -- Calculate HPD score (same logic as Python)
-    IF hpd_active = 0 THEN
-        hpd_score := 100.0;
-    ELSIF hpd_active <= 5 THEN
-        hpd_score := 85.0;
-    ELSIF hpd_active <= 15 THEN
-        hpd_score := 70.0;
-    ELSIF hpd_active <= 30 THEN
-        hpd_score := 50.0;
-    ELSE
-        hpd_score := 25.0;
-    END IF;
+    -- Calculate HPD score (same logic as Python: 100 - (violations * 10))
+    hpd_score := GREATEST(0, 100.0 - (hpd_active * 10));
     
-    -- Calculate DOB score (same logic as Python)
-    IF dob_active = 0 THEN
-        dob_score := 100.0;
-    ELSIF dob_active <= 3 THEN
-        dob_score := 85.0;
-    ELSIF dob_active <= 10 THEN
-        dob_score := 70.0;
-    ELSIF dob_active <= 20 THEN
-        dob_score := 50.0;
-    ELSE
-        dob_score := 25.0;
-    END IF;
+    -- Calculate DOB score (same logic as Python: 100 - (violations * 15))
+    dob_score := GREATEST(0, 100.0 - (dob_active * 15));
     
-    -- Get other scores from report
-    elevator_score := COALESCE(report_data.elevator_compliance_score, 100.0);
-    electrical_score := COALESCE(report_data.electrical_compliance_score, 100.0);
-    
-    -- Calculate overall score (weighted average)
-    overall_score := (hpd_score * 0.3) + (dob_score * 0.3) + (elevator_score * 0.2) + (electrical_score * 0.2);
+    -- Calculate overall score (same logic as Python: 50/50 split)
+    overall_score := (hpd_score * 0.5) + (dob_score * 0.5);
     
     -- Update the report
     UPDATE compliance_reports SET

@@ -218,7 +218,9 @@ export default function AddPropertyPage() {
           bin: complianceData.property?.bin || null,
           bbl: complianceData.property?.bbl || null,
           hpd_violations_active: complianceData.scores.hpd_violations_active || 0,
+          hpd_violations_total: complianceData.scores.hpd_violations_active || 0, // Store original total
           dob_violations_active: complianceData.scores.dob_violations_active || 0,
+          dob_violations_total: complianceData.scores.dob_violations_active || 0, // Store original total
           elevator_devices: complianceData.scores.elevator_devices || 0,
           boiler_devices: complianceData.scores.boiler_devices || 0,
           electrical_permits: complianceData.scores.electrical_permits || 0
