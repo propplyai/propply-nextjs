@@ -37,6 +37,10 @@ ON dismissed_violations FOR DELETE USING (true);
 ALTER TABLE compliance_reports 
 ADD COLUMN IF NOT EXISTS hpd_violations_dismissed INTEGER DEFAULT 0,
 ADD COLUMN IF NOT EXISTS dob_violations_dismissed INTEGER DEFAULT 0,
+ADD COLUMN IF NOT EXISTS hpd_compliance_score DECIMAL DEFAULT 100.0,
+ADD COLUMN IF NOT EXISTS dob_compliance_score DECIMAL DEFAULT 100.0,
+ADD COLUMN IF NOT EXISTS elevator_compliance_score DECIMAL DEFAULT 100.0,
+ADD COLUMN IF NOT EXISTS electrical_compliance_score DECIMAL DEFAULT 100.0,
 ADD COLUMN IF NOT EXISTS last_recalculated_at TIMESTAMP WITH TIME ZONE;
 
 -- Create function to recalculate compliance scores dynamically
