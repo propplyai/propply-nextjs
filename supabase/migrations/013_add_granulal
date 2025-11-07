@@ -126,9 +126,24 @@ $$ LANGUAGE plpgsql;
 -- Create trigger to auto-recalculate when violations are dismissed
 CREATE OR REPLACE FUNCTION trigger_recalculate_compliance()
 RETURNS TRIGGER AS $$
+DECLARE
+    target_report_id UUID;
 BEGIN
-    PERFORM recalculate_compliance_score(NEW.report_id);
-    RETURN NEW;
+    -- Use NEW for INSERT, OLD for DELETE
+    IF TG_OP = 'DELETE' THEN
+        target_report_id := OLD.report_id;
+    ELSE
+        target_report_id := NEW.report_id;
+    END IF;
+    
+    PERFORM recalculate_compliance_score(target_report_id);
+    
+    -- Return appropriate record
+    IF TG_OP = 'DELETE' THEN
+        RETURN OLD;
+    ELSE
+        RETURN NEW;
+    END IF;
 END;
 $$ LANGUAGE plpgsql;
 
