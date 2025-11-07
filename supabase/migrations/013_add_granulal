@@ -57,6 +57,7 @@ DECLARE
     hpd_score DECIMAL;
     dob_score DECIMAL;
     calculated_overall_score DECIMAL;  -- Renamed to avoid ambiguity with table column
+    total_active_violations INTEGER;
     result JSONB;
 BEGIN
     -- Get current report data
@@ -93,6 +94,9 @@ BEGIN
     -- Calculate overall score (same logic as Python: 50/50 split)
     calculated_overall_score := (hpd_score * 0.5) + (dob_score * 0.5);
     
+    -- Calculate total active violations
+    total_active_violations := hpd_active + dob_active;
+    
     -- Update the report with recalculated values
     UPDATE compliance_reports SET
         hpd_violations_active = hpd_active,
@@ -105,6 +109,14 @@ BEGIN
         last_recalculated_at = NOW()
     WHERE id = report_uuid;
     
+    -- Update the property table to sync active violations and compliance score
+    IF report_data.property_id IS NOT NULL THEN
+        UPDATE properties SET
+            active_violations = total_active_violations,
+            compliance_score = ROUND(calculated_overall_score)
+        WHERE id = report_data.property_id;
+    END IF;
+    
     -- Return the new scores
     result := jsonb_build_object(
         'success', true,
@@ -116,7 +128,8 @@ BEGIN
         'dob_active', dob_active,
         'dob_dismissed', dob_dismissed,
         'dob_score', ROUND(dob_score, 1),
-        'overall_score', ROUND(calculated_overall_score, 1)
+        'overall_score', ROUND(calculated_overall_score, 1),
+        'total_active_violations', total_active_violations
     );
     
     RETURN result;
