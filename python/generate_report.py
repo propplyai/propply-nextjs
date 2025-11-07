@@ -126,18 +126,23 @@ def get_comprehensive_compliance_data(identifiers):
         return result
     
     # HPD Violations - Active only with multi-key search
+    # CRITICAL: Only use BIN or BBL - Block/Lot can match wrong borough!
     strategies = []
     if bin_num:
         strategies.append(("BIN", f"bin = '{bin_num}' AND violationstatus = 'Open'"))
     if bbl:
         strategies.append(("BBL", f"bbl = '{bbl}' AND violationstatus = 'Open'"))
-    if block and lot:
-        strategies.append(("Block/Lot", f"block = '{block}' AND lot = '{lot}' AND violationstatus = 'Open'"))
     
     for strategy_name, where_clause in strategies:
         try:
             data = client.get_data('hpd_violations', where=where_clause, limit=500)
             if data and len(data) > 0:
+                # CRITICAL: Verify BIN matches to prevent wrong property data
+                if bin_num:
+                    data = [v for v in data if v.get('bin') == bin_num]
+                    if len(data) == 0:
+                        print(f"HPD {strategy_name} search returned data but BIN mismatch - skipping", file=sys.stderr)
+                        continue
                 result['hpd_violations'] = data
                 print(f"Found {len(data)} HPD violations using {strategy_name}", file=sys.stderr)
                 break
@@ -146,21 +151,23 @@ def get_comprehensive_compliance_data(identifiers):
             continue
     
     # DOB Violations - Active only with multi-key search
+    # CRITICAL: Only use BIN or BBL - Block/Lot can match wrong borough!
     strategies = []
     if bin_num:
         strategies.append(("BIN", f"bin = '{bin_num}' AND violation_category LIKE '%ACTIVE%'"))
     if bbl:
         strategies.append(("BBL", f"bbl = '{bbl}' AND violation_category LIKE '%ACTIVE%'"))
-    if block and lot:
-        strategies.append(("Block/Lot", f"block = '{block}' AND lot = '{lot}' AND violation_category LIKE '%ACTIVE%'"))
     
     for strategy_name, where_clause in strategies:
         try:
             data = client.get_data('dob_violations', where=where_clause, limit=500)
             if data and len(data) > 0:
-                # Filter by BIN if using block/lot
-                if strategy_name == "Block/Lot" and bin_num:
+                # CRITICAL: Verify BIN matches to prevent wrong property data
+                if bin_num:
                     data = [r for r in data if r.get('bin') == bin_num]
+                    if len(data) == 0:
+                        print(f"DOB {strategy_name} search returned data but BIN mismatch - skipping", file=sys.stderr)
+                        continue
                 result['dob_violations'] = data
                 print(f"Found {len(data)} DOB violations using {strategy_name}", file=sys.stderr)
                 break
@@ -168,26 +175,15 @@ def get_comprehensive_compliance_data(identifiers):
             print(f"DOB {strategy_name} search failed: {e}", file=sys.stderr)
             continue
     
-    # Elevator Inspections - Multi-key search with ALL historical data
-    strategies = []
+    # Elevator Inspections - BIN only to prevent wrong property data
     if bin_num:
-        strategies.append(("BIN", f"bin = '{bin_num}'"))
-    if block and lot:
-        strategies.append(("Block/Lot", f"block = '{block}' AND lot = '{lot}'"))
-    
-    for strategy_name, where_clause in strategies:
         try:
-            data = client.get_data('elevator_inspections', where=where_clause, limit=500)
+            data = client.get_data('elevator_inspections', where=f"bin = '{bin_num}'", limit=500)
             if data and len(data) > 0:
-                # Filter by BIN if using block/lot
-                if strategy_name == "Block/Lot" and bin_num:
-                    data = [r for r in data if r.get('bin') == bin_num]
                 result['elevator_data'] = data
-                print(f"Found {len(data)} elevator records using {strategy_name}", file=sys.stderr)
-                break
+                print(f"Found {len(data)} elevator records using BIN", file=sys.stderr)
         except Exception as e:
-            print(f"Elevator {strategy_name} search failed: {e}", file=sys.stderr)
-            continue
+            print(f"Elevator BIN search failed: {e}", file=sys.stderr)
     
     # Boiler Inspections - BIN only (dataset doesn't support other searches)
     if bin_num:
