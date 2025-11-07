@@ -286,7 +286,8 @@ export default function ComplianceReportPage() {
             dob_violations_active: result.updated_scores.dob_violations_active,
             dob_violations_dismissed: result.updated_scores.dob_violations_dismissed,
             dob_compliance_score: result.updated_scores.dob_compliance_score,
-            compliance_score: result.updated_scores.compliance_score
+            compliance_score: result.updated_scores.compliance_score,
+            overall_score: result.updated_scores.compliance_score
           }));
         }
       }
@@ -346,7 +347,8 @@ export default function ComplianceReportPage() {
             dob_violations_active: result.updated_scores.dob_violations_active,
             dob_violations_dismissed: result.updated_scores.dob_violations_dismissed,
             dob_compliance_score: result.updated_scores.dob_compliance_score,
-            compliance_score: result.updated_scores.compliance_score
+            compliance_score: result.updated_scores.compliance_score,
+            overall_score: result.updated_scores.compliance_score
           }));
         }
       }
@@ -382,7 +384,8 @@ export default function ComplianceReportPage() {
             dob_violations_active: result.updated_scores.dob_violations_active,
             dob_violations_dismissed: result.updated_scores.dob_violations_dismissed,
             dob_compliance_score: result.updated_scores.dob_compliance_score,
-            compliance_score: result.updated_scores.compliance_score
+            compliance_score: result.updated_scores.compliance_score,
+            overall_score: result.updated_scores.compliance_score
           }));
         }
       }
